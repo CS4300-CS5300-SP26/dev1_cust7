@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, inital-scale=1.0">
+    <title>Cookbot</title>
+</head>
+<body>
+<!-- NAV -->
+  <header class="navbar">
+    <div class="container">
+      <div class="nav-inner">
+        <a class="brand" href="#">
+          <!-- Replace src with your logo file, e.g. /static/images/logo.png -->
+          <img src="logo.png" alt="CookBot Logo" onerror="this.style.display='none'">
+          <div class="name">CookBot</div>
+        </a>
+
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#ai">AI Chef</a>
+          <a href="#pantry">Pantry</a>
+          <a href="#mealplan">Meal Plan</a>
+          <a href="#favorites">Favorites</a>
+        </nav>
+
+        <a class="signin" href="/signin">
+          Sign In <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main class="container hero">
+    <section class="banner" role="banner" aria-label="Welcome">
+      <div class="banner-content">
+        <h1>Welcome to CookBot</h1>
+        <p>Get ready to make mealplanning easy!</p>
+      </div>
+
+      <div class="banner-art" aria-hidden="true">
+        <div class="art-bubble">
+          <div class="art-card">
+            Add food art here later<br/>
+            (image / SVG / illustration)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="search-area" aria-label="Search links">
+      <div class="search-wrap">
+        <form class="search-bar" id="searchForm" autocomplete="off">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Type here…"
+            aria-label="Search for links"
+          />
+          <button class="search-btn" type="submit" aria-label="Search">
+            ↑
+          </button>
+        </form>
+
+        <div class="hint">Try: “chicken”, “meal plan”, “pantry”, “pasta”.</div>
+
+        <div class="results" id="resultsBox">
+          <h3 id="resultsTitle">Results</h3>
+          <ul id="resultsList"></ul>
+          <div class="empty" id="emptyState" style="display:none;">No matches found.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>
