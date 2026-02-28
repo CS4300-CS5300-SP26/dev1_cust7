@@ -26,8 +26,10 @@ SECRET_KEY = 'django-insecure-f84)neky)&&a)is_z@8hq4jp0=_i-4w5j51i614a$)9mv0f6on
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "app-rjoska-21.devedu.io",
+    'app-rjoska-21.devedu.io',
     'editor-rjoska-21.devedu.io',
+    'app-cs5300-21.devedu.io',
+    'editor-cs5300-21.devedu.io',
 ]
 
 
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cookBot',
 ]
 
 MIDDLEWARE = [
@@ -118,7 +121,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
