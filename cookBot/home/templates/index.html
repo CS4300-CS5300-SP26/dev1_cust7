@@ -13,16 +13,15 @@
     <div class="container-fluid">
       <div class="nav-header">
         <a class="navbar-brand" href="#">
-          <!-- Replace src with your logo-->
-          <img src="logo.png" alt="CookBot Logo" onerror="this.style.display='none'">
-          <div class="name">CookBot</div>
+          <img src="{% static 'logo.png' %}" alt="Logo">
         </a>
 
         <nav class="nav-links">
             <!-- Temp links nowhere -->
             <li><a href="/">Home</a></li>
             <li><a href="/">AI Chef</a></li>
-            <li><a href="/">Pantry</a></li>
+            <li><a href="/">Recipes</a></li>
+            <li><a href="/">Social</a></li>
             <li><a href="/">Meal Plan</a></li>
             <li><a href="/">Favorites</a></li>
         </nav>
@@ -38,6 +37,13 @@
       <div class="banner-content">
         <h1>Welcome to CookBot</h1>
         <p>Get ready to make mealplanning easy!</p>
+      </div>
+      <div class="banner-art">
+        <div class="art-bubble">
+          <div class="art-card">
+            <img src="{% static 'food1.png' %}" alt="foodImg" class="banner-image">
+          </div>
+        </div>
       </div>
     </section>
 
@@ -56,7 +62,7 @@
           </button>
         </form>
 
-        <div class="hint">Try: “chicken”, “meal plan”, “pantry”, “pasta”.</div>
+        <div class="hint">Try: “chicken”, “meal plan”, “French”, “pasta”.</div>
 
         <div class="results" id="resultsBox">
           <h3 id="resultsTitle">Results</h3>
