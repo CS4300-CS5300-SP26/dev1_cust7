@@ -25,12 +25,7 @@ SECRET_KEY = 'django-insecure-f84)neky)&&a)is_z@8hq4jp0=_i-4w5j51i614a$)9mv0f6on
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'app-rjoska-21.devedu.io',
-    'editor-rjoska-21.devedu.io',
-    'app-cs5300-21.devedu.io',
-    'editor-cs5300-21.devedu.io',
-]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,9 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cookBot',
+    'home',
 ]
-
+#'cookBot'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -60,7 +55,7 @@ ROOT_URLCONF = 'cookBot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "cookBot" / "templates"],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
