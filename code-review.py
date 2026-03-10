@@ -20,7 +20,7 @@ try:
         model="gpt-5.1-codex-mini",
         input=[
             {"role": "system", "content": "You are a senior software engineer tasked with performing code reviews for a web based django project. Provide concise and actionable feedback."},
-            {"role":"user", "content": f"Provide concise and actionable feedback for this code, make sure to mention the file name and line number for each suggestion. Here is the pull request diff:\n{diff}"}
+            {"role":"user", "content": f"Provide concise and actionable feedback for this code, make sure to mention the file name and line number for each suggestion and output it in markdown format. Here is the pull request diff:\n{diff}"}
         ]
 
     )
@@ -29,5 +29,6 @@ except openai.RateLimitError:
     chat_response = "Querying ChatGPT Failed, AI Code Review Unavailable"
 
 #Saving response into the feedback.txt file
-with open("feedback.txt","w") as feedback_file:
+with open("feedback.md","w") as feedback_file:
+    feedback_file.write("# AI Code Review\n\n")
     feedback_file.write(chat_response)
