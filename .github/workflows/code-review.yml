@@ -17,16 +17,22 @@ jobs:
       - name: Install Python 
         uses: actions/setup-python@v6 
         with: 
-          python-version: '3.11' 
+          python-version: '3.12.3' 
       - name: Install Dependencies 
         run: | 
           python -m pip install --upgrade pip 
           pip install -r requirments.txt 
+          pip install openai
       - name: Get Pull Request difference and store in temporary file
         run: | 
           git fetch
           git diff origin/${{github.event.pull_request.base.ref}} > difference.txt
-      - name: Run difference.txt through ai code reveiw file
+      - name: Run difference.txt through ai code review file
         env:
-          OPENAI_API_KEY: 
+          OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
+        run: |
+          python code-review.py
+          
+            
         
+
