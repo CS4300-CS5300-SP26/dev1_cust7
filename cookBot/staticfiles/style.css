@@ -1,0 +1,195 @@
+/* Reset, so all browsers are look the same */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: sans-serif;
+  background: #ffffff;
+  color: #1a3d2b;
+}
+
+/* Navbar */
+.navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #d7ebe3;
+  padding: 0.75rem 1.5rem;
+}
+
+.nav-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.navbar-brand img { height: 44px; }
+
+.name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a3d2b;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  margin: 0 auto;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-weight: 700;
+  color: #1a3d2b;
+}
+
+.nav-links a:hover { color: #009470; }
+
+.signin {
+  text-decoration: none;
+  font-weight: 700;
+  color: #1a3d2b;
+  background: #d7ebe3;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+}
+
+.signin:hover { background: #009470; color: #ffffff; }
+
+main.container {
+  background: #ffffff;
+  padding: 0;
+}
+
+/* Banner */
+section.banner {
+  background: linear-gradient(120deg, #009470, #42a06d);
+  padding: 3.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.banner-content h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.banner-content p {
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+/* Right side We used a bit of ChatGPT to help us get this working (mainly the art-bubble and the 2nd section.banner)*/
+section.banner {
+  min-height: 250px;
+  max-height: 300px;
+}
+
+.banner-art {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.art-bubble {
+  width: 320px;
+  height: 160px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+}
+
+.art-card {
+  width: 90%;
+  height: 80%;
+  border-radius: 16px;
+  place-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.banner-image{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right center;
+  display: block;
+}
+
+/* Search — white background, centered below banner */
+.search-area {
+  background: #ffffff;
+  padding: 3rem 1.5rem;
+}
+
+.search-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #d7ebe3;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.search-bar:focus-within { border-color: #009470; }
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  background: transparent;
+}
+
+.search-btn {
+  background: #009470;
+  border: none;
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  margin: 4px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.search-btn:hover { background: #42a06d; }
+
+.hint {
+  font-size: 0.82rem;
+  color: #9ab8ac;
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.results {
+  margin-top: 1.25rem;
+  background: #d7ebe3;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: none;
+}
+
+#resultsList { list-style: none; }
+
+#resultsList li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(0,148,112,0.15);
+}
+
+#resultsList li:last-child { border-bottom: none; }
