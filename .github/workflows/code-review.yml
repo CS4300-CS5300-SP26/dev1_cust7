@@ -32,6 +32,13 @@ jobs:
           OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
         run: |
           python code-review.py
+      - name: Post code review as comment in pull request
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: feedback.txt
+      - name: Clean up temporary files
+        run: |
+          rm difference.txt feedback.txt
           
             
         
