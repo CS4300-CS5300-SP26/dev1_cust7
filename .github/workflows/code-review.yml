@@ -35,12 +35,13 @@ jobs:
       - name: Post code review as comment in pull request
         uses: thollander/actions-comment-pull-request@v3
         with:
-          file-path: feedback.txt
+          file-path: feedback.md
       - name: Clean up temporary files
         run: |
           rm difference.txt feedback.txt
           
             
         
+
 
 
