@@ -38,10 +38,11 @@ jobs:
           file-path: feedback.md
       - name: Clean up temporary files
         run: |
-          rm difference.txt feedback.txt
+          rm difference.txt feedback.md
           
             
         
+
 
 
 
