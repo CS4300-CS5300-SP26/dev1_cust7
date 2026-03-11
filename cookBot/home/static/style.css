@@ -7,65 +7,6 @@ body {
   color: #1a3d2b;
 }
 
-/* Navbar */
-.navbar {
-  background: #ffffff;
-  border-bottom: 1px solid #d7ebe3;
-  padding: 0.75rem 1.5rem;
-}
-
-.nav-header {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-}
-
-.navbar-brand img { height: 44px; }
-
-.name {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1a3d2b;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  gap: 2rem;
-  margin: 0 auto;
-}
-
-.nav-links a {
-  text-decoration: none;
-  font-weight: 700;
-  color: #1a3d2b;
-}
-
-.nav-links a:hover { color: #009470; }
-
-.signin {
-  text-decoration: none;
-  font-weight: 700;
-  color: #1a3d2b;
-  background: #d7ebe3;
-  padding: 0.5rem 1.25rem;
-  border-radius: 999px;
-}
-
-.signin:hover { background: #009470; color: #ffffff; }
-
-main.container {
-  background: #ffffff;
-  padding: 0;
-}
-
 /* Banner */
 section.banner {
   background: linear-gradient(120deg, #009470, #42a06d);
@@ -74,7 +15,6 @@ section.banner {
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
-  border-radius: 18px;
   overflow: hidden;
 }
 
@@ -92,7 +32,6 @@ section.banner {
 /* Right side We used a bit of ChatGPT to help us get this working (mainly the art-bubble and the 2nd section.banner)*/
 section.banner {
   min-height: 250px;
-  max-height: 300px;
 }
 
 .banner-art {
@@ -193,3 +132,17 @@ section.banner {
 }
 
 #resultsList li:last-child { border-bottom: none; }
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+
+  .banner-art {
+    display: none;
+  }
+
+  section.banner {
+    justify-content: center;
+    text-align: center;
+  }
+
+}
