@@ -28,4 +28,6 @@ jobs:
       - name: Run Test Cases
         run: |
           cd cookBot
+          echo "================ RUNNING DJANGO TESTS ================"
           python manage.py test
+          echo "================ TESTS FINISHED ======================"
