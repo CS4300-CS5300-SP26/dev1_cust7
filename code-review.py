@@ -12,14 +12,19 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 with open("difference.txt","r") as diff_file:
     diff = diff_file.read()
 
+#Context Object
+context = "You are a senior software engineer tasked with performing code reviews for a web based django project. Provide concise and actionable feedback."
+#Prompt Object
+prompt = f"Provide concise and actionable feedback for this code, make sure to mention the file name and line number, and display the line of code for each suggestion. Also output your response in markdown format. Here is the pull request diff:\n{diff}"
+#Resoponse Object
 chat_response = ""
 #Response object by querying ChatGPT
 try:
     response = openai_client.responses.create(
         model="gpt-5.1-codex-mini",
         input=[
-            {"role": "system", "content": "You are a senior software engineer tasked with performing code reviews for a web based django project. Provide concise and actionable feedback."},
-            {"role":"user", "content": f"Provide concise and actionable feedback for this code, make sure to mention the file name and line number for each suggestion and output it in markdown format. Here is the pull request diff:\n{diff}"}
+            {"role": "system", "content": context},
+            {"role":"user", "content": prompt}
         ]
 
     )
