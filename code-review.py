@@ -11,8 +11,7 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 #Getting file content from diff.txt
 with open("difference.txt","r") as diff_file:
     diff = diff_file.read()
-print(diff)
-print(diff)
+
 chat_response = ""
 #Response object by querying ChatGPT
 try:
