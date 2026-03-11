@@ -1,0 +1,19 @@
+name: Automated Django Test Cases
+on:
+      push:
+            branches: [**]
+      pull_request:
+            branches: [ "main" ]
+jobs:
+      test:
+            runs-on: ubuntu-latest
+            
+      steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            
+
+            
+
+
