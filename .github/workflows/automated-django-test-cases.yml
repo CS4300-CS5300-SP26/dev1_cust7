@@ -1,19 +1,26 @@
-name: Automated Django Test Cases
+name: Automated Django Testing
+
 on:
       push:
-            branches: [**]
+            branches: ["**"]
       pull_request:
-            branches: [ "main" ]
+            branches: ["main"]
 jobs:
       test:
             runs-on: ubuntu-latest
-            
       steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
-
+      - name: Checkout Repo
+      uses: actions/checkout@v4
             
-
+      - name: Download Python
+      uses: actions/setup-python@v6
+      with: 
+            python-version: '3.12.3'
+      -name: Install Dependencies
+      run | 
+            python install -r requirments.txt
+      -name: Run test cases
+      run | 
+            cd cookBot
+            python manage.py test
             
-
-
