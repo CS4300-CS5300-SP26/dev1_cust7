@@ -28,6 +28,6 @@ except openai.RateLimitError:
     chat_response = "Querying ChatGPT Failed, AI Code Review Unavailable"
 
 #Saving response into the feedback.txt file
-with open("feedback.md","w") as feedback_file:
+with open("feedback.txt","w") as feedback_file:
     feedback_file.write("# AI Code Review\n\n")
     feedback_file.write(chat_response)
