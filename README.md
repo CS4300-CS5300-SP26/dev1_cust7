@@ -1,4 +1,5 @@
-# dev1_cust7
-Group project repo — dev1 → cust7
-Authors: Ethan K, Caleb S, Roman J, Julian J, Gary
+# CookBot
+### Group project repo — dev1 → cust7 <br>
+### URL: https://cookbot.me <br>
+### Authors:  Julian J, Roman J, Ethan K, Gary L, Caleb S<br>
 
