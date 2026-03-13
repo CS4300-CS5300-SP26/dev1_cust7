@@ -2,9 +2,11 @@
 import os
 import sys
 import django
+from pathlib import Path
 
 # Add the project directory to the Python path
-sys.path.insert(0, '/home/dx14/Documents/GITHUB/CS-4300/dev1_cust7/cookBot')
+base_dir = Path(__file__).resolve().parent / "cookBot"
+sys.path.insert(0, str(base_dir))
 
 # Set the Django settings module
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cookBot.settings')

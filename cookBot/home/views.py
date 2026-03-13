@@ -113,7 +113,6 @@ def pantry_view(request):
 
 @login_required
 @require_POST
-@csrf_exempt
 def add_ingredient(request):
     """Add a new ingredient to the user's pantry"""
     try:
@@ -144,7 +143,6 @@ def add_ingredient(request):
 
 @login_required
 @require_POST
-@csrf_exempt
 def delete_ingredient(request, ingredient_id):
     """Remove an ingredient from the user's pantry"""
     try:
