@@ -32,6 +32,16 @@ try:
 except openai.RateLimitError:
     chat_response = "Querying ChatGPT Failed, AI Code Review Unavailable"
 
+#Stripping markdown leading part if there
+if chat_response.startswith("```markdown"):
+    chat_response = chat_response[len("```markdown"):]
+elif chat_response.startswith("```"):
+    chat_response = chat_response[len("```"):]
+
+chat_response.stripped = chat_response.rstrip()
+if chat_response.stripped.endswith("```"):
+    chat_response = chat_response[:len(chat_response) - 3]
+    
 #Saving response into the feedback.txt file
 with open("feedback.txt","w") as feedback_file:
     feedback_file.write("# AI Code Review\n\n")
