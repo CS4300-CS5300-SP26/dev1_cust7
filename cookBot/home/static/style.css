@@ -1,13 +1,16 @@
 /* Reset, so all browsers are look the same */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Default page font and main text/background colors */
 body {
   font-family: sans-serif;
   background: #ffffff;
   color: #1a3d2b;
 }
 
-/* Banner */
+/* Main banner section:
+   green gradient background, spacing inside, and flex layout
+   to place text on the left and image on the right */
 section.banner {
   background: linear-gradient(120deg, #009470, #42a06d);
   padding: 3.5rem 3rem;
@@ -18,6 +21,7 @@ section.banner {
   overflow: hidden;
 }
 
+/* Main banner title styling */
 .banner-content h1 {
   font-size: 2.5rem;
   font-weight: 800;
@@ -25,10 +29,12 @@ section.banner {
   margin-bottom: 0.5rem;
 }
 
+/* Banner paragraph text styling */
 .banner-content p {
   font-size: 1.1rem;
   color: #ffffff;
 }
+
 /* Right side We used a bit of ChatGPT to help us get this working (mainly the art-bubble and the 2nd section.banner)*/
 section.banner {
   min-height: 250px;
@@ -39,6 +45,7 @@ section.banner {
   justify-content: flex-end;
 }
 
+/* Outer box that holds the banner art and centers it */
 .art-bubble {
   width: 320px;
   height: 160px;
@@ -47,6 +54,7 @@ section.banner {
   border-radius: 18px;
 }
 
+/* Inner card that contains the image itself */
 .art-card {
   width: 90%;
   height: 80%;
@@ -56,6 +64,7 @@ section.banner {
   padding: 1rem;
 }
 
+/* Makes the banner image fill its container without stretching */
 .banner-image{
   width: 100%;
   height: 100%;
@@ -70,11 +79,13 @@ section.banner {
   padding: 3rem 1.5rem;
 }
 
+/* Centers the search content and limits how wide it can get */
 .search-wrap {
   max-width: 680px;
   margin: 0 auto;
 }
 
+/* Search bar container: horizontal layout, rounded edges, border, and hidden overflow */
 .search-bar {
   display: flex;
   align-items: center;
@@ -84,8 +95,10 @@ section.banner {
   background: #ffffff;
 }
 
+/* Changes the search bar border color when the input inside is focused */
 .search-bar:focus-within { border-color: #009470; }
 
+/* Search input styling which takes up remaining space and removes default input border */
 .search-bar input {
   flex: 1;
   border: none;
@@ -95,6 +108,7 @@ section.banner {
   background: transparent;
 }
 
+/* Search button styling */
 .search-btn {
   background: #009470;
   border: none;
@@ -107,8 +121,10 @@ section.banner {
   cursor: pointer;
 }
 
+/* Changes button color when hovered */
 .search-btn:hover { background: #42a06d; }
 
+/* Example helper text under the search bar */
 .hint {
   font-size: 0.82rem;
   color: #9ab8ac;
@@ -116,6 +132,7 @@ section.banner {
   padding-left: 1.25rem;
 }
 
+/* Results box shown under the search area */
 .results {
   margin-top: 1.25rem;
   background: #d7ebe3;
@@ -124,22 +141,27 @@ section.banner {
   display: none;
 }
 
+/* Removes bullets from the results list */
 #resultsList { list-style: none; }
 
+/* Styles each result item and adds a divider line */
 #resultsList li {
   padding: 0.35rem 0;
   border-bottom: 1px solid rgba(0,148,112,0.15);
 }
 
+/* Removes the divider under the last result item */
 #resultsList li:last-child { border-bottom: none; }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
 
+  /* Hides the banner image/art on mobile */
   .banner-art {
     display: none;
   }
 
+  /* Centers the banner text when the image is removed */
   section.banner {
     justify-content: center;
     text-align: center;
