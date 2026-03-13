@@ -58,5 +58,3 @@ Thumbs.db
 htmlcov/
 .tox/
 .nox/
-
-SPOONACULAR_API_KEY = "5ed77f737f0e499f9edff54c238fcb7c"
