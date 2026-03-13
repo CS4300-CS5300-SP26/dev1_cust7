@@ -1,4 +1,3 @@
-import pytest
 import json
 from io import BytesIO
 from unittest.mock import patch, MagicMock
@@ -7,6 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.urls import reverse
+from home.models import Pantry
 
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
@@ -16,7 +16,7 @@ from django.urls import reverse
 class TestAPI(APITestCase):
     def test_index_page_200(self):
         response = self.client.get("/")
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
 #### Spoonacular nutrition label tests ####
 #### Mock found with Claud ####
@@ -66,7 +66,49 @@ class NutritionViewTests(TestCase):
 
     #Create a test client to make requests without running server
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
         self.client = Client()
+        self.client.login(username='testuser', password='password123')
+
+    def test_pantry_view_status(self):
+        """Tests that the pantry page loads for a logged-in user"""
+        response = self.client.get(reverse('pantry'))
+        self.assertEqual(response.status_code, 200)
+    
+    def test_add_ingredient_success(self):
+        """Tests adding an ingredient via AJAX"""
+        data = {'ingredient_name': 'Carrot'}
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Pantry.objects.filter(ingredient_name='Carrot').exists())
+
+    def test_add_duplicate_ingredient(self):
+        """Tests that duplicate ingredients are rejected (covers error lines)"""
+        Pantry.objects.create(user=self.user, ingredient_name='Apple')
+        data = {'ingredient_name': 'Apple'}
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400) # Covers the 'exists()' check logic
+
+    def test_delete_ingredient(self):
+        """Tests removing an ingredient"""
+        item = Pantry.objects.create(user=self.user, ingredient_name='Onion')
+        response = self.client.post(reverse('delete_ingredient', args=[item.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Pantry.objects.filter(id=item.id).exists())
+
+    def test_search_recipes_empty_pantry(self):
+        """Tests recipe search logic when pantry is empty (covers early return lines)"""
+        response = self.client.get(reverse('search_recipes_by_pantry'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('No ingredients in pantry', response.json().get('message', ''))
 
     @patch('urllib.request.urlopen')
     def test_returns_nutrition_data_for_valid_ingredient(self, mock_urlopen):
