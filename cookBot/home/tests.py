@@ -109,6 +109,29 @@ class NutritionViewTests(TestCase):
         response = self.client.get(reverse('search_recipes_by_pantry'))
         self.assertEqual(response.status_code, 200)
         self.assertIn('No ingredients in pantry', response.json().get('message', ''))
+    
+    @patch('urllib.request.urlopen')
+    def test_search_recipes_with_ingredients_success(self, mock_urlopen):
+        """Tests recipe search with ingredients (Mocking Spoonacular)"""
+        # Add an ingredient so the search logic actually runs
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        
+        # Mock a successful Spoonacular recipe list
+        mock_recipes = [{"id": 1, "title": "Chicken Soup", "image": "img.jpg", 
+                         "usedIngredients": [{"name": "chicken"}], "missedIngredients": []}]
+        mock_urlopen.return_value = make_mock_response(mock_recipes)
+        
+        response = self.client.get(reverse('search_recipes_by_pantry'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['recipes']), 1)
+
+    def test_get_fallback_recipes_logic(self):
+        """Tests the fallback logic when no API is called"""
+        from home.views import get_fallback_recipes
+        # Directly test the helper function to cover those 244-324 lines
+        pantry_items = ['Potato']
+        recipes = get_fallback_recipes(pantry_items)
+        self.assertTrue(len(recipes) > 0)
 
     @patch('urllib.request.urlopen')
     def test_returns_nutrition_data_for_valid_ingredient(self, mock_urlopen):
