@@ -30,6 +30,6 @@ jobs:
           cd cookBot
           echo "================ RUNNING DJANGO TESTS ================"
           python manage.py test
-          coverage run --source"." manage.py test
-          coverage report
+          coverage run manage.py test
+          coverage report -m
           echo "================ TESTS FINISHED ======================"
