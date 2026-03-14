@@ -29,7 +29,6 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
-          DEBUG: True
         run: |
           cd cookBot
           echo "================ RUNNING DJANGO TESTS ================"
