@@ -23,11 +23,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install djangorestframework pytest
+          pip install djangorestframework pytest coverage
 
       - name: Run Test Cases
         run: |
           cd cookBot
           echo "================ RUNNING DJANGO TESTS ================"
-          python manage.py test
+          coverage run manage.py test
+          coverage report -m --fail-under=80
           echo "================ TESTS FINISHED ======================"
