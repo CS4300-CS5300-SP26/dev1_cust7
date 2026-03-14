@@ -17,9 +17,10 @@ jobs:
           username: ${{ secrets.SERVER_ADMIN_USERNAME }}
           password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
           script: |
+            set -euo pipefail
             source cookboot_env/bin/activate
             cd dev1_cust7
-            git pull
+            git pull origin main
             pip install -r requirements.txt
             cd cookBot
             python manage.py migrate
