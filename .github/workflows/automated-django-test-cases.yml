@@ -30,5 +30,22 @@ jobs:
           cd cookBot
           echo "================ RUNNING DJANGO TESTS ================"
           coverage run manage.py test
-          coverage report -m --fail-under=80
+          coverage report -m --fail-under=80 | tee ../coverage.txt
           echo "================ TESTS FINISHED ======================"
+      - name: Build Coverage Comment
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Django Test Coverage"
+            echo ""
+            echo '```'
+            cat coverage.txt
+            echo '```'
+          } > pr-comment.txt
+      - name: Post Sticky Coverage Comment
+        if: github.event == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: pr-comment.txt
+      
+        
