@@ -37,7 +37,7 @@ jobs:
         run: |
           {
             echo "## Django Test Coverage"
-            echo""
+            echo ""
             echo '```'
             cat coverage.txt
             echo '```'
