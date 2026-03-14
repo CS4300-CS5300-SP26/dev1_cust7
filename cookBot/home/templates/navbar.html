@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookbot</title>
+    <!-- LINK ALL STYLES HERE -->
+    <link rel="stylesheet" href="{% static 'navbarStyle.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <!-- NAV formatting help from ChatGPT and https://www.w3schools.com/bootstrap/bootstrap_navbar.asp -->
+    <header class="navbar">
+        <div class="container-fluid">
+          <div class="nav-header">
+            
+            <!-- Logo and home button -->
+            <a class="navbar-brand" href="/">
+              <img src="{% static 'logo.png' %}" alt="Logo">
+            </a>
+      
+            <!-- Mobile toggle and this is hidden -->
+            <input type="checkbox" id="menu-toggle" class="menu-checkbox">
+            <label for="menu-toggle" class="menu-icon" aria-label="Hidden toggle navigation menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </label>
+      
+            <nav class="nav-links">
+              <ul class="main-menu">
+
+                <!-- Cookbot dropdown options -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">CookBot<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="#">AI Chef</a></li>
+                      <li><a href="#">Recipe Maker</a></li>
+                      <li><a href="#">Meal Planner</a></li>
+                    </ul>
+                </li> 
+
+                <!-- Social dropdown options -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">Social<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="#">Social Home</a></li>
+                      <li><a href="#">Share Recipe</a></li>
+                    </ul>
+                </li> 
+
+                <!-- Account dropdown options -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">Account<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        {% if user.is_authenticated %}
+                            <li><a href="#">My Account</a></li>
+                            <li><a href="/pantry">My Pantry</a></li>
+                            <li><a href="#">Meal Plans</a></li>
+                            <li><a href="#">Favorites</a></li>
+                            <li><a href="#">Log Out</a></li>
+                        {% else %}
+                            <li><a href="/signin">Sign In</a></li>
+                        {% endif %}
+                    </ul>
+                </li>         
+      
+              </ul>
+            </nav>
+      
+          </div>
+        </div>
+      </header>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>

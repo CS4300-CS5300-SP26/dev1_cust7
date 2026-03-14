@@ -98,13 +98,28 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'pantry-item';
             itemDiv.id = `item-${ingredient.id}`;
-            itemDiv.innerHTML = `
-                <span class="ingredient-name">` + ingredient.name.charAt(0).toUpperCase() + ingredient.name.slice(1) + `</span>
-                <div class="ingredient-actions">
-                    <button class="btn-nutrition nutrition-btn" data-ingredient="` + ingredient.name + `">Nutrition Info</button>
-                    <button class="btn-remove" onclick="deleteIngredient(` + ingredient.id + `)">Remove</button>
-                </div>
-            `;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'ingredient-name';
+            nameSpan.textContent = ingredient.name.charAt(0).toUpperCase() + ingredient.name.slice(1);
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'ingredient-actions';
+            
+            const nutritionBtn = document.createElement('button');
+            nutritionBtn.className = 'btn-nutrition nutrition-btn';
+            nutritionBtn.textContent = 'Nutrition Info';
+            nutritionBtn.setAttribute('data-ingredient', ingredient.name);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-remove';
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = function() { deleteIngredient(ingredient.id); };
+            
+            actionsDiv.appendChild(nutritionBtn);
+            actionsDiv.appendChild(removeBtn);
+            itemDiv.appendChild(nameSpan);
+            itemDiv.appendChild(actionsDiv);
             
             pantryItems.appendChild(itemDiv);
         }

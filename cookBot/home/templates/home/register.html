@@ -1,43 +1,23 @@
+{% extends "navbar.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - CookBot</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="{% static 'auth.css' %}">
-</head>
-<body>
-    <!-- Navigation -->
-    <header class="navbar">
-        <div class="container-fluid">
-            <div class="nav-header">
-                <a class="navbar-brand" href="#">
-                    <img src="{% static 'logo.png' %}" alt="Logo">
-                </a>
 
-                <nav class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/pantry">My Pantry</a></li>
-                    <li><a href="/">AI Chef</a></li>
-                    <li><a href="/">Recipes</a></li>
-                    <li><a href="/">Social</a></li>
-                    <li><a href="/">Meal Plan</a></li>
-                    <li><a href="/">Favorites</a></li>
-                </nav>
-
-                <a class="signin" href="/signin"> Sign In </a>
-            </div>
-        </div>
-    </header>
-
+{% block content %}
     <!-- Main Content -->
     <main class="auth-container">
         <div class="auth-header">
             <h1>Create Account</h1>
             <p>Join CookBot to start managing your pantry!</p>
         </div>
+
+        {% if form.errors %}
+            <div class="error-message">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <form method="post" class="auth-form">
             {% csrf_token %}
@@ -52,5 +32,4 @@
             <p><a href="/">Back to Home</a></p>
         </div>
     </main>
-</body>
-</html>
+{% endblock %}

@@ -77,12 +77,20 @@ def nutrition_test(request):
 
 def register(request):
     """User registration view"""
+    print(f"Register view called with method: {request.method}")
     if request.method == 'POST':
+        print(f"POST data received: {request.POST}")
         form = UserCreationForm(request.POST)
+        print(f"Form created with data: {form.data}")
         if form.is_valid():
+            print("Form is valid, saving user")
             user = form.save()
             login(request, user)
+            print(f"User {user.username} registered and logged in")
             return redirect('pantry')
+        else:
+            # Print form errors for debugging
+            print(f"Form errors: {form.errors}")
     else:
         form = UserCreationForm()
     return render(request, 'home/register.html', {'form': form})

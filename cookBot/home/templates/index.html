@@ -1,38 +1,7 @@
+{% extends "navbar.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, inital-scale=1.0">
-    <title>Cookbot</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-</head>
-<body>
-<!-- NAV formatting help from ChatGPT and https://www.w3schools.com/bootstrap/bootstrap_navbar.asp  -->
-  <header class="navbar">
-    <div class="container-fluid">
-      <div class="nav-header">
-        <a class="navbar-brand" href="#">
-          <img src="{% static 'logo.png' %}" alt="Logo">
-        </a>
 
-        <nav class="nav-links">
-            <!-- Temp links nowhere -->
-            <li><a href="/">Home</a></li>
-            <li><a href="/pantry">My Pantry</a></li>
-            <li><a href="/">AI Chef</a></li>
-            <li><a href="/">Recipes</a></li>
-            <li><a href="/">Social</a></li>
-            <li><a href="/">Meal Plan</a></li>
-            <li><a href="/">Favorites</a></li>
-        </nav>
-
-        <a class="signin" href="/signin"> Sign In </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Banner background (simple format to edit hopefully) -->
+{% block content %}
   <main class="container banner">
     <section class="banner" role="banner" aria-label="Welcome">
       <div class="banner-content">
@@ -48,7 +17,6 @@
       </div>
     </section>
 
-    <!-- Search bar mainly made by ChatGPT as we are not entirely sure what the search bar is supposed to search so its just a giant dummy-->
     <section class="search-area" aria-label="Search links">
       <div class="search-wrap">
         <form class="search-bar" id="searchForm" autocomplete="off">
@@ -73,6 +41,4 @@
       </div>
     </section>
   </main>
-
-</body>
-</html>
+{% endblock %}

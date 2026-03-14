@@ -1,6 +1,21 @@
+
 .env
 __pycache__/
 *.pyc
 db.sqlite3
 staticfiles/
 myenv/
+=======
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# pytest cache
+.pytest_cache/
+
+# Python virtual environments (optional but recommended)
+venv/
+.env
+

@@ -1,42 +1,12 @@
+{% extends "navbar.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Pantry - CookBot</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="{% static 'pantry.css' %}">
-</head>
-<body>
-    <!-- Navigation -->
-    <header class="navbar">
-        <div class="container-fluid">
-            <div class="nav-header">
-                <a class="navbar-brand" href="#">
-                    <img src="{% static 'logo.png' %}" alt="Logo">
-                </a>
 
-                <nav class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/pantry">My Pantry</a></li>
-                    <li><a href="/">AI Chef</a></li>
-                    <li><a href="/">Recipes</a></li>
-                    <li><a href="/">Social</a></li>
-                    <li><a href="/">Meal Plan</a></li>
-                    <li><a href="/">Favorites</a></li>
-                </nav>
-
-                <a class="signin" href="/signin"> Sign In </a>
-            </div>
-        </div>
-    </header>
-
+{% block content %}
     <!-- Main Content -->
     <main class="pantry-container">
         <div class="pantry-header">
             <h1>My Pantry</h1>
-            <button onclick="location.href='/'" style="background: #6c757d; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">← Back to Home</button>
+            <button onclick="window.location.href='/'" style="background: #6c757d; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">← Back to Home</button>
         </div>
 
         <!-- Messages -->
@@ -85,5 +55,4 @@
     {% include "home/nutrition_label.html" %}
 
     <script src="{% static 'pantry.js' %}"></script>
-</body>
-</html>
+{% endblock %}
