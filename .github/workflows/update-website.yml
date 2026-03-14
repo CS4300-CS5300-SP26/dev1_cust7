@@ -1,1 +1,28 @@
+name: Deploy Main Branch to Website
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Commands on Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP_ADDR }}
+          username: ${{ secrets.SERVER_ADMIN_USERNAME }}
+          password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
+          script: |
+            source cookboot_env/bin/activate
+            cd dev1_cust7
+            git pull
+            pip install -r requirements.txt
+            cd cookBot
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+            systemctl restart cookBot
+            systemctl restart nginx
