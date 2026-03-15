@@ -9,6 +9,7 @@ urlpatterns = [
     # Authentication
     path('register/', views.register, name='register'),
     path('signin/', views.signin, name='signin'),
+    path('logout/', views.signout, name='logout'),
     
     # Pantry functionality
     path('pantry/', views.pantry_view, name='pantry'),
