@@ -29,8 +29,8 @@ SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['*', '.devedu.io']
+CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
 
 # Application definition
 
