@@ -106,7 +106,7 @@ def signin(request):
     return render(request, 'home/signin.html')
 def signout(request):
     logout(request)
-    return redirect('signin')
+    return redirect('index')
 
 @login_required
 def pantry_view(request):
