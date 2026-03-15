@@ -5,11 +5,6 @@
   box-sizing: border-box;
 }
 
-/* Removes the browser's default page margin */
-body {
-    margin: 0;
-  }
-
   /* Navbar background, bottom border, and inner spacing */
   .navbar {
     background: #ffffff;

@@ -1,5 +1,5 @@
 /* Reset, so all browsers are look the same */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; padding: 0; }
 
 /* Default page font and main text/background colors */
 body {
@@ -13,12 +13,13 @@ body {
    to place text on the left and image on the right */
 section.banner {
   background: linear-gradient(120deg, #009470, #42a06d);
-  padding: 3.5rem 3rem;
+  padding: 3.5rem 5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2rem;
   overflow: hidden;
+  margin-top: 0;
 }
 
 /* Main banner title styling */

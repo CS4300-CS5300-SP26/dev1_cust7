@@ -56,11 +56,12 @@
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
                             <li><a href="#">My Account</a></li>
+                            <li><a href="/pantry">My Pantry</a></li>
                             <li><a href="#">Meal Plans</a></li>
                             <li><a href="#">Favorites</a></li>
                             <li><a href="#">Log Out</a></li>
                         {% else %}
-                            <li><a href="#">Sign In</a></li>
+                            <li><a href="/signin">Sign In</a></li>
                         {% endif %}
                     </ul>
                 </li>         

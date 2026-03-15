@@ -1,0 +1,112 @@
+{% load static %}
+<!-- Formating help from Claude-->
+{% comment %}
+    nutrition_label.html
+  
+    USAGE: Include this template inside your pantry page template:
+    {% include "home/nutrition_label.html" %}
+
+    Add this button to each ingredient in your pantry loop:
+    <button class="nutrition-btn" data-ingredient="{{ ingredient.name }}">Nutrition Info</button>
+{% endcomment %}
+
+<div id="nutrition-overlay" role="dialog" aria-modal="true" aria-labelledby="nutrition-modal-title">
+    <div id="nutrition-modal">
+  
+      <button id="nutrition-close-btn" aria-label="Close">&times;</button>
+  
+      <div id="nutrition-loading">
+        <div class="spinner"></div>
+        <p>Fetching nutrition data…</p>
+      </div>
+  
+      <div id="nutrition-error" style="display:none;">
+        <p id="nutrition-error-msg">Could not load nutrition information.</p>
+      </div>
+  
+      <div id="nutrition-content" style="display:none;">
+        <div class="fda-label">
+  
+          <div class="fda-title">Nutrition Facts</div>
+          <div class="fda-serving-row">
+            <span>Serving size</span>
+            <span id="fda-serving-size">1 serving</span>
+          </div>
+  
+          <div class="divider thick"></div>
+  
+          <div class="fda-calories-block">
+            <span class="cal-label">Calories</span>
+            <span class="cal-value" id="fda-calories">—</span>
+          </div>
+  
+          <div class="divider thick"></div>
+          <div class="dv-note">% Daily Value*</div>
+  
+          <div class="row bold">
+            <span>Total Fat <em class="amt" id="fda-fat">—</em></span>
+            <span class="dv" id="fda-fat-dv">—%</span>
+          </div>
+          <div class="row indent">
+            <span>Saturated Fat <em class="amt" id="fda-sat-fat">—</em></span>
+            <span class="dv" id="fda-sat-fat-dv">—%</span>
+          </div>
+          <div class="row indent">
+            <span><i>Trans</i> Fat <em class="amt" id="fda-trans-fat">—</em></span>
+            <span class="dv"></span>
+          </div>
+  
+          <div class="divider"></div>
+  
+          <div class="row bold">
+            <span>Cholesterol <em class="amt" id="fda-cholesterol">—</em></span>
+            <span class="dv" id="fda-cholesterol-dv">—%</span>
+          </div>
+          <div class="row bold">
+            <span>Sodium <em class="amt" id="fda-sodium">—</em></span>
+            <span class="dv" id="fda-sodium-dv">—%</span>
+          </div>
+  
+          <div class="divider"></div>
+  
+          <div class="row bold">
+            <span>Total Carbohydrate <em class="amt" id="fda-carbs">—</em></span>
+            <span class="dv" id="fda-carbs-dv">—%</span>
+          </div>
+          <div class="row indent">
+            <span>Dietary Fiber <em class="amt" id="fda-fiber">—</em></span>
+            <span class="dv" id="fda-fiber-dv">—%</span>
+          </div>
+          <div class="row indent">
+            <span>Total Sugars <em class="amt" id="fda-sugar">—</em></span>
+            <span class="dv"></span>
+          </div>
+  
+          <div class="divider"></div>
+  
+          <div class="row bold last">
+            <span>Protein <em class="amt" id="fda-protein">—</em></span>
+            <span class="dv" id="fda-protein-dv">—%</span>
+          </div>
+  
+          <div class="divider thick"></div>
+  
+          <div class="micro-grid">
+            <div class="micro-item">Vitamin D <span id="fda-vitd">—%</span></div>
+            <div class="micro-item">Calcium <span id="fda-calcium">—%</span></div>
+            <div class="micro-item">Iron <span id="fda-iron">—%</span></div>
+            <div class="micro-item">Potassium <span id="fda-potassium">—%</span></div>
+            <div class="micro-item">Vitamin A <span id="fda-vita">—%</span></div>
+            <div class="micro-item">Vitamin C <span id="fda-vitc">—%</span></div>
+          </div>
+  
+          <div class="divider thick"></div>
+          <div class="footnote">* Percent Daily Values are based on a 2,000 calorie diet.</div>
+  
+        </div>
+      </div>
+    </div>
+  </div>
+
+<link rel="stylesheet" href="{% static 'nutrition_label.css' %}">
+<script src="{% static 'nutrition_label.js' %}"></script>

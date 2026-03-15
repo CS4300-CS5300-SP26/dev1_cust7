@@ -1,0 +1,132 @@
+#nutrition-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+#nutrition-overlay.active { display: flex; }
+
+#nutrition-modal {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 340px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+#nutrition-close-btn {
+    position: absolute;
+    top: 0.5rem; right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #555;
+    line-height: 1;
+}
+#nutrition-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 0;
+    color: #666;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+}
+.spinner {
+    width: 28px; height: 28px;
+    border: 3px solid #ddd;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#nutrition-error {
+    padding: 1.5rem;
+    text-align: center;
+    color: #b00;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+  }
+
+  /* ── FDA Label ── */
+  .fda-label {
+    border: 2px solid #000;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 0.8rem;
+  }
+
+  .fda-title {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    padding: 4px 6px 0;
+    letter-spacing: -0.02em;
+  }
+
+  .fda-serving-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 6px 4px;
+    font-size: 0.75rem;
+  }
+
+  .fda-calories-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 6px 4px;
+  }
+  .cal-label { font-size: 1rem; font-weight: 700; }
+  .cal-value  { font-size: 2.8rem; font-weight: 900; line-height: 1; }
+
+  .divider       { height: 1px; background: #000; margin: 0 6px; }
+  .divider.thick { height: 8px; background: #000; margin: 0; }
+
+  .dv-note {
+    text-align: right;
+    font-size: 0.65rem;
+    padding: 1px 6px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 6px;
+    border-bottom: 1px solid #ccc;
+  }
+  .row.bold > span:first-child { font-weight: 800; }
+  .row.indent > span:first-child { padding-left: 1.2em; font-weight: 400; }
+  .row.last { border-bottom: none; }
+
+  .amt { font-style: normal; font-weight: 400; margin-left: 4px; }
+  .dv  { font-weight: 700; min-width: 32px; text-align: right; }
+
+  .micro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px 6px;
+  }
+  .micro-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    padding: 2px 6px 2px 0;
+    border-bottom: 1px solid #ccc;
+  }
+  .micro-item span { font-weight: 700; }
+
+  .footnote {
+    font-size: 0.6rem;
+    padding: 4px 6px;
+    line-height: 1.4;
+  }

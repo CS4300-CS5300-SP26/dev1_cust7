@@ -1,0 +1,60 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'pantry.css' %}">
+
+{% block content %}
+    <!-- Main Content -->
+    <main class="pantry-container">
+        <div class="pantry-header">
+            <h1>My Pantry</h1>
+            <button onclick="window.location.href='/'" style="background: #6c757d; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">← Back to Home</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <!-- Add Ingredient Form -->
+        <div class="pantry-form">
+            <input type="text" id="ingredient-input" placeholder="Enter ingredient name (e.g., chicken, rice, tomatoes)" autocomplete="off">
+            <button onclick="addIngredient()">Add to Pantry</button>
+        </div>
+
+        <!-- Pantry List -->
+        <div class="pantry-list">
+            <h3>My Ingredients</h3>
+            <div id="pantry-items">
+                {% if pantry_items %}
+                    {% for item in pantry_items %}
+                        <div class="pantry-item" id="item-{{ item.id }}">
+                            <span class="ingredient-name">{{ item.ingredient_name|title }}</span>
+                            <div class="ingredient-actions">
+                                <button class="btn-nutrition nutrition-btn" data-ingredient="{{ item.ingredient_name }}">Nutrition Info</button>
+                                <button class="btn-remove" onclick="deleteIngredient({{ item.id }})">Remove</button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">Your pantry is empty. Add some ingredients to get started!</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recipe Suggestions -->
+        <div class="recipes-section">
+            <div class="recipes-header">
+                <h3>Recipe Suggestions</h3>
+                <button onclick="searchRecipes()" style="background: #007bff; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">Refresh Recipes</button>
+            </div>
+            <div id="recipes-list">
+                <div class="empty-state">Add ingredients to your pantry to see recipe suggestions!</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Nutrition Label Template -->
+    {% include "home/nutrition_label.html" %}
+
+    <script src="{% static 'pantry.js' %}"></script>
+{% endblock %}
