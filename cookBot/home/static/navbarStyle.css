@@ -56,6 +56,7 @@
   /* Puts the Navbar links location to right side */
   .nav-links {
     margin-left: auto;
+    margin-right: 2rem;
   }
 
   /* Removes bullet points and places top-level menu in a row */
