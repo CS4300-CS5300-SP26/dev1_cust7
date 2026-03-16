@@ -1,4 +1,4 @@
-import os
+import os, re
 import openai
 from openai import OpenAI
 
