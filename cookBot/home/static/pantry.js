@@ -155,14 +155,14 @@
             
             // Show API status message if available
             if (message) {
-                const statusDiv = document.createElement('div');
-                statusDiv.className = 'recipe-status';
-                statusDiv.innerHTML = `<p style="color: #666; font-style: italic; margin-bottom: 1rem;">${message}</p>`;
-                recipesList.appendChild(statusDiv);
+                const statusDiv = document.createElement('p');
+                statusDiv.style.cssText = 'color: #666; font-style: italic; margin-bottom: 1rem; text-align: center;';
+                statusDiv.textContent = message;
+                recipesList.insertAdjacentElement('beforebegin', statusDiv); 
             }
             
             if (recipes.length === 0) {
-                recipesList.innerHTML += '<div class="empty-state">No recipes found. Add more ingredients to your pantry!</div>';
+                recipesList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">No recipes found. Add more ingredients to your pantry!</div>';
                 return;
             }
 
