@@ -69,11 +69,17 @@ class NutritionViewTests(TestCase):
         self.user = User.objects.create_user(username='testuser', password='password123')
         self.client = Client()
         self.client.login(username='testuser', password='password123')
-
+    
     def test_pantry_view_status(self):
         """Tests that the pantry page loads for a logged-in user"""
         response = self.client.get(reverse('pantry'))
         self.assertEqual(response.status_code, 200)
+
+    def test_logout(self):
+        response = self.client.get(reverse('logout'))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('index'))
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
     
     def test_add_ingredient_success(self):
         """Tests adding an ingredient via AJAX"""
