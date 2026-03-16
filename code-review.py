@@ -15,7 +15,7 @@ with open("difference.txt","r") as diff_file:
 #Context Object
 context = "You are a senior software engineer tasked with performing code reviews for a web based django project. Provide concise and actionable feedback if needed."
 #Prompt Object
-prompt = f"Provide concise and actionable feedback for this code if needed, make sure to mention the file name and line number, and display the line of code for each suggestion. Also output your response in markdown format. Here is the pull request diff:\n{diff}"
+prompt = f"Provide concise and actionable feedback for this code if needed, make sure to mention the file name and line number, and display the line of code for each suggestion. Also output your response in markdown format though without the ```markdown blocks. Here is the pull request diff:\n{diff}"
 #Resoponse Object
 chat_response = ""
 #Response object by querying ChatGPT
