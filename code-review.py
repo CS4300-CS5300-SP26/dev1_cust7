@@ -2,6 +2,10 @@ import os
 import openai
 from openai import OpenAI
 
+def sanitize_response(original_response):
+    new_response = re.sub(r"```markdown", "", original_response)
+    new_response = re.sub(r"```","", new_response)
+    return new_response
 #Pulling OpenAI API Key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -36,4 +40,4 @@ except openai.RateLimitError:
 #Saving response into the feedback.txt file
 with open("feedback.txt","w") as feedback_file:
     feedback_file.write("# AI Code Review\n\n")
-    feedback_file.write(chat_response)
+    feedback_file.write(sanitize_response(chat_response))
