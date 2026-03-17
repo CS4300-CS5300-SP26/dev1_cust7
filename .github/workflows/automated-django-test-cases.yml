@@ -26,7 +26,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest coverage
+          pip install pytest coverage behave behave-django
 
       - name: Run Test Coverage Cases
         env:
@@ -66,11 +66,6 @@ jobs:
             cat behave-coverage.txt
             echo '```'
             echo ""
-            echo "## Behave Test Output"
-            echo ""
-            echo '```'
-            cat behave-output.txt
-            echo '```'
           } > pr-comment.txt
       - name: Post Sticky Coverage Comment
         if: github.event_name == 'pull_request'
