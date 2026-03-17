@@ -47,8 +47,7 @@ jobs:
           cd cookBot
           echo "================ RUNNING BEHAVE TESTS ================"
           coverage erase
-          coverage run -m behave --junit --junit-directory behave-reports | tee ../behave-output.txt
-          coverage report -m --fail-under=80 | tee ../behave-coverage.txt
+          coverage run manage.py behave --junit --junit-directory behave-reports | tee ../behave-output.txt          coverage report -m --fail-under=80 | tee ../behave-coverage.txt
           echo "================ BEHAVE TESTS FINISHED ==============="
       - name: Build Coverage Comment
         if: github.event_name == 'pull_request'
