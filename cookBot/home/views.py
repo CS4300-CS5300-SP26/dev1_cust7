@@ -99,7 +99,7 @@ def signin(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('pantry')
+            return redirect('index')
         else:
             error_message = "Invalid username or password"
             return render(request, 'home/signin.html', {'error_message': error_message})
