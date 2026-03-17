@@ -28,7 +28,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest coverage
 
-      - name: Run Test Cases
+      - name: Run Test Coverage Cases
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
@@ -38,6 +38,18 @@ jobs:
           coverage run manage.py test
           coverage report -m --fail-under=80 | tee ../coverage.txt
           echo "================ TESTS FINISHED ======================"
+      - name: Run Behave Testing
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
+          DJANGO_SETTINGS_MODULE: cookBot.settings
+        run: |
+          cd cookBot
+          echo "================ RUNNING BEHAVE TESTS ================"
+          coverage erase
+          coverage run -m behave --junit --junit-directory behave-reports | tee ../behave-output.txt
+          coverage report -m --fail-under=80 | tee ../behave-coverage.txt
+          echo "================ BEHAVE TESTS FINISHED ==============="
       - name: Build Coverage Comment
         if: github.event_name == 'pull_request'
         run: |
@@ -46,6 +58,18 @@ jobs:
             echo ""
             echo '```'
             cat coverage.txt
+            echo '```'
+            echo ""
+            echo "## Behave Test Coverage"
+            echo ""
+            echo '```'
+            cat behave-coverage.txt
+            echo '```'
+            echo ""
+            echo "## Behave Test Output"
+            echo ""
+            echo '```'
+            cat behave-output.txt
             echo '```'
           } > pr-comment.txt
       - name: Post Sticky Coverage Comment
