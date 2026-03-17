@@ -14,4 +14,6 @@ supervisor==4.2.5
 urllib3==2.6.3
 wheel==0.42.0
 djangorestframework==3.16.1
+behave==1.2.6
+behave-django==1.4.0
 
