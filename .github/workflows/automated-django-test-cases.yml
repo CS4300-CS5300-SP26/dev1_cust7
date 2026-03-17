@@ -66,11 +66,6 @@ jobs:
             cat behave-coverage.txt
             echo '```'
             echo ""
-            echo "## Behave Test Output"
-            echo ""
-            echo '```'
-            cat behave-output.txt
-            echo '```'
           } > pr-comment.txt
       - name: Post Sticky Coverage Comment
         if: github.event_name == 'pull_request'
