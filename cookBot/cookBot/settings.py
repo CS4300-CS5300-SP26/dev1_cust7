@@ -30,8 +30,9 @@ SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*', '.devedu.io']
-CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
-
+#CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
+#Comment the line below out and uncomment above when working through DevEdu
+CSRF_TRUSTED_ORIGINS = ['https://cookbot.me', 'https://www.cookbot.me']
 # Application definition
 
 INSTALLED_APPS = [

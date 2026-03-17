@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -104,7 +104,9 @@ def signin(request):
             error_message = "Invalid username or password"
             return render(request, 'home/signin.html', {'error_message': error_message})
     return render(request, 'home/signin.html')
-
+def signout(request):
+    logout(request)
+    return redirect('index')
 
 @login_required
 def pantry_view(request):
