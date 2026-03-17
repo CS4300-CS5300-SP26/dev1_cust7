@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-fallback-key-for-local-dev')
 
 #Spoonacular API key
-SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for_local_dev')
+SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for_local_dev').split(',')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -32,7 +32,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ['*', '.devedu.io']
 #CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
 #Comment the line below out and uncomment above when working through DevEdu
-CSRF_TRUSTED_ORIGINS = ['https://cookbot.me', 'https://www.cookbot.me']
+CSRF_TRUSTED_ORIGINS = ['https://app-cs5300-21.devedu.io', 'https://cookbot.me', 'https://www.cookbot.me']
 # Application definition
 
 INSTALLED_APPS = [
@@ -86,7 +86,12 @@ DATABASES = {
     }
 }
 
-
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "spoonacular-cache",
+    }
+}
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
