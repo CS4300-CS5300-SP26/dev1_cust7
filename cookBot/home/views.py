@@ -82,7 +82,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('pantry')
+            return redirect('index')
         else:
             # Print form errors for debugging
             print(f"Form errors: {form.errors}")
