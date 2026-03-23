@@ -289,3 +289,19 @@ def get_fallback_recipes(pantry_items):
     fallback_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
     
     return fallback_recipes[:5]  # Return top 5 suggestions
+
+
+# THIS IS A TEST FUNCTION TO PRACTICE ON A CLOSE TO LIVE ENVIROMENT
+def voice_demo(request):
+    steps = [
+        "Step 1: Gather all ingredients.",
+        "Step 2: Sauté ground beef in a large skillet over medium heat until browned and crumbly; 5 to 10 minutes.",
+        "Step 3: Meanwhile, fill a large pot with lightly salted water and bring to a rapid boil. Cook egg noodles at a boil until tender yet firm to the bite, 7 to 9 minutes. Drain and set aside.",
+        "Step 4: Drain and discard any fat from the cooked beef. Stir condensed soup and garlic powder into the beef. Simmer for 10 minutes, stirring occasionally.",
+        "Step 5: Remove beef from the heat. Add egg noodles and stir to combine. Stir in sour cream and season with salt and pepper.",
+        "Step 6: Serve hot and enjoy!"
+    ]
+
+    return render(request, "voice_demo.html", {
+        "steps_json": json.dumps(steps)
+    })

@@ -17,4 +17,7 @@ urlpatterns = [
     path('pantry/delete/<int:ingredient_id>/', views.delete_ingredient, name='delete_ingredient'),
     path('pantry/api/', views.get_pantry_ingredients, name='get_pantry_ingredients'),
     path('pantry/search-recipes/', views.search_recipes_by_pantry, name='search_recipes_by_pantry'),
+
+    # TTS and STT tests
+    path('voice-demo/', views.voice_demo, name='voice_demo'),
 ]
