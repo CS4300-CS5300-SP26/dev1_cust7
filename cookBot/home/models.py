@@ -15,3 +15,17 @@ class Pantry(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.ingredient_name}"
+
+class Recipe(models.Model):
+    """Model to store recipes with ingredients and instructions"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
+    title = models.CharField(max_length=200)
+    instructions = models.TextField()
+    created_date = models.DateTimeField(default=timezone.now)
+ 
+    class Meta:
+        ordering = ['title']  # Sort recipes alphabetically
+ 
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"
+ 
