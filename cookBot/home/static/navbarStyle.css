@@ -6,10 +6,13 @@
 }
 
   /* Navbar background, bottom border, and inner spacing */
+  /* position: relative + z-index ensure the navbar always renders above page content */
   .navbar {
     background: #ffffff;
     border-bottom: 1px solid #d7ebe3;
     padding: 0.75rem 1rem;
+    position: relative;
+    z-index: 1000;
   }
 
   /* Navbar fills page width */
