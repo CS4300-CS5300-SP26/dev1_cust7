@@ -1,1 +1,25 @@
+name: Website Uptime Monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Website Status
+        run: |
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://cookbot.me)
+          echo "Status Code: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+          exit 1
+          fi
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          
+    
+            
 
