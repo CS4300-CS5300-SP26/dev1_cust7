@@ -2,25 +2,38 @@
 {% load static %}
 
 {% block content %}
-    <!-- Main Content -->
-    <main class="auth-container">
+<main class="auth-page">
+    <section class="auth-panel">
         <div class="auth-header">
             <h1>Sign In</h1>
-            <p>Welcome back to CookBot!</p>
         </div>
 
-        <div class="error-message">{% if error_message %}{{ error_message }}{% endif %}</div>
+        {% if error_message %}
+            <div class="error-message auth-error">
+                {{ error_message }}
+            </div>
+        {% endif %}
 
         <form method="post" class="auth-form">
             {% csrf_token %}
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Sign In</button>
+
+            <div class="form-field">
+                <label for="username">Username</label>
+                <input id="username" type="text" name="username" placeholder="Enter your username" required>
+            </div>
+
+            <div class="form-field">
+                <label for="password">Password</label>
+                <input id="password" type="password" name="password" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="auth-btn">Sign In</button>
         </form>
 
         <div class="auth-links">
-            <p>Don't have an account? <a href="/register">Register here</a></p>
-            <p><a href="/">Back to Home</a></p>
+            <p>Don’t have an account? <a href="/register">Register here</a></p>
+
         </div>
-    </main>
+    </section>
+</main>
 {% endblock %}
