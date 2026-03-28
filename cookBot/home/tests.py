@@ -5,7 +5,6 @@ from django.test import TestCase, Client
 from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 from django.urls import reverse
 from home.models import Pantry
 from home.models import Recipe, RecipeIngredient
@@ -289,3 +288,5 @@ class RecipeModelTests(TestCase):
         recipe.delete()
         self.assertFalse(RecipeIngredient.objects.filter(recipe_id=recipe_id).exists())
  #### End recipe model tests ####
+ 
+ 
