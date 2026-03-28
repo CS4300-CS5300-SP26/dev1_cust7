@@ -19,6 +19,9 @@ jobs:
       - name: Notify Discord on failure
         if: failure()
         run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content":"The Cookbot website return a non 200 level response, this might indicate that the service might be down."}' \
+               ${{ secrets.DISCORD_DEV_CHANNEL_WEBHOOK }}
           
     
             
