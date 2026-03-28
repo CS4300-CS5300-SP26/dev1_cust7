@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check Website Status
         run: |
-          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://cookbot.me)
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://cookbot.me/test)
           echo "Status Code: $STATUS"
           if [ "$STATUS" != "200" ]; then
           exit 1
