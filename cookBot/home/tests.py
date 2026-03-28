@@ -4,9 +4,11 @@ from unittest.mock import patch, MagicMock
 from django.test import TestCase, Client
 from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.urls import reverse
 from home.models import Pantry
+from home.models import Recipe, RecipeIngredient
 
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
@@ -184,3 +186,106 @@ class NutritionViewTests(TestCase):
         self.client.get(reverse('get_nutrition', args=['banana']))
         self.assertEqual(mock_urlopen.call_count, 2)
 ####end spoonacular nutrition label tests####
+
+#### Recipe Model Tests ####
+class RecipeModelTests(TestCase):
+ 
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+ 
+    def test_recipe_is_created_with_required_fields(self):
+        """Given a recipe is created, it includes a title and instructions"""
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Banana Pancakes',
+            instructions='Mix and fry.'
+        )
+        self.assertEqual(recipe.title, 'Banana Pancakes')
+        self.assertEqual(recipe.instructions, 'Mix and fry.')
+ 
+    def test_recipe_is_assigned_unique_id_on_save(self):
+        """Given a recipe is stored, it is assigned a unique identifier"""
+        recipe1 = Recipe.objects.create(user=self.user, title='Soup', instructions='Boil.')
+        recipe2 = Recipe.objects.create(user=self.user, title='Salad', instructions='Toss.')
+        self.assertIsNotNone(recipe1.id)
+        self.assertIsNotNone(recipe2.id)
+        self.assertNotEqual(recipe1.id, recipe2.id)
+ 
+    def test_recipe_can_be_retrieved_by_id(self):
+        """Given a recipe is saved, it can be retrieved from the system using its ID"""
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Omelette',
+            instructions='Whisk eggs and cook.'
+        )
+        retrieved = Recipe.objects.get(id=recipe.id)
+        self.assertEqual(retrieved.title, 'Omelette')
+ 
+    def test_recipe_ingredient_contains_name_quantity_and_unit(self):
+        """Given a recipe includes ingredients, each ingredient has a name, quantity, and unit"""
+        recipe = Recipe.objects.create(user=self.user, title='Pasta', instructions='Boil pasta.')
+        ingredient = RecipeIngredient.objects.create(
+            recipe=recipe,
+            name='Pasta',
+            quantity='200',
+            unit='g'
+        )
+        self.assertEqual(ingredient.name, 'Pasta')
+        self.assertEqual(ingredient.quantity, '200')
+        self.assertEqual(ingredient.unit, 'g')
+ 
+    def test_recipe_ingredient_unit_is_optional(self):
+        """Given an ingredient is created, unit is not required"""
+        recipe = Recipe.objects.create(user=self.user, title='Boiled Egg', instructions='Boil egg.')
+        ingredient = RecipeIngredient.objects.create(
+            recipe=recipe,
+            name='Egg',
+            quantity='2'
+        )
+        self.assertIsNone(ingredient.unit)
+ 
+    def test_recipe_requires_title(self):
+        """Given title is missing, the system prevents the recipe from being saved"""
+        recipe = Recipe(user=self.user, title='', instructions='Some instructions.')
+        with self.assertRaises(ValidationError):
+            recipe.full_clean()
+ 
+    def test_recipe_requires_instructions(self):
+        """Given instructions are missing, the system prevents the recipe from being saved"""
+        recipe = Recipe(user=self.user, title='Some Title', instructions='')
+        with self.assertRaises(ValidationError):
+            recipe.full_clean()
+ 
+    def test_recipe_ingredient_requires_name(self):
+        """Given ingredient name is missing, the system prevents it from being saved"""
+        recipe = Recipe.objects.create(user=self.user, title='Stew', instructions='Cook slowly.')
+        ingredient = RecipeIngredient(recipe=recipe, name='', quantity='100', unit='g')
+        with self.assertRaises(ValidationError):
+            ingredient.full_clean()
+ 
+    def test_recipe_ingredient_requires_quantity(self):
+        """Given ingredient quantity is missing, the system prevents it from being saved"""
+        recipe = Recipe.objects.create(user=self.user, title='Stew', instructions='Cook slowly.')
+        ingredient = RecipeIngredient(recipe=recipe, name='Carrot', quantity='', unit='g')
+        with self.assertRaises(ValidationError):
+            ingredient.full_clean()
+ 
+    def test_recipe_str(self):
+        """Tests the string representation of a recipe"""
+        recipe = Recipe.objects.create(user=self.user, title='Waffles', instructions='Mix and cook.')
+        self.assertEqual(str(recipe), 'testuser - Waffles')
+ 
+    def test_recipe_ingredient_str(self):
+        """Tests the string representation of a recipe ingredient"""
+        recipe = Recipe.objects.create(user=self.user, title='Waffles', instructions='Mix and cook.')
+        ingredient = RecipeIngredient.objects.create(recipe=recipe, name='Flour', quantity='100', unit='g')
+        self.assertEqual(str(ingredient), 'Waffles - Flour')
+ 
+    def test_recipe_ingredients_deleted_when_recipe_deleted(self):
+        """Tests that ingredients are cascade deleted with the recipe"""
+        recipe = Recipe.objects.create(user=self.user, title='Toast', instructions='Toast bread.')
+        RecipeIngredient.objects.create(recipe=recipe, name='Bread', quantity='2')
+        recipe_id = recipe.id
+        recipe.delete()
+        self.assertFalse(RecipeIngredient.objects.filter(recipe_id=recipe_id).exists())
+ #### End recipe model tests ####
