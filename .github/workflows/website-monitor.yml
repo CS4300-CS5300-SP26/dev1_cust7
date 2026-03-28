@@ -1,0 +1,28 @@
+name: Website Uptime Monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Website Status
+        run: |
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://cookbot.me)
+          echo "Status Code: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+          exit 1
+          fi
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content":"The Cookbot website return a non 200 level response, this might indicate that the service might be down."}' \
+               ${{ secrets.DISCORD_DEV_CHANNEL_WEBHOOK }}
+          
+    
+            
+
