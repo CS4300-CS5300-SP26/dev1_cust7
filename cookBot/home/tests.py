@@ -287,6 +287,64 @@ class RecipeModelTests(TestCase):
         recipe_id = recipe.id
         recipe.delete()
         self.assertFalse(RecipeIngredient.objects.filter(recipe_id=recipe_id).exists())
- #### End recipe model tests ####
+    
+    # Visibility tests 
  
+    def test_recipe_defaults_to_private(self):
+        """Given a recipe is created without specifying visibility, it defaults to private"""
+        recipe = Recipe.objects.create(user=self.user, title='Secret Soup', instructions='Boil.')
+        self.assertFalse(recipe.is_public)
+ 
+    def test_recipe_can_be_set_to_public(self):
+        """Given a recipe is created with is_public=True, it is marked as public"""
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Famous Cake',
+            instructions='Bake.',
+            is_public=True
+        )
+        self.assertTrue(recipe.is_public)
+ 
+    def test_recipe_visibility_can_be_toggled(self):
+        """Given a private recipe, it can be updated to public and back"""
+        recipe = Recipe.objects.create(user=self.user, title='Toggleable Stew', instructions='Cook.')
+        self.assertFalse(recipe.is_public)
+        recipe.is_public = True
+        recipe.save()
+        self.assertTrue(Recipe.objects.get(id=recipe.id).is_public)
+        recipe.is_public = False
+        recipe.save()
+        self.assertFalse(Recipe.objects.get(id=recipe.id).is_public)
+ 
+    # Rating tests
+ 
+    def test_recipe_rating_is_optional(self):
+        """Given a recipe is created without a rating, rating defaults to None"""
+        recipe = Recipe.objects.create(user=self.user, title='Unrated Dish', instructions='Cook.')
+        self.assertIsNone(recipe.rating)
+ 
+    def test_recipe_can_be_rated_1_to_5(self):
+        """Given a recipe is rated, it accepts values 1 through 5"""
+        for stars in range(1, 6):
+            recipe = Recipe.objects.create(
+                user=self.user,
+                title=f'{stars} Star Dish',
+                instructions='Cook.',
+                rating=stars
+            )
+            self.assertEqual(recipe.rating, stars)
+ 
+    def test_recipe_rating_rejects_invalid_values(self):
+        """Given a rating outside 1-5 is submitted, the system rejects it"""
+        for invalid in [0, 6, -1]:
+            recipe = Recipe(
+                user=self.user,
+                title='Bad Rating',
+                instructions='Cook.',
+                rating=invalid
+            )
+            with self.assertRaises(ValidationError):
+                recipe.full_clean()
+ 
+ #### End recipe model tests ####
  

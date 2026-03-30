@@ -18,11 +18,23 @@ class Pantry(models.Model):
 
 class Recipe(models.Model):
     """Model to store recipes with ingredients and instructions"""
+    
+    STAR_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
     instructions = models.TextField()
     created_date = models.DateTimeField(default=timezone.now)
- 
+    is_public = models.BooleanField(default=False)
+    rating = models.IntegerField(choices=STAR_CHOICES, null=True, blank=True)
+
+
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically
  
