@@ -30,10 +30,12 @@ jobs:
           ls -a
           flake8 --show-source --count --output-file=flake8_results.txt ./ 
       - name: Put Lint Results in PR Comment
+        if: always()
         uses: thollander/actions-comment-pull-request@v3
         with:
           file-path: flake8_results.txt
       - name: Clean up temporary file
+        if: always()
         run: |
           rm flake8_results.txt
           
