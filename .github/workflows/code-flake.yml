@@ -1,1 +1,31 @@
+name: Code Flake on Existing Code
 
+on: 
+  pull_request: 
+    types: [opened, synchronize, reopened] 
+  workflow_dispatch:
+permissions: 
+  contents: read 
+  pull-requests: write 
+jobs: 
+  code_lint:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Pull Repository 
+        uses: actions/checkout@v4 
+        with: 
+          fetch-depth: 2 
+      - name: Install Python
+        uses: actions/setup-python@v6 
+        with: 
+          python-version: '3.12.3'
+      - name: Install Dependencies
+        run: | 
+          python -m pip install --upgrade pip 
+          pip install -r requirements.txt 
+          pip install flake8
+      - name: Run codebase through flake8
+        run: |
+          ls
+          
+          
