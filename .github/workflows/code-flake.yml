@@ -28,7 +28,7 @@ jobs:
         if: always()
         run: |
           ls -a
-          flake8 --show-source --count --output-file=flake8_results.txt dev1_cust7 
+          flake8 --show-source --count --output-file=flake8_results.txt ./ 
       - name: Put Lint Results in PR Comment
         uses: thollander/actions-comment-pull-request@v3
         with:
