@@ -108,6 +108,7 @@ def signout(request):
     logout(request)
     return redirect('index')
 
+@login_required
 def account(request):
     """Display user account information"""
     if not request.user.is_authenticated:

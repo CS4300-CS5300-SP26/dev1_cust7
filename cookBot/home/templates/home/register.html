@@ -21,6 +21,30 @@
 
         <form method="post" class="auth-form">
             {% csrf_token %}
+            <div class="form-field">
+                <label for="first_name">First Name</label>
+                <input
+                    id="first_name"
+                    type="text"
+                    name="first_name"
+                    placeholder="Enter your First Name"
+                    value="{{ form.first_name.value|default:'' }}"
+                    autocomplete="first_name"
+                    required
+                >
+            </div>
+            <div class="form-field">
+                <label for="last_name">Last Name</label>
+                <input
+                    id="last_name"
+                    type="text"
+                    name="last_name"
+                    placeholder="Enter your Last Name"
+                    value="{{ form.first_name.value|default:'' }}"
+                    autocomplete="last_name"
+                    required
+                >
+            </div>
 
             <div class="form-field">
                 <label for="username">Username</label>
@@ -31,6 +55,19 @@
                     placeholder="Enter your username"
                     value="{{ form.username.value|default:'' }}"
                     autocomplete="username"
+                    required
+                >
+            </div>
+
+            <div class="form-field">
+                <label for="email">Email Address</label>
+                <input
+                    id="email"
+                    type="text"
+                    name="email"
+                    placeholder="Enter your Email Address"
+                    value="{{ form.email.value|default:'' }}"
+                    autocomplete="email"
                     required
                 >
             </div>
