@@ -2,15 +2,15 @@
 {% load static %}
 
 {% block content %}
-    <!-- Main Content -->
-    <main class="auth-container">
+<main class="auth-page">
+    <section class="auth-panel">
         <div class="auth-header">
             <h1>Create Account</h1>
             <p>Join CookBot to start managing your pantry!</p>
         </div>
 
         {% if form.errors %}
-            <div class="error-message">
+            <div class="error-message auth-error" role="alert">
                 {% for field, errors in form.errors.items %}
                     {% for error in errors %}
                         <p>{{ error }}</p>
@@ -21,15 +21,51 @@
 
         <form method="post" class="auth-form">
             {% csrf_token %}
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password1" placeholder="Password" required>
-            <input type="password" name="password2" placeholder="Confirm Password" required>
-            <button type="submit">Register</button>
+
+            <div class="form-field">
+                <label for="username">Username</label>
+                <input
+                    id="username"
+                    type="text"
+                    name="username"
+                    placeholder="Enter your username"
+                    value="{{ form.username.value|default:'' }}"
+                    autocomplete="username"
+                    required
+                >
+            </div>
+
+            <div class="form-field">
+                <label for="password1">Password</label>
+                <input
+                    id="password1"
+                    type="password"
+                    name="password1"
+                    placeholder="Enter your password"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <div class="form-field">
+                <label for="password2">Confirm Password</label>
+                <input
+                    id="password2"
+                    type="password"
+                    name="password2"
+                    placeholder="Confirm your password"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="auth-btn">Register</button>
         </form>
 
         <div class="auth-links">
             <p>Already have an account? <a href="/signin">Sign in here</a></p>
             <p><a href="/">Back to Home</a></p>
         </div>
-    </main>
+    </section>
+</main>
 {% endblock %}
