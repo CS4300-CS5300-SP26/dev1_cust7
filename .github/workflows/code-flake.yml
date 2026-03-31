@@ -2,7 +2,7 @@ name: Code Flake on Existing Code
 
 on: 
   pull_request: 
-    types: [opened, synchronize, reopened] 
+    types: [opened] 
   workflow_dispatch:
 permissions: 
   contents: read 
