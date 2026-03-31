@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.conf import settings
 
 # Build the key cycle once at startup from the list in settings
-_KEYS = [k.strip() for k in settings.SPOONACULAR_API_KEYS]
+_KEYS = [k.strip() for k in settings.SPOONACULAR_API_KEY]
 _key_cycle = itertools.cycle(_KEYS)
 
 
