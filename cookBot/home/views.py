@@ -108,6 +108,13 @@ def signout(request):
     logout(request)
     return redirect('index')
 
+def account(request):
+    """Display user account information"""
+    if not request.user.is_authenticated:
+        return redirect('signin')
+    
+    return render(request, 'home/account_info.html', {'user': request.user})
+
 @login_required
 def pantry_view(request):
     """Display the user's pantry page"""
