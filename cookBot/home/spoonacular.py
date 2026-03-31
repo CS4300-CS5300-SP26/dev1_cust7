@@ -2,6 +2,7 @@ import itertools
 import hashlib
 import urllib.request
 import urllib.parse
+import urllib.error
 import json
 from django.core.cache import cache
 from django.conf import settings
@@ -22,6 +23,13 @@ def _get_next_key():
 
 
 def spoonacular_get(endpoint, params={}):
+    #Check Cache First
+    cache_key = "spoon_" + hashlib.md5(f"{endpoint}{sorted(params.items())}".encode()).hexdigest()
+
+    cached = cache.get(cache_key)
+    #free response no API call
+    if cached is not None:
+        return cached 
     #Rotates keys automatically on 402 
     #Key rotation
     key = _get_next_key()
@@ -36,8 +44,7 @@ def spoonacular_get(endpoint, params={}):
         f"https://api.spoonacular.com/{endpoint}?{encoded}",
         headers={"User-Agent": "Mozilla/5.0"}
     )
-
-    import urllib.error
+    
     try:
         with urllib.request.urlopen(req) as res:
             data = json.loads(res.read().decode())
