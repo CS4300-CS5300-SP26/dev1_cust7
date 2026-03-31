@@ -27,5 +27,12 @@ jobs:
       - name: Run codebase through flake8
         run: |
           flake8 --show-source --count --output-file=flake8_results.txt dev1_cust7 
+      - name: Put Lint Results in PR Comment
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: flake8_results.txt
+      - name: Clean up temporary file
+        run: |
+          rm flake8_results.txt
           
           
