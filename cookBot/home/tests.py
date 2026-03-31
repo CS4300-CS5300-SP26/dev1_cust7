@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.urls import reverse
 from home.models import Pantry
-
+from django.core.cache import cache
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
 # Model tests need to be made
@@ -66,6 +66,7 @@ class NutritionViewTests(TestCase):
 
     #Create a test client to make requests without running server
     def setUp(self):
+        cache.clear()
         self.user = User.objects.create_user(username='testuser', password='password123')
         self.client = Client()
         self.client.login(username='testuser', password='password123')
@@ -116,7 +117,7 @@ class NutritionViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('No ingredients in pantry', response.json().get('message', ''))
     
-    @patch('urllib.request.urlopen')
+    @patch('home.spoonacular.urllib.request.urlopen')
     def test_search_recipes_with_ingredients_success(self, mock_urlopen):
         """Tests recipe search with ingredients (Mocking Spoonacular)"""
         # Add an ingredient so the search logic actually runs
@@ -139,7 +140,7 @@ class NutritionViewTests(TestCase):
         recipes = get_fallback_recipes(pantry_items)
         self.assertTrue(len(recipes) > 0)
 
-    @patch('urllib.request.urlopen')
+    @patch('home.spoonacular.urllib.request.urlopen')
     def test_returns_nutrition_data_for_valid_ingredient(self, mock_urlopen):
         #simulate the ingredient search call and the nutrition lookup call
         mock_urlopen.side_effect = [
@@ -153,7 +154,7 @@ class NutritionViewTests(TestCase):
         self.assertEqual(data['name'], 'banana')
         self.assertIn('nutrition', data)
 
-    @patch('urllib.request.urlopen')
+    @patch('home.spoonacular.urllib.request.urlopen')
     def test_returns_404_when_ingredient_not_found(self, mock_urlopen):
         #Simulate spoonacular returning an empty results list
         mock_urlopen.return_value = make_mock_response({"results": [], "totalResults": 0})
@@ -163,7 +164,7 @@ class NutritionViewTests(TestCase):
         data = json.loads(response.content)
         self.assertIn('error', data)
 
-    @patch('urllib.request.urlopen')
+    @patch('home.spoonacular.urllib.request.urlopen')
     def test_returns_502_on_network_error(self, mock_urlopen):
         #Raise URLerror to simulate network failure
         import urllib.error
@@ -174,8 +175,9 @@ class NutritionViewTests(TestCase):
         data = json.loads(response.content)
         self.assertIn('error', data)
 
-    @patch('urllib.request.urlopen')
+    @patch('home.spoonacular.urllib.request.urlopen')
     def test_two_api_calls_are_made(self, mock_urlopen):
+        cache.clear()
         #check if view makes 2 calls to urlopen
         mock_urlopen.side_effect = [
             make_mock_response(MOCK_SEARCH_RESPONSE),
