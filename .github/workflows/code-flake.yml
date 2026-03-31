@@ -27,7 +27,6 @@ jobs:
       - name: Run codebase through flake8
         if: always()
         run: |
-          ls -a
           flake8 --show-source --count --exit-zero --output-file=flake8_results.txt ./
       - name: Put Lint Results in PR Comment
         if: always()
