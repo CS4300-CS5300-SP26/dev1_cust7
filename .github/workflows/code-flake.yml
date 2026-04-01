@@ -25,14 +25,13 @@ jobs:
           pip install -r requirements.txt 
           pip install flake8
       - name: Run codebase through flake8
-        if: always()
         run: |
           flake8 --show-source --count --exit-zero --output-file=flake8_results.txt ./
       - name: Put Lint Results in PR Comment
         if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          file-path: flake8_results.txt
+          path: flake8_results.txt
       - name: Clean up temporary file
         if: always()
         run: |
