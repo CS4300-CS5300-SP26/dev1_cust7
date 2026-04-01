@@ -1,0 +1,22 @@
+name: Restart Server Services
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Commands on Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP_ADDR }}
+          username: ${{ secrets.SERVER_ADMIN_USERNAME }}
+          password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
+          script: |
+            set -euo pipefail
+            systemctl restart cookBot
+            systemctl restart nginx
+  uptime-check:
+    needs: build
+    uses: ./.github/workflows/website-monitor.yml
