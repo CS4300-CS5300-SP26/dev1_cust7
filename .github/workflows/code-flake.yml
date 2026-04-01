@@ -25,9 +25,9 @@ jobs:
           pip install flake8
       - name: Run codebase through flake8
         run: |
-          flake8 --exit-zero --output-file=flake8_results.txt ./
+          flake8 --output-file=flake8_results.txt ./
       - name: create Comment Formatting
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         run: |
           {
             echo "## Flake8 Results"
@@ -39,12 +39,13 @@ jobs:
             
           } > pr-comment.txt
       - name: Create PR Comment
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: 'code-flake'
           path: pr-comment.txt
       - name: Clean up temporary files
+        if: always()
         run: |
           rm flake8_results.txt pr-comment.txt
           
