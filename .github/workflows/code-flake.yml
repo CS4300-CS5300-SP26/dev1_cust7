@@ -26,16 +26,28 @@ jobs:
           pip install flake8
       - name: Run codebase through flake8
         run: |
-          flake8 --show-source --count --exit-zero --output-file=flake8_results.txt ./
-      - name: Put Lint Results in PR Comment
+          flake8 --exit-zero --output-file=flake8_results.txt ./
+      - name: create Comment Formatting
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Flake8 Results"
+            echo ""
+            echo '```'
+            cat flake8_results.txt
+            echo '```'
+            echo ""
+            
+          } > pr-comment.txt
+      - name: Create PR Comment
         if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: 'code-flake'
-          path: flake8_results.txt
-      - name: Clean up temporary file
+          path: pr-comment.txt
+      - name: Clean up temporary files
         if: always()
         run: |
-          rm flake8_results.txt
+          rm flake8_results.txt comment.txt
           
           
