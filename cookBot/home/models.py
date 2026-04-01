@@ -18,29 +18,24 @@ class Pantry(models.Model):
 
 class Recipe(models.Model):
     """Model to store recipes with ingredients and instructions"""
-    
-    STAR_CHOICES = [
-        (1, '1 Star'),
-        (2, '2 Stars'),
-        (3, '3 Stars'),
-        (4, '4 Stars'),
-        (5, '5 Stars'),
-    ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
     instructions = models.TextField()
+    is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
-    is_public = models.BooleanField(default=False)
-    rating = models.IntegerField(choices=STAR_CHOICES, null=True, blank=True)
-
-
+    
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically
  
+    def average_rating(self):
+        """Returns the average star rating from all user ratings, or None if no ratings exist"""
+        ratings = self.ratings.all()
+        if not ratings:
+            return None
+        return sum(r.stars for r in ratings) / len(ratings)
+ 
     def __str__(self):
         return f"{self.user.username} - {self.title}"
- 
 
 class RecipeIngredient(models.Model):
     """Model to store individual ingredients for a recipe"""
@@ -54,3 +49,27 @@ class RecipeIngredient(models.Model):
  
     def __str__(self):
         return f"{self.recipe.title} - {self.name}"
+
+class RecipeRating(models.Model):
+    """Model to store individual user ratings for a recipe"""
+ 
+    STAR_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+ 
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipe_ratings')
+    stars = models.IntegerField(choices=STAR_CHOICES)
+    rated_date = models.DateTimeField(default=timezone.now)
+ 
+    class Meta:
+        unique_together = ['recipe', 'user']  # One rating per user per recipe
+        ordering = ['rated_date']
+ 
+    def __str__(self):
+        return f"{self.user.username} - {self.recipe.title} - {self.stars} stars"
+        
