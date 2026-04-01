@@ -20,7 +20,6 @@ class Recipe(models.Model):
     """Model to store recipes with ingredients and instructions"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
-    instructions = models.TextField()
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
     
@@ -37,6 +36,18 @@ class Recipe(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.title}"
 
+class RecipeStep(models.Model):
+    """Model to store individual ordered steps for a recipe"""
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
+    order = models.IntegerField()
+    text = models.TextField()
+ 
+    class Meta:
+        ordering = ['order']  # Always return steps in order
+ 
+    def __str__(self):
+        return f"{self.recipe.title} - Step {self.order}"
+        
 class RecipeIngredient(models.Model):
     """Model to store individual ingredients for a recipe"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients')
@@ -72,4 +83,3 @@ class RecipeRating(models.Model):
  
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title} - {self.stars} stars"
-        
