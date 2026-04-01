@@ -27,3 +27,6 @@ jobs:
             python manage.py collectstatic --noinput
             systemctl restart cookBot
             systemctl restart nginx
+  uptime-check:
+    needs: build
+    uses: ./.github/workflows/website-monitor.yml
