@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from home.models import Pantry, Recipe, RecipeIngredient
+from home.models import Pantry, Recipe, RecipeIngredient, RecipeRating
 from django.core.cache import cache
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
@@ -221,6 +221,33 @@ class RecipeModelTests(TestCase):
         retrieved = Recipe.objects.get(id=recipe.id)
         self.assertEqual(retrieved.title, 'Omelette')
  
+    def test_recipe_requires_title(self):
+        """Given title is missing, the system prevents the recipe from being saved"""
+        recipe = Recipe(user=self.user, title='', instructions='Some instructions.')
+        with self.assertRaises(ValidationError):
+            recipe.full_clean()
+ 
+    def test_recipe_requires_instructions(self):
+        """Given instructions are missing, the system prevents the recipe from being saved"""
+        recipe = Recipe(user=self.user, title='Some Title', instructions='')
+        with self.assertRaises(ValidationError):
+            recipe.full_clean()
+ 
+    def test_recipe_str(self):
+        """Tests the string representation of a recipe"""
+        recipe = Recipe.objects.create(user=self.user, title='Waffles', instructions='Mix and cook.')
+        self.assertEqual(str(recipe), 'testuser - Waffles')
+ 
+    def test_recipe_ingredients_deleted_when_recipe_deleted(self):
+        """Tests that ingredients are cascade deleted with the recipe"""
+        recipe = Recipe.objects.create(user=self.user, title='Toast', instructions='Toast bread.')
+        RecipeIngredient.objects.create(recipe=recipe, name='Bread', quantity='2')
+        recipe_id = recipe.id
+        recipe.delete()
+        self.assertFalse(RecipeIngredient.objects.filter(recipe_id=recipe_id).exists())
+ 
+    # ---- Ingredient tests ----
+ 
     def test_recipe_ingredient_contains_name_quantity_and_unit(self):
         """Given a recipe includes ingredients, each ingredient has a name, quantity, and unit"""
         recipe = Recipe.objects.create(user=self.user, title='Pasta', instructions='Boil pasta.')
@@ -237,24 +264,8 @@ class RecipeModelTests(TestCase):
     def test_recipe_ingredient_unit_is_optional(self):
         """Given an ingredient is created, unit is not required"""
         recipe = Recipe.objects.create(user=self.user, title='Boiled Egg', instructions='Boil egg.')
-        ingredient = RecipeIngredient.objects.create(
-            recipe=recipe,
-            name='Egg',
-            quantity='2'
-        )
+        ingredient = RecipeIngredient.objects.create(recipe=recipe, name='Egg', quantity='2')
         self.assertIsNone(ingredient.unit)
- 
-    def test_recipe_requires_title(self):
-        """Given title is missing, the system prevents the recipe from being saved"""
-        recipe = Recipe(user=self.user, title='', instructions='Some instructions.')
-        with self.assertRaises(ValidationError):
-            recipe.full_clean()
- 
-    def test_recipe_requires_instructions(self):
-        """Given instructions are missing, the system prevents the recipe from being saved"""
-        recipe = Recipe(user=self.user, title='Some Title', instructions='')
-        with self.assertRaises(ValidationError):
-            recipe.full_clean()
  
     def test_recipe_ingredient_requires_name(self):
         """Given ingredient name is missing, the system prevents it from being saved"""
@@ -270,26 +281,13 @@ class RecipeModelTests(TestCase):
         with self.assertRaises(ValidationError):
             ingredient.full_clean()
  
-    def test_recipe_str(self):
-        """Tests the string representation of a recipe"""
-        recipe = Recipe.objects.create(user=self.user, title='Waffles', instructions='Mix and cook.')
-        self.assertEqual(str(recipe), 'testuser - Waffles')
- 
     def test_recipe_ingredient_str(self):
         """Tests the string representation of a recipe ingredient"""
         recipe = Recipe.objects.create(user=self.user, title='Waffles', instructions='Mix and cook.')
         ingredient = RecipeIngredient.objects.create(recipe=recipe, name='Flour', quantity='100', unit='g')
         self.assertEqual(str(ingredient), 'Waffles - Flour')
  
-    def test_recipe_ingredients_deleted_when_recipe_deleted(self):
-        """Tests that ingredients are cascade deleted with the recipe"""
-        recipe = Recipe.objects.create(user=self.user, title='Toast', instructions='Toast bread.')
-        RecipeIngredient.objects.create(recipe=recipe, name='Bread', quantity='2')
-        recipe_id = recipe.id
-        recipe.delete()
-        self.assertFalse(RecipeIngredient.objects.filter(recipe_id=recipe_id).exists())
-    
-    # Visibility tests 
+    # ---- Visibility tests ----
  
     def test_recipe_defaults_to_private(self):
         """Given a recipe is created without specifying visibility, it defaults to private"""
@@ -317,35 +315,57 @@ class RecipeModelTests(TestCase):
         recipe.save()
         self.assertFalse(Recipe.objects.get(id=recipe.id).is_public)
  
-    # Rating tests
+    # ---- Rating tests ----
  
-    def test_recipe_rating_is_optional(self):
-        """Given a recipe is created without a rating, rating defaults to None"""
+    def test_average_rating_returns_none_when_no_ratings(self):
+        """Given a recipe has no ratings, average_rating returns None"""
         recipe = Recipe.objects.create(user=self.user, title='Unrated Dish', instructions='Cook.')
-        self.assertIsNone(recipe.rating)
+        self.assertIsNone(recipe.average_rating())
  
-    def test_recipe_can_be_rated_1_to_5(self):
-        """Given a recipe is rated, it accepts values 1 through 5"""
-        for stars in range(1, 6):
-            recipe = Recipe.objects.create(
-                user=self.user,
-                title=f'{stars} Star Dish',
-                instructions='Cook.',
-                rating=stars
-            )
-            self.assertEqual(recipe.rating, stars)
+    def test_average_rating_with_single_rating(self):
+        """Given a recipe has one rating, average_rating returns that value"""
+        recipe = Recipe.objects.create(user=self.user, title='Solo Rated', instructions='Cook.')
+        RecipeRating.objects.create(recipe=recipe, user=self.user, stars=4)
+        self.assertEqual(recipe.average_rating(), 4)
  
-    def test_recipe_rating_rejects_invalid_values(self):
+    def test_average_rating_with_multiple_ratings(self):
+        """Given a recipe has multiple ratings, average_rating returns the correct average"""
+        recipe = Recipe.objects.create(user=self.user, title='Multi Rated', instructions='Cook.')
+        user2 = User.objects.create_user(username='user2', password='password123')
+        user3 = User.objects.create_user(username='user3', password='password123')
+        RecipeRating.objects.create(recipe=recipe, user=self.user, stars=5)
+        RecipeRating.objects.create(recipe=recipe, user=user2, stars=3)
+        RecipeRating.objects.create(recipe=recipe, user=user3, stars=4)
+        self.assertAlmostEqual(recipe.average_rating(), 4.0)
+ 
+    def test_rating_rejects_invalid_star_values(self):
         """Given a rating outside 1-5 is submitted, the system rejects it"""
+        recipe = Recipe.objects.create(user=self.user, title='Bad Rating', instructions='Cook.')
         for invalid in [0, 6, -1]:
-            recipe = Recipe(
-                user=self.user,
-                title='Bad Rating',
-                instructions='Cook.',
-                rating=invalid
-            )
+            rating = RecipeRating(recipe=recipe, user=self.user, stars=invalid)
             with self.assertRaises(ValidationError):
-                recipe.full_clean()
+                rating.full_clean()
+ 
+    def test_user_cannot_rate_same_recipe_twice(self):
+        """Given a user has already rated a recipe, a second rating is rejected"""
+        recipe = Recipe.objects.create(user=self.user, title='Double Rated', instructions='Cook.')
+        RecipeRating.objects.create(recipe=recipe, user=self.user, stars=3)
+        with self.assertRaises(Exception):
+            RecipeRating.objects.create(recipe=recipe, user=self.user, stars=5)
+ 
+    def test_ratings_deleted_when_recipe_deleted(self):
+        """Given a recipe is deleted, all its ratings are also deleted"""
+        recipe = Recipe.objects.create(user=self.user, title='Doomed Recipe', instructions='Cook.')
+        RecipeRating.objects.create(recipe=recipe, user=self.user, stars=5)
+        recipe_id = recipe.id
+        recipe.delete()
+        self.assertFalse(RecipeRating.objects.filter(recipe_id=recipe_id).exists())
+ 
+    def test_recipe_rating_str(self):
+        """Tests the string representation of a recipe rating"""
+        recipe = Recipe.objects.create(user=self.user, title='Tacos', instructions='Assemble.')
+        rating = RecipeRating.objects.create(recipe=recipe, user=self.user, stars=5)
+        self.assertEqual(str(rating), 'testuser - Tacos - 5 stars')
  
  #### End recipe model tests ####
  
