@@ -47,6 +47,6 @@ jobs:
       - name: Clean up temporary files
         if: always()
         run: |
-          rm flake8_results.txt pr-comment.txt
+          rm -f flake8_results.txt pr-comment.txt
           
           
