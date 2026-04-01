@@ -31,6 +31,7 @@ jobs:
         if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          header: 'code-flake'
           path: flake8_results.txt
       - name: Clean up temporary file
         if: always()
