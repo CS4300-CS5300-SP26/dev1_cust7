@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from home.models import Pantry
+from home.models import Pantry, Recipe, RecipeIngredient
 from django.core.cache import cache
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
