@@ -2,7 +2,7 @@ name: Code Flake on Existing Code
 
 on: 
   pull_request: 
-    types: [opened] 
+    types: [opened, synchronize, reopened] 
   workflow_dispatch:
 permissions: 
   contents: read 
@@ -30,7 +30,7 @@ jobs:
           flake8 --show-source --count --exit-zero --output-file=flake8_results.txt ./
       - name: Put Lint Results in PR Comment
         if: always()
-        uses: thollander/actions-comment-pull-request@v3
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
           file-path: flake8_results.txt
       - name: Clean up temporary file
