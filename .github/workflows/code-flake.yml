@@ -3,7 +3,6 @@ name: Code Flake on Existing Code
 on: 
   pull_request: 
     types: [opened, synchronize, reopened] 
-  workflow_dispatch:
 permissions: 
   contents: read 
   pull-requests: write 
@@ -26,7 +25,7 @@ jobs:
           pip install flake8
       - name: Run codebase through flake8
         run: |
-          flake8 --exit-zero --output-file=flake8_results.txt ./
+          flake8 --output-file=flake8_results.txt ./
       - name: create Comment Formatting
         if: github.event_name == 'pull_request'
         run: |
@@ -40,13 +39,12 @@ jobs:
             
           } > pr-comment.txt
       - name: Create PR Comment
-        if: always()
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: 'code-flake'
           path: pr-comment.txt
       - name: Clean up temporary files
-        if: always()
         run: |
           rm flake8_results.txt pr-comment.txt
           
