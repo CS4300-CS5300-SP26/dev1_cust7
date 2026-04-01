@@ -1,8 +1,8 @@
 name: Website Uptime Monitor
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
+  # schedule:
+  #  - cron: "*/15 * * * *"
   workflow_dispatch:
   workflow_call:
   
