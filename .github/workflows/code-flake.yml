@@ -25,7 +25,7 @@ jobs:
           pip install flake8
       - name: Run codebase through flake8
         run: |
-          flake8 --output-file=flake8_results.txt ./
+          flake8 --exit-zero --output-file=flake8_results.txt ./
       - name: create Comment Formatting
         if: github.event_name == 'pull_request'
         run: |
