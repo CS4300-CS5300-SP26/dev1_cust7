@@ -2,15 +2,13 @@ name: Website Uptime Monitor
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
   workflow_call:
   
 jobs:
   check-site:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     steps:
       - name: Check Website Status
         id: check
@@ -23,27 +21,11 @@ jobs:
           echo "state=down" >> "$GITHUB_OUTPUT"
           fi
       - name: Notify Discord on failure
-        if: steps.check.outputs.state == 'down' && vars.SERVER_STATUS == 'up'
+        if: steps.check.outputs.state == 'down' && github.event_name == 'schedule'
         run: |
           curl -H "Content-Type: application/json" \
                -d '{"content":"The Cookbot website returned a non 200 level response, this might indicate that the website might be down at the moment."}' \
                ${{ secrets.DISCORD_DEV_CHANNEL_WEBHOOK }}
-      - name: Notifiy Discord on server restoration
-        if: steps.check.outputs.state == 'up' && vars.SERVER_STATUS == 'down'
-        run: |
-          curl -H "Content-Type: application/json" \
-               -d '{"content":"The Cookbot website returned a 200 level response, this might indicate that the website might be working at the moment."}' \
-               ${{ secrets.DISCORD_DEV_CHANNEL_WEBHOOK }}
-      - name: Update server status variable
-        if: steps.check.outputs.state != vars.SERVER_STATUS
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          curl -L -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            "https://api.github.com/repos/${{ github.repository }}/actions/variables/SERVER_STATUS" \
-            -d '{"name":"SERVER_STATUS","value":"${{ steps.check.outputs.state }}"}'
           
     
             
