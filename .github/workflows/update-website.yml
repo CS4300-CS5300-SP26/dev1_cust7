@@ -25,9 +25,8 @@ jobs:
             cd cookBot
             python manage.py migrate
             python manage.py collectstatic --noinput
-            sleep 20
             systemctl restart cookBot
-            systemctl restart nginx
+            sleep 20
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml
