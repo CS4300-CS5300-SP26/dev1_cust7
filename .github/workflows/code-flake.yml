@@ -28,6 +28,7 @@ jobs:
         with:
           args: "check --diff"
       - name: Suggest Changes in PR for changes ruff finds
+        if: always()
         uses: parkerbxyz/suggest-changes@v3
         with:
           comment: 'Ruff Linting Changes'
