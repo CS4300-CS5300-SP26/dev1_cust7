@@ -6,11 +6,10 @@ import re
 import json
 import math
 
-def messy():
-    a = 1
-    b = 2
-    c = 3
-    return a
+def test():
+    print(  "hello world"  )  # whitespace fix
+    x=1+2   # spacing fix
+    if(x==3): print("yes")
 
 
 def main():
