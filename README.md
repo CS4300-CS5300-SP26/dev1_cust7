@@ -8,5 +8,3 @@ CookBot is a web/mobile application designed to help users find recipes based on
 
 ## AI Disclosure
 Our team utilized AI tools such as Claude and OpenAI to assist in the development of this project.
-
-test input 2
