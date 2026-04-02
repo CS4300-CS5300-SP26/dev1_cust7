@@ -28,6 +28,14 @@ jobs:
         run: |
           ruff check --fix
           ruff format .
+      - name: Debug Ruff changes
+        if: always()
+        run: |
+          echo "Changed files after Ruff:"
+          git status --short
+          echo
+          echo "Git diff after Ruff:"
+          git diff -- . ':(exclude).github/workflows/*'
       - name: Fail if Ruff still finds issues
         run: | 
           ruff check --output-format=github
