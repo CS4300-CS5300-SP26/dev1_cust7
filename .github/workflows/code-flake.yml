@@ -24,9 +24,14 @@ jobs:
           python -m pip install --upgrade pip 
           pip install -r requirements.txt 
           pip install ruff
-      - name: Run codebase through ruff
+      - name: Run Ruff and apply autofixes
         run: |
-          ruff check | tee ruff_output.txt
+          ruff check --fix
+          ruff format .
+      - name: Fail if Ruff still finds issues
+        run: | 
+          ruff check --output-format=github
+          run format --check .
       - name: Suggest Changes in PR for changes ruff finds
         if: always()
         uses: parkerbxyz/suggest-changes@v3
