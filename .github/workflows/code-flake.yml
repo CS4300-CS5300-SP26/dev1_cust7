@@ -26,7 +26,7 @@ jobs:
           pip install ruff
       - name: Run codebase through ruff
         run: |
-          ruff check --diff > ruff_output.txt
+          ruff check | tee ruff_output.txt
       - name: Suggest Changes in PR for changes ruff finds
         if: always()
         uses: parkerbxyz/suggest-changes@v3
