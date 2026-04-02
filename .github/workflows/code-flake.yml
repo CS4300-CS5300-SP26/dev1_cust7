@@ -2,7 +2,7 @@ name: Code Flake on Existing Code
 
 on: 
   pull_request:
-    branches: [main]
+    branches: [ci-test]
     types: [opened, synchronize, reopened] 
 permissions: 
   contents: read 
