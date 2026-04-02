@@ -31,13 +31,13 @@ jobs:
       - name: Fail if Ruff still finds issues
         run: | 
           ruff check --output-format=github
-          run format --check .
+          ruff format --check .
       - name: Suggest Changes in PR for changes ruff finds
         if: always()
         uses: parkerbxyz/suggest-changes@v3
         with:
           comment: 'Ruff Linting Changes'
-          event: 'REQUEST_CHANGES'
+          event: 'COMMENT'
           
         
       
