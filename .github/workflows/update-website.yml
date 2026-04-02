@@ -24,9 +24,10 @@ jobs:
             pip install -r requirements.txt
             cd cookBot
             python manage.py migrate
-            python manage.py collectstatic --noinput
+            python manage.py collectstatic --noinput --clear
             systemctl restart cookBot
-            sleep 20
+            sleep 5
+            systemctl restart nginx
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml
