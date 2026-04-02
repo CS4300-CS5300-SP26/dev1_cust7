@@ -20,11 +20,13 @@ jobs:
             set -euo pipefail
             source cookBot_env/bin/activate
             cd dev1_cust7
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             pip install -r requirements.txt
             cd cookBot
             python manage.py migrate
             python manage.py collectstatic --noinput --clear
+            sleep 5
             systemctl restart cookBot
             sleep 5
             systemctl restart nginx
