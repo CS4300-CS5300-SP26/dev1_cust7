@@ -36,7 +36,7 @@ jobs:
         if: always()
         uses: parkerbxyz/suggest-changes@v3
         with:
-          comment: 'Ruff Linting Changes'
+          comment: 'Ruff applied safe autofixes to code touched by this PR. Any remaining lint issues need manual fixes if action is failing'
           event: 'COMMENT'
           
         
