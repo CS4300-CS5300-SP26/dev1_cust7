@@ -2,9 +2,6 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-import re
-import json
-import math
 
 def test():
     print(  "hello world"  )  # whitespace fix
