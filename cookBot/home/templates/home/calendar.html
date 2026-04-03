@@ -5,6 +5,14 @@
 <!-- FullCalendar.io CSS -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
 
+<!-- Generate Button -->
+<div style="text-align: center; margin-bottom: 20px;">
+    <button id="generate-plan-btn" class="btn btn-primary" style="padding: 12px 24px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        🍽️ Generate Weekly Plan
+    </button>
+    <div id="generate-message" style="margin-top: 10px; font-weight: 500;"></div>
+</div>
+
 <style>
     /* Calendar container styling */
     #calendar {
@@ -137,6 +145,60 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     calendar.render();
+    
+    // Generate button click handler
+    document.getElementById('generate-plan-btn').addEventListener('click', function() {
+        var btn = this;
+        var msgDiv = document.getElementById('generate-message');
+        
+        // Disable button and show loading
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        msgDiv.textContent = '';
+        
+        fetch('/api/generate-meal-plan/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                msgDiv.textContent = data.message;
+                msgDiv.style.color = 'green';
+                // Refresh calendar to show new meals
+                calendar.refetchEvents();
+            } else {
+                msgDiv.textContent = data.error || 'Failed to generate meal plan';
+                msgDiv.style.color = 'red';
+            }
+        })
+        .catch(error => {
+            msgDiv.textContent = 'Error: ' + error;
+            msgDiv.style.color = 'red';
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = '🍽️ Generate Weekly Plan';
+        });
+    });
+    
+    // CSRF token helper function
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 });
 </script>
 {% endblock %}
