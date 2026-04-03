@@ -289,3 +289,36 @@ def get_fallback_recipes(pantry_items):
     fallback_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
     
     return fallback_recipes[:5]  # Return top 5 suggestions
+
+
+@login_required
+@require_GET
+def get_meals_json(request):
+    """API endpoint to get user's meal plans for FullCalendar.io"""
+    from .models import MealPlan
+    
+    # Get optional date range parameters from query string
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    # Query only the current user's meal plans
+    meals = MealPlan.objects.filter(user=request.user)
+    
+    # Filter by date range if provided
+    if start_date:
+        meals = meals.filter(date__gte=start_date)
+    if end_date:
+        meals = meals.filter(date__lte=end_date)
+    
+    # Format for FullCalendar.io
+    calendar_events = []
+    for meal in meals:
+        calendar_events.append({
+            'id': meal.id,
+            'title': meal.recipe_name,
+            'start': meal.date.isoformat(),
+            'meal_type': meal.meal_type,
+            'recipe_id': meal.recipe_id,
+        })
+    
+    return JsonResponse({'meals': calendar_events})
