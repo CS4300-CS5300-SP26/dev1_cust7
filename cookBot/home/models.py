@@ -83,3 +83,27 @@ class RecipeRating(models.Model):
  
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title} - {self.stars} stars"
+
+
+class MealPlan(models.Model):
+    """Model to store user's meal calendar entries"""
+    
+    MEAL_TYPE_CHOICES = [
+        ('Breakfast', 'Breakfast'),
+        ('Lunch', 'Lunch'),
+        ('Dinner', 'Dinner'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meal_plans')
+    recipe_name = models.CharField(max_length=200)
+    recipe_id = models.IntegerField(blank=True, null=True)  # Optional, for linking to external APIs
+    date = models.DateField()
+    meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
+    created_date = models.DateTimeField(default=timezone.now)
+    
+    class Meta:
+        unique_together = ['user', 'date', 'meal_type']  # One meal per slot per user
+        ordering = ['date', 'meal_type']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.meal_type} on {self.date}: {self.recipe_name}"
