@@ -558,5 +558,117 @@ class MissingCoverageTests(TestCase):
         pantry = Pantry.objects.create(user=self.user, ingredient_name='Test Ingredient')
         expected = f"{self.user.username} - Test Ingredient"
         self.assertEqual(str(pantry), expected)
+
+    @patch('home.spoonacular.cache.get')
+    def test_spoonacular_cache_miss(self, mock_cache_get):
+        """Test spoonacular.py line 22: Cache miss scenario"""
+        mock_cache_get.return_value = None  # Cache miss
+        from home.spoonacular import spoonacular_get
+        
+        with patch('home.spoonacular.urllib.request.urlopen') as mock_urlopen:
+            mock_urlopen.return_value = make_mock_response({"results": [{"id": 1, "name": "test"}]})
+            result = spoonacular_get("food/ingredients/search", {"query": "test"})
+            self.assertEqual(result["results"][0]["name"], "test")
+            mock_urlopen.assert_called_once()
+
+    @patch('home.spoonacular.cache.set')
+    def test_spoonacular_cache_timeout(self, mock_cache_set):
+        """Test spoonacular.py lines 52-58: Cache timeout behavior"""
+        from home.spoonacular import spoonacular_get
+        
+        # Clear cache to ensure cache miss
+        cache.clear()
+        
+        with patch('home.spoonacular.cache.get', return_value=None) as mock_cache_get:
+            with patch('home.spoonacular.urllib.request.urlopen') as mock_urlopen:
+                mock_urlopen.return_value = make_mock_response({"results": [{"id": 1, "name": "test"}]})
+                result = spoonacular_get("food/ingredients/search", {"query": "test"})
+                # Should call cache.set with timeout
+                self.assertTrue(mock_cache_set.called)
+                call_kwargs = mock_cache_set.call_args.kwargs
+                call_args = mock_cache_set.call_args[0]
+                # Cache key should start with "spoon_"
+                self.assertTrue(call_args[0].startswith("spoon_"))
+                self.assertEqual(call_args[1]["results"][0]["name"], "test")  # Cached data
+                # Check timeout is passed as keyword argument
+                self.assertEqual(call_kwargs.get('timeout'), 3600)
+
+    @patch('home.views.spoonacular_get')
+    def test_get_nutrition_invalid_json_response(self, mock_spoonacular):
+        """Test views.py line 51: Invalid JSON response handling"""
+        mock_spoonacular.return_value = {"invalid": "data"}
+        response = self.client.get(reverse('get_nutrition', args=['banana']))
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertIn("No ingredient found matching", data['error'])
+
+    @patch('home.views.spoonacular_get')
+    def test_get_nutrition_missing_fields(self, mock_spoonacular):
+        """Test views.py lines 59-61, 66: Missing fields in API response - view returns raw data"""
+        mock_spoonacular.side_effect = [
+            {"results": [{"id": 1, "name": "banana"}]},  # Search succeeds
+            {"id": 1, "name": "banana"}  # Nutrition lookup with minimal data (no nutrition key)
+        ]
+        response = self.client.get(reverse('get_nutrition', args=['banana']))
+        # View returns 200 with whatever data the API returned (no validation of nutrition key)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['name'], 'banana')
+
+    def test_register_form_invalid_data(self):
+        """Test views.py lines 77-78, 82: Form validation with invalid data"""
+        with patch('home.views.print') as mock_print:
+            response = self.client.post(reverse('register'), {
+                'username': 'test@user!',  # Invalid characters
+                'password1': '123',  # Too short
+                'password2': '456'  # Doesn't match
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'form')
+            mock_print.assert_called()
+
+    def test_add_ingredient_malformed_json(self):
+        """Test views.py lines 140-141: Malformed JSON handling"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data='{"ingredient_name": "Test',  # Malformed JSON
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+
+    @patch('home.views.spoonacular_get')
+    def test_search_recipes_rate_limiting(self, mock_spoonacular):
+        """Test views.py lines 194-204: API rate limiting (HTTP 429)"""
+        import urllib.error
+        mock_spoonacular.side_effect = urllib.error.HTTPError(
+            url="test", code=429, msg="Too Many Requests", hdrs={}, fp=None
+        )
+        self.client.login(username='testuser', password='password123')
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        response = self.client.get(reverse('search_recipes_by_pantry'))
+        self.assertEqual(response.status_code, 502)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_fallback_recipes_edge_cases(self):
+        """Test views.py lines 257-262: Fallback recipes edge cases"""
+        from home.views import get_fallback_recipes
+        
+        # Test with empty pantry
+        fallback = get_fallback_recipes([])
+        self.assertEqual(len(fallback), 1)
+        self.assertEqual(fallback[0]['title'], 'Basic Recipe Suggestions')
+        
+        # Test with special characters
+        fallback = get_fallback_recipes(['café', 'piñata'])
+        self.assertTrue(len(fallback) > 0)
+        
+        # Test with very long ingredient names
+        long_name = 'a' * 100
+        fallback = get_fallback_recipes([long_name])
+        self.assertTrue(len(fallback) > 0)
 #### End Missing Coverage Tests ####
  
