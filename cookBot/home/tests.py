@@ -399,4 +399,164 @@ class RecipeModelTests(TestCase):
         self.assertEqual(str(rating), 'testuser - Tacos - 5 stars')
  
  #### End recipe model tests ####
+
+#### Missing Code Coverage Tests (Error Handling, API Failures, Edge Cases) ####
+class MissingCoverageTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    @patch('home.spoonacular._get_next_key')
+    def test_spoonacular_all_keys_exhausted(self, mock_get_key):
+        """Test spoonacular.py line 23: All API keys exhausted scenario"""
+        mock_get_key.return_value = None  # No keys available
+        from home.spoonacular import spoonacular_get
+        with self.assertRaises(Exception) as context:
+            spoonacular_get("food/ingredients/search", {"query": "test"})
+        self.assertIn("All Spoonacular API keys are exhausted", str(context.exception))
+
+    @patch('home.spoonacular.cache.get')
+    def test_spoonacular_cache_hit(self, mock_cache_get):
+        """Test spoonacular.py line 31: Cache hit returns cached data without API call"""
+        cached_data = {"results": [{"id": 1, "name": "cached"}]}
+        mock_cache_get.return_value = cached_data
+        from home.spoonacular import spoonacular_get
+        
+        with patch('home.spoonacular.urllib.request.urlopen') as mock_urlopen:
+            result = spoonacular_get("food/ingredients/search", {"query": "test"})
+            self.assertEqual(result, cached_data)
+            mock_urlopen.assert_not_called()  # Should not make API call
+
+    @patch('home.views.spoonacular_get')
+    def test_get_nutrition_api_search_failure(self, mock_spoonacular):
+        """Test views.py lines 41-45: API search failure in get_nutrition"""
+        mock_spoonacular.side_effect = Exception("API timeout")
+        response = self.client.get(reverse('get_nutrition', args=['banana']))
+        self.assertEqual(response.status_code, 502)
+        data = response.json()
+        self.assertIn("Search request failed", data['error'])
+
+    @patch('home.views.spoonacular_get')
+    def test_get_nutrition_no_ingredient_found(self, mock_spoonacular):
+        """Test views.py line 51: No ingredient found in search results"""
+        mock_spoonacular.return_value = {"results": []}
+        response = self.client.get(reverse('get_nutrition', args=['xyzunknown']))
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertIn("No ingredient found matching", data['error'])
+
+    @patch('home.views.spoonacular_get')
+    def test_get_nutrition_nutrition_api_failure(self, mock_spoonacular):
+        """Test views.py lines 56-57: Nutrition API failure"""
+        mock_spoonacular.side_effect = [
+            {"results": [{"id": 1, "name": "banana"}]},  # Search succeeds
+            Exception("Nutrition API down")  # Nutrition lookup fails
+        ]
+        response = self.client.get(reverse('get_nutrition', args=['banana']))
+        self.assertEqual(response.status_code, 502)
+        data = response.json()
+        self.assertIn("Nutrition request failed", data['error'])
+
+    def test_register_form_validation_errors(self):
+        """Test views.py lines 72-82: Form validation errors in register view"""
+        with patch('home.views.print') as mock_print:
+            response = self.client.post(reverse('register'), {
+                'username': 'testuser',  # Already exists
+                'password1': 'password123',
+                'password2': 'password123'
+            })
+            # Should render form with errors, not redirect
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'form')
+            mock_print.assert_called()  # Form errors should be printed
+
+    def test_signin_invalid_credentials(self):
+        """Test views.py line 103: Invalid username/password in signin"""
+        response = self.client.post(reverse('signin'), {
+            'username': 'nonexistent',
+            'password': 'wrongpassword'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Invalid username or password')
+
+    def test_add_ingredient_json_parse_error(self):
+        """Test views.py lines 120-165: JSON parsing error in add_ingredient"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data='invalid json',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_add_ingredient_empty_name(self):
+        """Test views.py lines 120-165: Empty ingredient name validation"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps({'ingredient_name': ''}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data['error'], 'Ingredient name is required')
+
+    def test_add_ingredient_duplicate(self):
+        """Test views.py lines 120-165: Duplicate ingredient prevention"""
+        self.client.login(username='testuser', password='password123')
+        # Add ingredient first time
+        response1 = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps({'ingredient_name': 'Apple'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response1.status_code, 200)
+        
+        # Try to add same ingredient again
+        response2 = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps({'ingredient_name': 'Apple'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response2.status_code, 400)
+        data = response2.json()
+        self.assertEqual(data['error'], 'Ingredient already in pantry')
+
+    def test_delete_ingredient_not_found(self):
+        """Test views.py lines 120-165: Deleting non-existent ingredient"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(reverse('delete_ingredient', args=[999]))
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+
+    @patch('home.spoonacular._get_next_key')
+    def test_search_recipes_all_keys_exhausted(self, mock_get_key):
+        """Test spoonacular.py line 23: All API keys exhausted raises exception in recipe search"""
+        mock_get_key.return_value = None
+        self.client.login(username='testuser', password='password123')
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        response = self.client.get(reverse('search_recipes_by_pantry'))
+        # When all keys are exhausted, an exception is raised resulting in 502
+        self.assertEqual(response.status_code, 502)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_fallback_recipes_no_matches(self):
+        """Test views.py lines 207-215: Fallback recipes when no ingredients match"""
+        pantry_items = ['xyzunknown']  # No matching recipes
+        from home.views import get_fallback_recipes
+        fallback = get_fallback_recipes(pantry_items)
+        self.assertEqual(len(fallback), 1)
+        self.assertEqual(fallback[0]['title'], 'Basic Recipe Suggestions')
+        self.assertEqual(fallback[0]['used_ingredient_count'], 0)
+
+    def test_pantry_str_edge_case(self):
+        """Test models.py line 17: Pantry.__str__ with edge case"""
+        pantry = Pantry.objects.create(user=self.user, ingredient_name='Test Ingredient')
+        expected = f"{self.user.username} - Test Ingredient"
+        self.assertEqual(str(pantry), expected)
+#### End Missing Coverage Tests ####
  
