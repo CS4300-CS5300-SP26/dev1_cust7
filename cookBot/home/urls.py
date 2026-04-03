@@ -20,4 +20,5 @@ urlpatterns = [
     
     # Meal Calendar API
     path('api/get-meals/', views.get_meals_json, name='get_meals'),
+    path('calendar/', views.calendar_view, name='calendar'),
 ]
