@@ -672,3 +672,261 @@ class MissingCoverageTests(TestCase):
         self.assertTrue(len(fallback) > 0)
 #### End Missing Coverage Tests ####
  
+
+
+ #### Meal Calendar (MealPlan) Model Tests ####
+from datetime import date
+
+class MealPlanModelTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    def test_mealplan_is_created_with_required_fields(self):
+        """Given a meal plan is created, it includes all required fields: user, recipe_name, recipe_id, date, and meal_type"""
+        meal_plan = MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Spaghetti',
+            recipe_id=12345,
+            date=date(2026, 4, 3),
+            meal_type='Dinner'
+        )
+        self.assertEqual(meal_plan.user, self.user)
+        self.assertEqual(meal_plan.recipe_name, 'Spaghetti')
+        self.assertEqual(meal_plan.recipe_id, 12345)
+        self.assertEqual(meal_plan.date, date(2026, 4, 3))
+        self.assertEqual(meal_plan.meal_type, 'Dinner')
+#### End meal calendar model tests ####
+
+#### MealPlan API Tests (Security, Algorithm, UI AC) ####
+class MealPlanAPITests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    def test_user_cannot_access_another_user_meals(self):
+        """Security AC: Given two users, User B cannot see User A's meal plans via the API"""
+        user_a = User.objects.create_user(username='userA', password='password123')
+        user_b = User.objects.create_user(username='userB', password='password123')
+        MealPlan.objects.create(
+            user=user_a,
+            recipe_name='Chicken Pasta',
+            recipe_id=101,
+            date=date(2026, 4, 3),
+            meal_type='Dinner'
+        )
+        # Log in as User B and try to access meals
+        self.client.login(username='userB', password='password123')
+        response = self.client.get(reverse('get_meals'))
+        # User B should NOT see User A's meal
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data.get('meals', [])), 0)
+        self.assertFalse(any(m['recipe_name'] == 'Chicken Pasta' for m in data.get('meals', [])))
+
+    def test_generate_weekly_plan_uses_pantry_ingredients(self):
+        """Algorithm AC: Given pantry ingredients, the generate function creates meals using those ingredients"""
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        Pantry.objects.create(user=self.user, ingredient_name='Broccoli')
+        from home.views import generate_weekly_plan
+        generate_weekly_plan(self.user)
+        meals = MealPlan.objects.filter(user=self.user)
+        self.assertTrue(meals.exists())
+        meal_names = [m.recipe_name.lower() for m in meals]
+        self.assertTrue(any('chicken' in name or 'broccoli' in name for name in meal_names))
+
+    def test_get_meals_returns_empty_for_future_date_range(self):
+        """UI AC: Given a date range in the far future with no meals, the API returns empty list with 200 OK"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(
+            reverse('get_meals') + '?start_date=2030-01-01&end_date=2030-12-31'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get('meals', []), [])
+#### End MealPlan API Tests ####
+
+#### MealPlan Negative Tests ####
+class MealPlanNegativeTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    def test_create_meal_without_name(self):
+        """Negative Test: Attempt to save a MealPlan with null or empty recipe_name should raise ValidationError"""
+        with self.assertRaises(ValidationError):
+            meal_plan = MealPlan(
+                user=self.user,
+                recipe_name='',
+                recipe_id=123,
+                date=date(2026, 4, 3),
+                meal_type='Dinner'
+            )
+            meal_plan.full_clean()
+
+    def test_unauthorized_meal_access(self):
+        """Negative Test: User B should not see User A's meals via API - returns empty list or 403"""
+        user_a = User.objects.create_user(username='userA_neg', password='password123')
+        user_b = User.objects.create_user(username='userB_neg', password='password123')
+        MealPlan.objects.create(
+            user=user_a,
+            recipe_name='Secret Recipe',
+            recipe_id=999,
+            date=date(2026, 4, 3),
+            meal_type='Lunch'
+        )
+        self.client.login(username='userB_neg', password='password123')
+        response = self.client.get(reverse('get_meals'))
+        # Should return empty list or 403 Forbidden
+        self.assertIn(response.status_code, [200, 403])
+        if response.status_code == 200:
+            data = response.json()
+            self.assertEqual(len(data.get('meals', [])), 0)
+            self.assertFalse(any(m['recipe_name'] == 'Secret Recipe' for m in data.get('meals', [])))
+
+    def test_invalid_date_format(self):
+        """Negative Test: System should handle invalid date without 500 Server Error"""
+        self.client.login(username='testuser', password='password123')
+        # Try to create a meal with invalid date string via API
+        response = self.client.post(
+            reverse('create_meal'),
+            data=json.dumps({
+                'recipe_name': 'Test Meal',
+                'recipe_id': 1,
+                'date': '2026-99-99',
+                'meal_type': 'Dinner'
+            }),
+            content_type='application/json'
+        )
+        # Should return 400 Bad Request, not 500 Server Error
+        self.assertIn(response.status_code, [400, 422])
+#### End MealPlan Negative Tests ####
+
+#### MealPlan Advanced Integration Tests ####
+class MealPlanIntegrationTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    def test_pantry_integration(self):
+        """Integration Test: When user has 'Chicken' in Pantry, generate_meals saves at least one MealPlan"""
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        from home.views import generate_meals
+        generate_meals(self.user)
+        meals_count = MealPlan.objects.filter(user=self.user).count()
+        self.assertGreater(meals_count, 0, "Expected at least one MealPlan to be created from pantry ingredients")
+
+    def test_prevent_duplicate_meals(self):
+        """Integration Test: Running meal generator twice should not create duplicate MealPlan entries"""
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        from home.views import generate_meals
+        # Run generator twice
+        generate_meals(self.user)
+        generate_meals(self.user)
+        # Check for duplicates: same user, same meal_type should not have multiple entries
+        meal_types = MealPlan.objects.filter(user=self.user).values_list('meal_type', flat=True)
+        # Each meal_type should appear only once
+        for meal_type in set(meal_types):
+            count = MealPlan.objects.filter(user=self.user, meal_type=meal_type).count()
+            self.assertEqual(count, 1, f"Found duplicate MealPlan entries for meal_type '{meal_type}'")
+
+    def test_api_requires_login(self):
+        """Integration Test: Non-logged-in user cannot access /api/get-meals/ endpoint"""
+        # Don't log in - access as anonymous user
+        response = self.client.get(reverse('get_meals'))
+        # Should return 302 redirect to login or 403 Forbidden
+        self.assertIn(response.status_code, [302, 403])
+#### End MealPlan Integration Tests ####
+
+#### MealPlan Acceptance Criteria Tests (CRUD, API, Mocking) ####
+class MealPlanAcceptanceTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+
+    def test_crud_read_meal(self):
+        """CRUD Test: A saved MealPlan can be retrieved by ID"""
+        meal_plan = MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Grilled Chicken',
+            recipe_id=555,
+            date=date(2026, 4, 5),
+            meal_type='Lunch'
+        )
+        retrieved = MealPlan.objects.get(id=meal_plan.id)
+        self.assertEqual(retrieved.recipe_name, 'Grilled Chicken')
+        self.assertEqual(retrieved.recipe_id, 555)
+        self.assertEqual(retrieved.date, date(2026, 4, 5))
+        self.assertEqual(retrieved.meal_type, 'Lunch')
+
+    def test_crud_delete_meal(self):
+        """CRUD Test: A MealPlan can be deleted"""
+        meal_plan = MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Salad',
+            recipe_id=666,
+            date=date(2026, 4, 6),
+            meal_type='Dinner'
+        )
+        meal_id = meal_plan.id
+        meal_plan.delete()
+        self.assertFalse(MealPlan.objects.filter(id=meal_id).exists())
+
+    def test_api_returns_clean_json(self):
+        """API Test: /api/get-meals/ returns clean JSON with expected structure"""
+        MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Omelette',
+            recipe_id=111,
+            date=date(2026, 4, 7),
+            meal_type='Breakfast'
+        )
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('get_meals'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        # Verify JSON structure
+        self.assertIn('meals', data)
+        self.assertIsInstance(data['meals'], list)
+        self.assertEqual(len(data['meals']), 1)
+        # Verify meal fields
+        meal = data['meals'][0]
+        self.assertIn('recipe_name', meal)
+        self.assertIn('recipe_id', meal)
+        self.assertIn('date', meal)
+        self.assertIn('meal_type', meal)
+        self.assertEqual(meal['recipe_name'], 'Omelette')
+
+    def test_generator_handles_empty_pantry(self):
+        """Logic Test: Generator handles empty pantry without crashing"""
+        from home.views import generate_meals
+        # Ensure pantry is empty
+        self.assertEqual(Pantry.objects.filter(user=self.user).count(), 0)
+        # Should not raise exception
+        try:
+            generate_meals(self.user)
+        except Exception as e:
+            self.fail(f"generate_meals() raised {type(e).__name__} with empty pantry: {e}")
+
+    @patch('home.views.spoonacular_get')
+    def test_generate_with_mocked_api(self, mock_spoonacular):
+        """Mocking Test: When API returns 7 recipes, generate_meal_plan saves 7 MealPlan objects"""
+        # Mock API to return 7 recipes
+        mock_recipes = [
+            {'id': i, 'title': f'Recipe {i}', 'image': f'http://img{i}.jpg'}
+            for i in range(1, 8)
+        ]
+        mock_spoonacular.return_value = mock_recipes
+        
+        from home.views import generate_meal_plan
+        generate_meal_plan(self.user)
+        
+        # Assert 7 MealPlan objects were saved
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 7)
+        # Verify recipe names match
+        saved_names = list(MealPlan.objects.filter(user=self.user).values_list('recipe_name', flat=True))
+        expected_names = [f'Recipe {i}' for i in range(1, 8)]
+        self.assertEqual(sorted(saved_names), sorted(expected_names))
+#### End MealPlan Acceptance Tests ####
+
+
