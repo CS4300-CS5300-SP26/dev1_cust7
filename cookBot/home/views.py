@@ -101,8 +101,6 @@ def edit_account(request):
         if form.is_valid():
             form.save()
             return redirect('account')
-        else:
-            print(f"Form errors: {form.errors}")
     else:
         form = EditProfileForm(instance=request.user)
 

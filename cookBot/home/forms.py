@@ -36,3 +36,4 @@ class EditProfileForm(forms.ModelForm):
         if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("That email is already in use.")
         return email
+        
