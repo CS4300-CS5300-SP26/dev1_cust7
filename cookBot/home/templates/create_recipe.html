@@ -1,0 +1,60 @@
+{% extends "navbar.html" %}
+{% load static %}
+{% block content %}
+
+
+<head>
+    <title>Create Recipe</title>
+    <style>
+        .ingredient-row, .step-row { margin-bottom: 10px; }
+        input, select, textarea { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Create Recipe</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label>Title:</label>
+        <input type="text" name="title" required><br><br>
+
+        <label>Public:</label>
+        <input type="checkbox" name="is_public"><br><br>
+
+        <h3>Ingredients</h3>
+        <div id="ingredients-container">
+            <div class="ingredient-row">
+                <input type="number" name="ingredient_quantity[]" placeholder="Quantity" min="0.001" step="0.0001" required>
+                <select name="ingredient_unit[]">
+                    <option value=""></option>
+                    <option value="cup">cup</option>
+                    <option value="grams">grams</option>
+                    <option value="pounds">lb</option>
+                    <option value="table spoon">tbsp</option>
+                    <option value="tea spoon">tsp</option>
+                    <option value="ounces">oz</option>
+                </select>
+                <input type="text" name="ingredient_name[]" placeholder="Ingredient Name" required>
+                <button type="button" onclick="removeRow(this)">Remove</button>
+            </div>
+        </div>
+        <button type="button" onclick="addIngredient()">+ Add Ingredient</button>
+
+        <h3>Steps</h3>
+        <div id="steps-container">
+            <div class="step-row">
+                <textarea name="steps[]" placeholder="Step description" required></textarea>
+                <button type="button" onclick="removeRow(this)">Remove</button>
+            </div>
+        </div>
+        <button type="button" onclick="addStep()">+ Add Step</button>
+
+        <br><br>
+        <button type="submit">Create Recipe</button>
+    </form>
+
+    <script src="{% static 'recipe_form.js' %}"></script>
+</body>
+
+
+{% endblock %}

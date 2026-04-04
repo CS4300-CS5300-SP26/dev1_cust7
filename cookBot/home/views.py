@@ -8,6 +8,7 @@ from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from .models import Recipe, RecipeStep, RecipeIngredient
 import json
 import urllib.request
 import urllib.parse
@@ -290,18 +291,62 @@ def get_fallback_recipes(pantry_items):
     
     return fallback_recipes[:5]  # Return top 5 suggestions
 
+# This is for the Recipe viewing page and Recipe Input page
+# Logic that needs to be added is who can view depending on privacy
+def recipe_view(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
 
-# THIS IS A TEST FUNCTION TO PRACTICE ON A CLOSE TO LIVE ENVIROMENT
-def voice_demo(request):
-    steps = [
-        "Step 1: Gather all ingredients.",
-        "Step 2: Sauté ground beef in a large skillet over medium heat until browned and crumbly; 5 to 10 minutes.",
-        "Step 3: Meanwhile, fill a large pot with lightly salted water and bring to a rapid boil. Cook egg noodles at a boil until tender yet firm to the bite, 7 to 9 minutes. Drain and set aside.",
-        "Step 4: Drain and discard any fat from the cooked beef. Stir condensed soup and garlic powder into the beef. Simmer for 10 minutes, stirring occasionally.",
-        "Step 5: Remove beef from the heat. Add egg noodles and stir to combine. Stir in sour cream and season with salt and pepper.",
-        "Step 6: Serve hot and enjoy!"
+    steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
+
+    ingredients = [
+        f"{i.quantity} {i.unit or ''} {i.name}".strip()
+        for i in recipe.ingredients.all()
     ]
 
-    return render(request, "voice_demo.html", {
-        "steps_json": json.dumps(steps)
+    return render(request, "recipe_view.html", {
+        "recipe": recipe,
+        "steps_json": steps,
+        "ingredients_json": ingredients,
     })
+
+@login_required
+def create_recipe(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        is_public = request.POST.get("is_public") == "on"
+
+        # Create recipe
+        recipe = Recipe.objects.create(
+            user=request.user,
+            title=title,
+            is_public=is_public
+        )
+
+        # Get ingredient data
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        # Get step data
+        steps = request.POST.getlist('steps[]')
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        # Redirect to voice page
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "create_recipe.html")
