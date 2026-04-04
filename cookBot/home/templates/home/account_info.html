@@ -4,11 +4,11 @@
 {% block content %}
 <main class="account-page">
     <section class="account-info">
-        <h1>Account Information</h1>
+        <h1>Account</h1>
         <p>Welcome {{ user.first_name|default:user.username }}!</p>
 
-        <div class="account-section">
-            <h2>Profile Information</h2>
+        <div class="card account-section">
+            <h2>Profile</h2>
             <p><strong>Username:</strong> {{ user.username }}</p>
             <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
             <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
@@ -19,9 +19,9 @@
             </div>
         </div>
     </section>
-    <section class="account-security">
+    <section class="card account-security">
       <h2>Security</h2>
-        <div class="change-password">
+        <div class=" change-password">
                 <a href="{% url 'change_password' %}" class="auth-btn">Change Password</a>
             </div>
 

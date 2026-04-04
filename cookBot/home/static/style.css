@@ -184,11 +184,6 @@ section.banner {
 .auth-panel {
   width: 100%;
   max-width: 460px;
-  background: #ffffff;
-  border: 1px solid #d7ebe3;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
 }
 
 .auth-header {
@@ -315,9 +310,16 @@ section.banner {
   padding: 3rem 2rem;
   background: #ffffff;
 }
+.card {
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
 
 .account-info {
-  max-width: 800px;
+  flex: 2;
 }
 
 .account-header {
@@ -338,7 +340,6 @@ section.banner {
 }
 
 .account-section {
-  max-width: 700px;
   background: #ffffff;
   border: 1px solid #d7ebe3;
   border-radius: 20px;
@@ -357,7 +358,7 @@ section.banner {
   font-size: 1.1rem;
   color: #1a3d2b;
   margin-bottom: 1rem;
-  line-height: 1.5;
+  line-height: 1.0;
 }
 
 .account-section p strong {
@@ -367,21 +368,32 @@ section.banner {
 }
 
 .account-actions {
-  margin-top: 1.75rem;
+  margin-top: 2.5rem;
 }
 
 .account-actions .auth-btn {
   text-decoration: none;
   display: inline-block;
 }
-
+.account-security {
+  flex: 1;
+}
+.change-password {
+  margin-top: 2.5rem;
+}
+.account-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
 @media (max-width: 768px) {
   .account-page {
     padding: 2rem 1rem;
   }
 
   .account-header h1 {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
+    margin-bottom: 0.4rem;
   }
 
   .account-header p {
@@ -406,6 +418,10 @@ section.banner {
   .account-actions .auth-btn {
     width: 100%;
     text-align: center;
+  }
+  .account-layout {
+    flex-direction: column;
+
   }
 }
 /* end of account info page styles */
