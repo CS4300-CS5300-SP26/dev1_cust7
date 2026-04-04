@@ -29,22 +29,19 @@ jobs:
             python manage.py collectstatic --noinput --clear
             systemctl restart cookBot
             systemctl reload nginx
-            for i in 1 2 3; do
+            for i in 1 2 3 4 5 6; do
               STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:8000 || true)
               echo "Attempt $i: Status $STATUS"
               if [ "$STATUS" = "200" ]; then
                 echo "App is healthy"
                 break
               fi
-              if [ "$i" -eq 1 ]; then
-                echo "App not ready, restarting cookBot..."
-                sleep 5
-                systemctl restart cookBot
-              else
-                echo "App failed after retry"
-                exit 1
-              fi
+              sleep 5
             done 
+            echo "Autodeploy failed health check after retries"
+            systemctl status cookBot --no-pager || true
+            journalctl -u cookBot -n 100 --no-pager || true
+            exit 1
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml
