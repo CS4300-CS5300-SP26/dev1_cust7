@@ -10,6 +10,7 @@ from django.utils import timezone
 import json
 import urllib.request
 import urllib.parse
+from .forms import RegisterForm, EditProfileForm
 
 
 def index(request):
@@ -76,18 +77,17 @@ def nutrition_test(request):
 
 
 def register(request):
-    """User registration view"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('index')
         else:
-            # Print form errors for debugging
             print(f"Form errors: {form.errors}")
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
+
     return render(request, 'home/register.html', {'form': form})
 
 
@@ -115,6 +115,20 @@ def account(request):
         return redirect('signin')
     
     return render(request, 'home/account_info.html', {'user': request.user})
+
+@login_required
+def edit_account(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('account')
+        else:
+            print(f"Form errors: {form.errors}")
+    else:
+        form = EditProfileForm(instance=request.user)
+
+    return render(request, 'home/edit_account.html', {'form': form})
 
 @login_required
 def pantry_view(request):

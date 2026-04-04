@@ -6,11 +6,19 @@
 {% block content %}
 <main class="account-page">
       <section class="account-info">
-            <h1>My Account</h1>
-            <p>Welcome, {{ user.username }}!</p>
-            <p>First Name: {{ user.first_name }}</p>
-            <p>Last Name: {{ user.last_name }}</p>
-            <p>Email: {{ user.email }}</p>
+            <h1> Account Information </h1>
+            <p> Welcome {{ user.first_name | default:user.username }}! </p>
+            
+            <div class="account-section">
+                  <h2>Profile Information</h2>
+                  <p><strong>Username:</strong> {{ user.username }}</p>
+                  <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
+                  <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
+                  <p><strong>Email:</strong> {{ user.email|default:"Not set" }}</p>
+
+                  <div class"account-actions">
+                        <a href="{% url 'edit_account' %}" class="auth-btn">Edit Profile</a>
+                  </div> 
             
          
 

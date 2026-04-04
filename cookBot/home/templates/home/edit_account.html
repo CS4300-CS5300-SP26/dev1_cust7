@@ -5,8 +5,8 @@
 <main class="auth-page">
     <section class="auth-panel">
         <div class="auth-header">
-            <h1>Create Account</h1>
-            <p>Join CookBot to start managing your pantry!</p>
+            <h1>Edit Account Information</h1>
+            <p>Update your CookBot profile details below.</p>
         </div>
 
         {% if form.errors %}
@@ -21,6 +21,7 @@
 
         <form method="post" class="auth-form">
             {% csrf_token %}
+
             <div class="form-field">
                 <label for="first_name">First Name</label>
                 <input
@@ -29,10 +30,11 @@
                     name="first_name"
                     placeholder="Enter your First Name"
                     value="{{ form.first_name.value|default:'' }}"
-                    autocomplete="first_name"
+                    autocomplete="given-name"
                     required
                 >
             </div>
+
             <div class="form-field">
                 <label for="last_name">Last Name</label>
                 <input
@@ -41,7 +43,7 @@
                     name="last_name"
                     placeholder="Enter your Last Name"
                     value="{{ form.last_name.value|default:'' }}"
-                    autocomplete="last_name"
+                    autocomplete="family-name"
                     required
                 >
             </div>
@@ -63,7 +65,7 @@
                 <label for="email">Email Address</label>
                 <input
                     id="email"
-                    type="text"
+                    type="email"
                     name="email"
                     placeholder="Enter your Email Address"
                     value="{{ form.email.value|default:'' }}"
@@ -72,37 +74,11 @@
                 >
             </div>
 
-            <div class="form-field">
-                <label for="password1">Password</label>
-                <input
-                    id="password1"
-                    type="password"
-                    name="password1"
-                    placeholder="Enter your password"
-                    autocomplete="new-password"
-                    required
-                >
+            <div class="account-actions">
+                <button type="submit" class="auth-btn">Save Changes</button>
+                <a href="{% url 'account' %}" class="auth-btn cancel-btn">Cancel</a>
             </div>
-
-            <div class="form-field">
-                <label for="password2">Confirm Password</label>
-                <input
-                    id="password2"
-                    type="password"
-                    name="password2"
-                    placeholder="Confirm your password"
-                    autocomplete="new-password"
-                    required
-                >
-            </div>
-
-            <button type="submit" class="auth-btn">Register</button>
         </form>
-
-        <div class="auth-links">
-            <p>Already have an account? <a href="/signin">Sign in here</a></p>
-            <p><a href="/">Back to Home</a></p>
-        </div>
     </section>
 </main>
 {% endblock %}
