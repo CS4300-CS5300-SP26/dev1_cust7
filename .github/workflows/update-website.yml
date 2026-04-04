@@ -29,8 +29,8 @@ jobs:
             python manage.py collectstatic --noinput --clear
             systemctl restart cookBot
             systemctl reload nginx
-            for i in 1 2; do
-              STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:8000)
+            for i in 1 2 3; do
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:8000 || true)
               echo "Attempt $i: Status $STATUS"
               if [ "$STATUS" = "200" ]; then
                 echo "App is healthy"
@@ -38,8 +38,8 @@ jobs:
               fi
               if [ "$i" -eq 1 ]; then
                 echo "App not ready, restarting cookBot..."
-                systemctl restart cookBot
                 sleep 5
+                systemctl restart cookBot
               else
                 echo "App failed after retry"
                 exit 1
