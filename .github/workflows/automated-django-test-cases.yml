@@ -71,6 +71,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
+          header: 'automated-django-test-cases'
           path: pr-comment.txt
       
         

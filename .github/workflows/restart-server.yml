@@ -1,9 +1,6 @@
-name: Deploy Main Branch to Website
+name: Restart Server Services
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -18,17 +15,7 @@ jobs:
           password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
           script: |
             set -euo pipefail
-            source cookBot_env/bin/activate
-            cd dev1_cust7
-            git fetch origin
-            git reset --hard origin/main
-            pip install -r requirements.txt
-            cd cookBot
-            python manage.py migrate
-            python manage.py collectstatic --noinput --clear
-            sleep 5
             systemctl restart cookBot
-            sleep 5
             systemctl restart nginx
   uptime-check:
     needs: build

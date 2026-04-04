@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
+from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 import json
@@ -18,27 +19,13 @@ def index(request):
 
 ####Help from Claude and Spoonacular documents on fetching data from spoonacular####
 def get_nutrition(request, ingredient_name):
-    #API key from settings.py
-    api_key = settings.SPOONACULAR_API_KEY
-
-    #Search for ingredient ID from spoonacular
-    search_params = urllib.parse.urlencode({
-        "query": ingredient_name,
-        "apiKey": api_key,
-        "number": 1,
-    })
-    
-    #Spoonacular blocks urllib's default user agent
-    #Fake regular browser
-    req = urllib.request.Request(
-        f"https://api.spoonacular.com/food/ingredients/search?{search_params}",
-        headers={"User-Agent": "Mozilla/5.0"}  
-    )
     try:
-        with urllib.request.urlopen(req) as res:
-            search_data = json.loads(res.read().decode())
+        # Step 1: find ingredient ID
+        search_data = spoonacular_get("food/ingredients/search", {
+            "query": ingredient_name,
+            "number": 1,
+        })
     except Exception as e:
-        print(f"SEARCH ERROR: {type(e).__name__}: {e}")
         return JsonResponse({"error": f"Search request failed: {str(e)}"}, status=502)
 
     results = search_data.get("results", [])
@@ -47,25 +34,14 @@ def get_nutrition(request, ingredient_name):
             {"error": f"No ingredient found matching '{ingredient_name}'"},
             status=404,
         )
-    #ingredient ID
+
     ingredient_id = results[0]["id"]
-    
 
-    #Fetch full nutrition information based on ingredient ID
-    nutrition_params = urllib.parse.urlencode({
-        "amount": 1,
-        "apiKey": api_key,
-    })
-
-    #Spoonacular blocks urllib's default user agent
-    #Fake regular browser
-    nutrition_req = urllib.request.Request(
-        f"https://api.spoonacular.com/food/ingredients/{ingredient_id}/information?{nutrition_params}",
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
     try:
-        with urllib.request.urlopen(nutrition_req) as res:
-            nutrition_data = json.loads(res.read().decode())
+        # Step 2: fetch nutrition by ID
+        nutrition_data = spoonacular_get(f"food/ingredients/{ingredient_id}/information", {
+            "amount": 1,
+        })
     except Exception as e:
         return JsonResponse({"error": f"Nutrition request failed: {str(e)}"}, status=502)
 
@@ -217,24 +193,13 @@ def search_recipes_by_pantry(request):
     ingredients = ','.join(pantry_items)
     
     # Search for recipes using ingredients
-    search_params = urllib.parse.urlencode({
-        "ingredients": ingredients,
-        "number": 10,  # Get top 10 matching recipes
-        "ranking": 1,  # Rank by most matched ingredients
-        "ignorePantry": False,
-        "apiKey": settings.SPOONACULAR_API_KEY,
-    })
-    
-    #Spoonacular blocks urllib's default user agent
-    #Fake regular browser
-    req = urllib.request.Request(
-        f"https://api.spoonacular.com/recipes/findByIngredients?{search_params}",
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
-    
     try:
-        with urllib.request.urlopen(req) as res:
-            recipes_data = json.loads(res.read().decode())
+        recipes_data = spoonacular_get("recipes/findByIngredients", {
+            "ingredients": ingredients,
+            "number": 10,
+            "ranking": 1,
+            "ignorePantry": False,
+        })
         
         # Process recipes to add match counts
         processed_recipes = []
