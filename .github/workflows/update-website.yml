@@ -18,6 +18,7 @@ jobs:
           password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
           script: |
             set -euo pipefail
+            systemctl stop cookBot
             source cookBot_env/bin/activate
             cd dev1_cust7
             git fetch origin
@@ -26,10 +27,24 @@ jobs:
             cd cookBot
             python manage.py migrate
             python manage.py collectstatic --noinput --clear
-            sleep 5
             systemctl restart cookBot
-            sleep 5
-            systemctl restart nginx
+            for i in 1 2; do
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1)
+              echo "Attempt $i: Status $STATUS"
+              if [ "$STATUS" = "200" ]; then
+                echo "App is healthy"
+                break
+              fi
+              if [ "$i" -eq 1 ]; then
+                echo "App not ready, restarting cookBot..."
+                systemctl restart cookBot
+                sleep 5
+              else
+                echo "App failed after retry"
+                exit 1
+              fi
+            done 
+            systemctl reload nginx
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml
