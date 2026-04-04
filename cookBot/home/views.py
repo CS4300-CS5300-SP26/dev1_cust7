@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
@@ -61,8 +61,7 @@ def register(request):
             user = form.save()
             login(request, user)
             return redirect('index')
-        else:
-            print(f"Form errors: {form.errors}")
+
     else:
         form = RegisterForm()
 
@@ -88,10 +87,6 @@ def signout(request):
 
 @login_required
 def account(request):
-    """Display user account information"""
-    if not request.user.is_authenticated:
-        return redirect('signin')
-    
     return render(request, 'home/account_info.html', {'user': request.user})
 
 @login_required
@@ -114,8 +109,7 @@ def change_password(request):
             user = form.save()
             update_session_auth_hash(request, user)
             return redirect('account')
-        else:
-            print(f"Form errors: {form.errors}")
+
     else:
         form = PasswordChangeForm(user=request.user)
 
