@@ -11,11 +11,6 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
     
-    def clean_email(self):
-        email = self.cleaned_data['email'].strip().lower()
-
-        if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data['first_name']
@@ -25,8 +20,6 @@ class RegisterForm(UserCreationForm):
             user.save()
         return user
     
-
-    return email
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = User
