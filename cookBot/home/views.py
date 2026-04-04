@@ -8,6 +8,7 @@ from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 from .models import Recipe, RecipeStep, RecipeIngredient
 import json
 import urllib.request
@@ -292,16 +293,26 @@ def get_fallback_recipes(pantry_items):
     return fallback_recipes[:5]  # Return top 5 suggestions
 
 # This is for the Recipe viewing page and Recipe Input page
-# Logic that needs to be added is who can view depending on privacy
 def recipe_view(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    # If the recipe is not public, only the owner can view it
+    if not recipe.is_public:
+        if not request.user.is_authenticated or request.user != recipe.user:
+            raise PermissionDenied
 
     steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
 
     ingredients = [
-        f"{i.quantity} {i.unit or ''} {i.name}".strip()
-        for i in recipe.ingredients.all()
-    ]
+        " ".join(
+            part for part in (
+                (i.quantity or "").strip(),
+                (i.unit or "").strip(),
+                (i.name or "").strip(),
+            ) if part
+    )
+    for i in recipe.ingredients.all()
+]
 
     return render(request, "recipe_view.html", {
         "recipe": recipe,
@@ -312,8 +323,15 @@ def recipe_view(request, recipe_id):
 @login_required
 def create_recipe(request):
     if request.method == "POST":
-        title = request.POST.get("title")
+        title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
+
+        # Server-side validation
+        if not title:
+            return render(request, "create_recipe.html", {
+                "error": "Title cannot be empty.",
+                "post_data": request.POST,
+            })
 
         # Create recipe
         recipe = Recipe.objects.create(
@@ -346,7 +364,6 @@ def create_recipe(request):
                     text=step_text.strip()
                 )
 
-        # Redirect to voice page
         return redirect("recipe_view", recipe_id=recipe.id)
 
     return render(request, "create_recipe.html")

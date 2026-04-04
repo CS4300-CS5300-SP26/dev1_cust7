@@ -3,15 +3,15 @@ function addIngredient() {
     const row = document.createElement('div');
     row.className = 'ingredient-row';
     row.innerHTML = `
-        <input type="number" name="ingredient_quantity[]" placeholder="Quantity" min="0.1" step="0.1" required>
+        <input type="number" name="ingredient_quantity[]" placeholder="Quantity" min="0.001" step="0.0001" required>
         <select name="ingredient_unit[]">
             <option value=""></option>
-            <option value="cup">cup</option>
-            <option value="grams">grams</option>
-            <option value="pounds">lb</option>
-            <option value="table spoon">tbsp</option>
-            <option value="tea spoon">tsp</option>
-            <option value="ounces">oz</option>
+            <option value="cups">cup</option>
+            <option value="grams">g</option>
+            <option value="lbs">lb</option>
+            <option value="tablespoons">tbsp</option>
+            <option value="teaspoons">tsp</option>
+            <option value="ozs">oz</option>
         </select>
         <input type="text" name="ingredient_name[]" placeholder="Ingredient Name" required>
         <button type="button" onclick="removeRow(this)">Remove</button>

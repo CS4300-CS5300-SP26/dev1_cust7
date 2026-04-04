@@ -36,3 +36,16 @@ Feature: Recipe View Page
   Scenario: Page returns 200 status for the recipe owner
     When I visit the recipe view page
     Then the page should load successfully
+
+  Scenario: A different logged-in user cannot view a private recipe
+    Given a second user exists with username "otheruser" and password "otherpass123"
+    And I am logged in as "otheruser" with password "otherpass123"
+    When I visit the recipe view page
+    Then the response status should be 403
+
+  Scenario: A public recipe can be viewed by another user
+    Given the recipe "Scrambled Eggs" is set to public
+    And a second user exists with username "otheruser" and password "otherpass123"
+    And I am logged in as "otheruser" with password "otherpass123"
+    When I visit the recipe view page
+    Then the page should load successfully

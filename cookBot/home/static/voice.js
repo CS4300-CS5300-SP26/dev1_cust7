@@ -197,6 +197,12 @@ function extractNum(t) {
 function handleCmd(t) {
   console.log('[Chef] command:', t);
 
+  if (/\b(start|beginning|restart|first)\b/.test(t)) {
+    if (steps.length === 0) { speak("This recipe has no steps."); return; }
+    goTo(0); speak('Starting from the beginning. Step 1. ' + steps[0]);
+    return;
+  }
+
   if (/\b(next|forward|continue)\b/.test(t)) {
     if (current < steps.length - 1) { goTo(current + 1); speak('Step ' + (current + 1) + '. ' + steps[current]); }
     else speak("That's the last step \u2014 you're done!");
@@ -340,14 +346,20 @@ function wireButtons() {
 // Made by Claude
 // ─────────────────────────────────────────────────
 renderIngredients();
-renderSteps();
-goTo(0);
-wireButtons();
-setupRecog();
 
-if (recog) {
-  setStatus('Listening\u2026 say \u201CHey Chef\u201D', 'listening');
-  safeStart();
+if (steps.length === 0) {
+  setStatus('No steps found for this recipe.', '');
+  document.getElementById('prevBtn').disabled = true;
+  document.getElementById('nextBtn').disabled = true;
 } else {
-  setStatus('Voice unavailable', '');
+  renderSteps();
+  goTo(0);
+  wireButtons();
+  setupRecog();
+
+  if (recog) {
+    setStatus('Ready \u2014 click Start to enable voice control', '');
+  } else {
+    setStatus('Voice unavailable', '');
+  }
 }

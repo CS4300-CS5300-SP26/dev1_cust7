@@ -37,7 +37,7 @@ def step_create_recipe_with_steps(context, title):
 @given('that recipe has the following ingredients:')
 def step_create_ingredients(context):
     for row in context.table:
-        unit = row['unit'] if row['unit'].strip() else None
+        unit = row['unit'].strip() or None
         RecipeIngredient.objects.get_or_create(
             recipe=context.recipe,
             name=row['name'],
@@ -50,10 +50,6 @@ def step_create_ingredients(context):
 
 @given('I am logged in as "{username}" with password "{password}"')
 def step_login(context, username, password):
-    """
-    Uses Django's test client to log in. behave-django provides
-    context.client which works just like Django's TestCase client.
-    """
     logged_in = context.client.login(username=username, password=password)
     assert logged_in, f"Login failed for user '{username}' — check the password matches what was set in the create step"
 
@@ -92,3 +88,15 @@ def step_see_text(context, text):
     assert text in content, (
         f"Could not find '{text}' anywhere in the page content"
     )
+
+# user control tests
+@given('a second user exists with username "{username}" and password "{password}"')
+def step_create_second_user(context, username, password):
+    step_create_user(context, username, password)
+
+
+@given('the recipe "{title}" is set to public')
+def step_make_recipe_public(context, title):
+    Recipe.objects.filter(title=title).update(is_public=True)
+    # Refresh context.recipe so it reflects the updated value
+    context.recipe.refresh_from_db()

@@ -2,12 +2,6 @@
 {% load static %}
  <!-- Claude helped Roman make this work with the JS -->
 
-{% block title %}{{ recipe.title }}{% endblock %}
-
-{% block extra_head %}
-
-{% endblock %}
-
 {% block content %}
  <!-- Make json/ensure json is here for Javascript to use -->
 {{ steps_json|json_script:"steps-data" }}
