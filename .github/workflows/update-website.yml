@@ -18,6 +18,7 @@ jobs:
           password: ${{ secrets.SERVER_ADMIN_PASSWORD }}
           script: |
             set -euo pipefail
+            systemctl stop cookBot
             source cookBot_env/bin/activate
             cd dev1_cust7
             git fetch origin
@@ -26,10 +27,21 @@ jobs:
             cd cookBot
             python manage.py migrate
             python manage.py collectstatic --noinput --clear
-            sleep 5
-            systemctl restart cookBot
-            sleep 5
-            systemctl restart nginx
+            systemctl start cookBot
+            systemctl reload nginx
+            for i in 1 2 3 4 5 6; do
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 3 --max-time 10 http://127.0.0.1:8000 || true)
+              echo "Attempt $i: Status $STATUS"
+              if [ "$STATUS" = "200" ]; then
+                echo "App is healthy"
+                exit 0
+              fi
+              sleep 5
+            done 
+            echo "Autodeploy failed health check after retries"
+            systemctl status cookBot --no-pager || true
+            journalctl -u cookBot -n 100 --no-pager || true
+            exit 1
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml

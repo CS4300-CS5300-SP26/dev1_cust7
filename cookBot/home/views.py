@@ -8,6 +8,8 @@ from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
+from .models import Recipe, RecipeStep, RecipeIngredient
 import json
 import urllib.request
 import urllib.parse
@@ -326,3 +328,79 @@ def get_fallback_recipes(pantry_items):
     fallback_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
     
     return fallback_recipes[:5]  # Return top 5 suggestions
+
+# This is for the Recipe viewing page and Recipe Input page
+def recipe_view(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    # If the recipe is not public, only the owner can view it
+    if not recipe.is_public:
+        if not request.user.is_authenticated or request.user != recipe.user:
+            raise PermissionDenied
+
+    steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
+
+    ingredients = [
+        " ".join(
+            part for part in (
+                (i.quantity or "").strip(),
+                (i.unit or "").strip(),
+                (i.name or "").strip(),
+            ) if part
+    )
+    for i in recipe.ingredients.all()
+]
+
+    return render(request, "recipe_view.html", {
+        "recipe": recipe,
+        "steps_json": steps,
+        "ingredients_json": ingredients,
+    })
+
+@login_required
+def create_recipe(request):
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        is_public = request.POST.get("is_public") == "on"
+
+        # Server-side validation
+        if not title:
+            return render(request, "create_recipe.html", {
+                "error": "Title cannot be empty.",
+                "post_data": request.POST,
+            })
+
+        # Create recipe
+        recipe = Recipe.objects.create(
+            user=request.user,
+            title=title,
+            is_public=is_public
+        )
+
+        # Get ingredient data
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        # Get step data
+        steps = request.POST.getlist('steps[]')
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "create_recipe.html")
