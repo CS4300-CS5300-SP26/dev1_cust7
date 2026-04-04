@@ -17,4 +17,8 @@ urlpatterns = [
     path('pantry/delete/<int:ingredient_id>/', views.delete_ingredient, name='delete_ingredient'),
     path('pantry/api/', views.get_pantry_ingredients, name='get_pantry_ingredients'),
     path('pantry/search-recipes/', views.search_recipes_by_pantry, name='search_recipes_by_pantry'),
+
+    # Paths for create recipe and display recipe pages
+    path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
+    path('recipe/create/', views.create_recipe, name='create_recipe'),
 ]

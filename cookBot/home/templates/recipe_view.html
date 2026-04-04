@@ -1,0 +1,68 @@
+{% extends "navbar.html" %}
+{% load static %}
+ <!-- Claude helped Roman make this work with the JS -->
+
+{% block content %}
+ <!-- Make json/ensure json is here for Javascript to use -->
+{{ steps_json|json_script:"steps-data" }}
+{{ ingredients_json|json_script:"ingredients-data" }}
+
+<div class="recipe-page">
+
+  <div class="recipe-header">
+    <h1>{{ recipe.title }}</h1>
+    <div class="recipe-meta">
+      <span>By {{ recipe.user.username }}</span>
+      <!-- Public or Private and rating logic (not really done as we don't have the systems fully in place) -->
+      {% if recipe.is_public %}<span class="badge">Public</span>
+      {% else %}<span class="badge">Private</span>{% endif %}
+      {% with avg=recipe.average_rating %}
+        {% if avg %}<span>&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- Stuff to use voice commands -->
+  <div class="voice-bar">
+    <div class="voice-indicator" id="voiceIndicator"></div>
+    <div class="voice-info">
+      <!-- Shows how to use the voice activation -->
+      <div class="voice-status" id="voiceStatus">Loading&#8230;</div>
+      <div class="voice-heard"  id="voiceHeard">Say &#8220;Hey Chef&#8221; to activate</div>
+    </div>
+    <!-- NO onclick="" attributes as they were causing issues -->
+    <button class="voice-btn start" id="btnStart">&#127897; Start</button>
+    <button class="voice-btn stop"  id="btnStop">&#9209; Stop</button>
+    <div class="voice-hint">
+      <!-- Example commands -->
+      Commands: <strong>&#8220;Hey Chef, next&#8221;</strong> &middot;
+      <strong>&#8220;read step 3&#8221;</strong> &middot;
+      <strong>&#8220;go back&#8221;</strong> &middot;
+      <strong>&#8220;list ingredients&#8221;</strong> &middot;
+      <strong>&#8220;repeat&#8221;</strong>
+    </div>
+  </div>
+
+  <!-- Shows all the ingredients and Instructions -->
+  <div class="recipe-grid">
+    <div class="card">
+      <div class="card-title">Ingredients</div>
+      <ul class="ingredients-list" id="ingredientsList"></ul>
+    </div>
+    <div class="card">
+      <div class="card-title">Instructions</div>
+      <ol class="steps-list" id="stepsList"></ol>
+      <div class="step-nav">
+        <!-- voice.js attaches listeners to these IDs -->
+        <button class="nav-btn"        id="prevBtn" disabled>&#8592; Previous</button>
+        <button class="nav-btn primary" id="nextBtn">Next &#8594;</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- External script -->
+<script src="{% static 'voice.js' %}"></script>
+
+{% endblock %}
