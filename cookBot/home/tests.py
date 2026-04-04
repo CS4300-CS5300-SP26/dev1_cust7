@@ -449,7 +449,7 @@ class RecipeViewTests(TestCase):
         ingredients = response.context["ingredients_json"]
 
         self.assertIn("1 cup Flour", ingredients)
-        self.assertIn("2  Eggs".strip(), ingredients)
+        self.assertIn("2 Eggs".strip(), ingredients)
 
     def test_recipe_view_404(self):
         """Invalid recipe should return 404"""
