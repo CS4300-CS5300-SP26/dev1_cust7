@@ -308,3 +308,104 @@ section.banner {
     font-size: 1.7rem;
   }
 }
+
+/* Account info page styles */
+.account-page {
+  min-height: calc(100vh - 80px);
+  padding: 3rem 2rem;
+  background: #ffffff;
+}
+
+.account-info {
+  max-width: 800px;
+}
+
+.account-header {
+  margin-bottom: 1.5rem;
+}
+
+.account-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 0.75rem;
+}
+
+.account-header p {
+  font-size: 1.3rem;
+  color: #4f6f60;
+  margin: 0;
+}
+
+.account-section {
+  max-width: 700px;
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
+
+.account-section h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 1.5rem;
+}
+
+.account-section p {
+  font-size: 1.1rem;
+  color: #1a3d2b;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.account-section p strong {
+  display: inline-block;
+  min-width: 140px;
+  color: #1a3d2b;
+}
+
+.account-actions {
+  margin-top: 1.75rem;
+}
+
+.account-actions .auth-btn {
+  text-decoration: none;
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .account-page {
+    padding: 2rem 1rem;
+  }
+
+  .account-header h1 {
+    font-size: 2.25rem;
+  }
+
+  .account-header p {
+    font-size: 1.1rem;
+  }
+
+  .account-section {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .account-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .account-section p strong {
+    display: block;
+    min-width: auto;
+    margin-bottom: 0.2rem;
+  }
+
+  .account-actions .auth-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+/* end of account info page styles */

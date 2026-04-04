@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
@@ -129,6 +129,21 @@ def edit_account(request):
         form = EditProfileForm(instance=request.user)
 
     return render(request, 'home/edit_account.html', {'form': form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            return redirect('account')
+        else:
+            print(f"Form errors: {form.errors}")
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'home/change_password.html', {'form': form})
 
 @login_required
 def pantry_view(request):

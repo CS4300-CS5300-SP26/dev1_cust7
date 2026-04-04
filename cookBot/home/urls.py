@@ -12,6 +12,7 @@ urlpatterns = [
     path('logout/', views.signout, name='logout'),
     path('account/', views.account, name='account'),
     path('account/edit/', views.edit_account, name='edit_account'),
+    path('account/change-password/', views.change_password, name='change_password'),
     
     # Pantry functionality
     path('pantry/', views.pantry_view, name='pantry'),
