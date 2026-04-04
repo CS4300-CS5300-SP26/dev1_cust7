@@ -28,8 +28,9 @@ jobs:
             python manage.py migrate
             python manage.py collectstatic --noinput --clear
             systemctl restart cookBot
+            systemctl reload nginx
             for i in 1 2; do
-              STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1)
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://127.0.0.1:8000)
               echo "Attempt $i: Status $STATUS"
               if [ "$STATUS" = "200" ]; then
                 echo "App is healthy"
@@ -44,7 +45,6 @@ jobs:
                 exit 1
               fi
             done 
-            systemctl reload nginx
   uptime-check:
     needs: build
     uses: ./.github/workflows/website-monitor.yml
