@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from home.models import Pantry, Recipe, RecipeIngredient, RecipeRating, RecipeStep
 from django.core.cache import cache
+from .forms import RegisterForm, EditProfileForm
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
 # Model tests need to be made
@@ -521,3 +522,123 @@ class CreateRecipeTests(TestCase):
         self.assertEqual(RecipeStep.objects.filter(recipe=recipe).count(), 1)
 
  #### End of tests for recipe page and create recipe pages ####
+
+# Tests for Account Management (Registration, Edit Account, Change Password)
+
+class RegisterFormTests(TestCase):
+    def test_register_form_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username="existinguser",
+            email="test@email.com",
+            password="testpass123"
+        )
+
+        form = RegisterForm(data={
+            "first_name": "Another",
+            "last_name": "User",
+            "username": "anotheruser",
+            "email": "test@email.com",
+            "password1": "StrongPassword123!",
+            "password2": "StrongPassword123!",
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+        self.assertIn(
+            "An account with this email already exists.",
+            form.errors["email"]
+        )
+class EditProfileFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@email.com",
+            password="testpass123"
+        )
+
+    def test_edit_profile_form_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username="otheruser",
+            email="taken@email.com",
+            password="testpass123"
+        )
+
+        form = EditProfileForm(
+            data={
+                "first_name": "Test",
+                "last_name": "User",
+                "username": "testuser",
+                "email": "taken@email.com",
+            },
+            instance=self.user
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+        self.assertIn(
+            "That email is already in use.",
+            form.errors["email"]
+        )
+class AccountViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@email.com",
+            password="testpass123"
+        )
+
+    def test_register_view_creates_user(self):
+        response = self.client.post(reverse("register"), {
+            "first_name": "New",
+            "last_name": "User",
+            "username": "newuser",
+            "email": "newuser@email.com",
+            "password1": "StrongPassword123!",
+            "password2": "StrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username="newuser").exists())
+
+    def test_edit_account_updates_user(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("edit_account"), {
+            "first_name": "Updated",
+            "last_name": "User",
+            "username": "testuser",
+            "email": "updated@email.com",
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Updated")
+        self.assertEqual(self.user.email, "updated@email.com")
+
+    def test_change_password_works(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("change_password"), {
+            "old_password": "testpass123",
+            "new_password1": "NewStrongPassword123!",
+            "new_password2": "NewStrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewStrongPassword123!"))
+    def test_change_password_fails_with_wrong_current_password(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("change_password"), {
+            "old_password": "wrongpassword",
+            "new_password1": "NewStrongPassword123!",
+            "new_password2": "NewStrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 200)
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("testpass123"))

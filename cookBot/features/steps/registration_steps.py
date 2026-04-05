@@ -68,9 +68,6 @@ def step_submit_registration_with_existing_email(context):
       })
 @then('the registration should fail')
 def step_registration_fails(context):
-      print("STATUS:", context.response.status_code)
-      print("BODY:", context.response.content.decode())
-
       assert context.response.status_code == 200
 
 @then('I should see a duplicate email error')
