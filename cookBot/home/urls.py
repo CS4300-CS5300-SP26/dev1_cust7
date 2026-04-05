@@ -21,4 +21,8 @@ urlpatterns = [
     # Paths for create recipe and display recipe pages
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
     path('recipe/create/', views.create_recipe, name='create_recipe'),
+
+    # Social feed
+    path('social/', views.social_feed, name='social_feed'),
+    
 ]

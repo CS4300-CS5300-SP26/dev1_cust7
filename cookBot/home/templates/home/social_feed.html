@@ -1,0 +1,5 @@
+{% for recipe in public_recipes %}
+    <a href="{% url 'recipe_view' recipe.id %}">{{ recipe.title }}</a>
+{% empty %}
+    <p>No recipes have been shared yet.</p>
+{% endfor %}
