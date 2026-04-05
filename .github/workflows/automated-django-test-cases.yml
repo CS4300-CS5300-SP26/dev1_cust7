@@ -33,6 +33,7 @@ jobs:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
         run: |
+          set -eo pipefail
           cd cookBot
           echo "================ RUNNING DJANGO TESTS ================"
           coverage run manage.py test
@@ -44,6 +45,7 @@ jobs:
           SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
           DJANGO_SETTINGS_MODULE: cookBot.settings
         run: |
+          set -eo pipefail
           cd cookBot
           echo "================ RUNNING BEHAVE TESTS ================"
           coverage erase
