@@ -566,11 +566,24 @@ class SocialFeedTests(TestCase):
  
     def test_social_feed_is_ordered_newest_first(self):
         """Given multiple public recipes exist, they are returned newest first"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        now = timezone.now()
+
+        older_recipe = Recipe.objects.create(user=self.user, title='Older Recipe', is_public=True)
+        Recipe.objects.filter(id=older_recipe.id).update(created_date=now - timedelta(days=1))
+
+        newer_recipe = Recipe.objects.create(user=self.other_user, title='Newer Recipe', is_public=True)
+        Recipe.objects.filter(id=newer_recipe.id).update(created_date=now)
+
         response = self.client.get(reverse('social_feed'))
         recipes = list(response.context['public_recipes'])
+
+        self.assertGreaterEqual(len(recipes), 2)  # guard: ensure loop actually runs
         for i in range(len(recipes) - 1):
             self.assertGreaterEqual(recipes[i].created_date, recipes[i + 1].created_date)
- 
+            
     def test_social_feed_empty_when_no_public_recipes(self):
         """Given no public recipes exist, the feed context contains an empty list"""
         response = self.client.get(reverse('social_feed'))
