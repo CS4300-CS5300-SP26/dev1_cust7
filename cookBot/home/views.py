@@ -365,6 +365,7 @@ def get_meals_json(request):
     return JsonResponse({'meals': calendar_events})
 
 
+@login_required
 def calendar_view(request):
     """Render the meal calendar page"""
     return render(request, 'home/calendar.html')

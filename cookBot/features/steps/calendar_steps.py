@@ -83,6 +83,12 @@ def step_click_generate(context):
 @when('I return to the calendar page')
 def step_return_to_calendar(context):
     """Navigate back to the calendar page"""
+    # Ensure user is logged in (calendar_view requires login)
+    from django.contrib.auth.models import User
+    if not hasattr(context, 'user') or not context.user.is_authenticated:
+        user = User.objects.get(username='testuser')
+        context.client.login(username='testuser', password='testpass123')
+        context.user = user
     context.response = context.client.get('/calendar/')
 
 @then('I should see {count:d} meals on the calendar grid')
