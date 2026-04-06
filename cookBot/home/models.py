@@ -89,6 +89,7 @@ class RecipeRating(models.Model):
 class ChatSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions')
     created_date = models.DateTimeField(default=timezone.now)
+    pantry_context = models.JSONField(default=list, blank=True)
     
     #Spoonacular results 
     spoonacular_context = models.JSONField(default=list, blank=True)

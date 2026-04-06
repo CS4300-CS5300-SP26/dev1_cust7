@@ -30,7 +30,7 @@ would you like tips on that, or a variation?"
 
 #Grab all information from both spooancular recipes suggested and saved recipes
 #So that the AI is aware of these
-def collect_context_from_recipes(spoonacular_recipes=None, saved_recipes=None):
+def collect_context_from_recipes(spoonacular_recipes=None, saved_recipes=None, pantry_items=None):
     context = []
 
     #Grabbing spoonacular suggested recipes 
@@ -60,14 +60,19 @@ def collect_context_from_recipes(spoonacular_recipes=None, saved_recipes=None):
                 f"(ingredients: {ingredients or 'not listed'})"
             )
         context.append('\n'.join(saved_lines))
- 
+    #Grab pantry items
+    if pantry_items:
+        pantry_lines = ["The user currently has these ingredients in their pantry:"]
+        pantry_lines.append(', '.join(pantry_items))
+        context.append('\n'.join(pantry_lines))
+
     return '\n\n'.join(context)
 
 #Combine the recipes pulled from spoonacular and saved and add it to our prompt
-def build_messages(conversation_history, spoonacular_recipes=None, saved_recipes=None):
+def build_messages(conversation_history, spoonacular_recipes=None, saved_recipes=None, pantry_items=None):
     system_content = SYSTEM_PROMPT
  
-    context_block = collect_context_from_recipes(spoonacular_recipes, saved_recipes)
+    context_block = collect_context_from_recipes(spoonacular_recipes, saved_recipes, pantry_items)
     if context_block:
         system_content += f"\n\n--- USER RECIPE CONTEXT ---\n{context_block}"
  
@@ -77,10 +82,10 @@ def build_messages(conversation_history, spoonacular_recipes=None, saved_recipes
     return messages
 
 #Call openAi with our prompt along with the conversation history for a better response
-def call_openai(conversation_history, spoonacular_recipes=None, saved_recipes=None):
+def call_openai(conversation_history, spoonacular_recipes=None, saved_recipes=None, pantry_items=None):
     OPENAI_API_KEY = settings.OPENAI_API_KEY
 
-    messages = build_messages(conversation_history, spoonacular_recipes, saved_recipes)
+    messages = build_messages(conversation_history, spoonacular_recipes, saved_recipes, pantry_items)
  
     payload = json.dumps({
         "model": "gpt-5-mini",

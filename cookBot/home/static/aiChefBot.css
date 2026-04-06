@@ -9,7 +9,7 @@
     width: 100%;
   }
    
-  /* ── Sidebar ──────────────────────────────────────────────────────────────── */
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
   .chefbot-sidebar {
     width: 260px;
     flex-shrink: 0;
@@ -68,7 +68,7 @@
     border: 1.5px solid #d7eba3;
     border-radius: 20px;
     overflow: hidden;
-    min-height: 560px;
+    min-height: 400px;
   }
    
   /* Scrollable message area */
@@ -181,17 +181,18 @@
   /* ── Input bar ────────────────────────────────────────────────────────────── */
   .chat-input-area {
     border-top: 1.5px solid #d7eba3;
-    padding: 1rem 1.25rem;
+    padding: 0.6rem 1.25rem;
     background: #ffffff;
+    margin-top: auto;
   }
    
   .chat-input-bar {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 0.6rem;
     border: 1.5px solid #d7eba3;
     border-radius: 999px;
-    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    padding: 0.4rem 0.4rem 0.4rem 1.25rem;
     background: #ffffff;
     transition: border-color 0.2s;
   }
@@ -262,4 +263,17 @@
     .context-card {
       min-width: 200px;
     }
-}
+  }
+  section.banner {
+    padding: 1rem 5%;
+    min-height: unset;
+  }
+  
+  section.banner .banner-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.2rem;
+  }
+  
+  section.banner .banner-content p {
+    font-size: 0.9rem;
+  }
