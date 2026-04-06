@@ -332,9 +332,10 @@ def step_openai_has_system_prompt_first(context):
     history = call_kwargs.get('conversation_history', [])
     # The system prompt is added inside build_messages, not in history
     # So we verify the history starts with the user message
-    assert history[0]['role'] == 'user', f"Expected user role, got {history[0]['role']}"
-    assert history[0]['content'] == 'What can I cook?'
-
+    messages = build_messages(history)
+    assert messages[0]['role'] == 'system', f"Expected system role first, got {messages[0]['role']}"
+    assert 'ChefBot' in messages[0]['content'], "System prompt does not contain ChefBot"
+    
 @then('the context should contain the Spoonacular recipe titles')
 def step_context_has_spoonacular_titles(context):
     assert 'Chicken Fried Rice' in context.result
