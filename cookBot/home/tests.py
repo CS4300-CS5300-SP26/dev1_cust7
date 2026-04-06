@@ -790,7 +790,7 @@ class MissingCoverageTests(TestCase):
 
     @patch('home.views.spoonacular_get')
     def test_generate_meal_plan_api_failure(self, mock_spoonacular):
-        """Test views.py lines 440-443: generate_meal_plan handles API failure"""
+        """Test views.py: generate_meal_plan falls back to suggested recipes on API failure"""
         import urllib.error
         self.client.login(username='testuser', password='password123')
         
@@ -803,9 +803,17 @@ class MissingCoverageTests(TestCase):
         )
         
         response = self.client.post(reverse('generate_meal_plan'))
-        self.assertEqual(response.status_code, 502)
+        # Should return 200 and use fallback recipes instead of failing
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn('error', data)
+        self.assertTrue(data.get('success'))
+        self.assertIn('meals_count', data)
+        self.assertEqual(data['meals_count'], 7)
+        
+        # Verify meals were still created using fallback recipes
+        from home.models import MealPlan
+        meals_count = MealPlan.objects.filter(user=self.user).count()
+        self.assertEqual(meals_count, 7)
 
     # ---- Unauthorized Access Tests ----
 
