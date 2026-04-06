@@ -1,16 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
+from .models import Recipe, RecipeStep, RecipeIngredient
 import json
 import urllib.request
 import urllib.parse
+from .forms import RegisterForm, EditProfileForm
 
 
 def index(request):
@@ -52,18 +55,16 @@ def nutrition_test(request):
 
 
 def register(request):
-    """User registration view"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('index')
-        else:
-            # Print form errors for debugging
-            print(f"Form errors: {form.errors}")
+
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
+
     return render(request, 'home/register.html', {'form': form})
 
 
@@ -83,6 +84,36 @@ def signin(request):
 def signout(request):
     logout(request)
     return redirect('index')
+
+@login_required
+def account(request):
+    return render(request, 'home/account_info.html', {'user': request.user})
+
+@login_required
+def edit_account(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('account')
+    else:
+        form = EditProfileForm(instance=request.user)
+
+    return render(request, 'home/edit_account.html', {'form': form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            return redirect('account')
+
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'home/change_password.html', {'form': form})
 
 @login_required
 def pantry_view(request):
@@ -290,7 +321,6 @@ def get_fallback_recipes(pantry_items):
     
     return fallback_recipes[:5]  # Return top 5 suggestions
 
-
 @login_required
 @require_GET
 def get_meals_json(request):
@@ -411,3 +441,80 @@ def generate_meal_plan(request):
         return JsonResponse({
             'error': f'Failed to generate meal plan: {str(e)}'
         }, status=502)
+
+# This is for the Recipe viewing page and Recipe Input page
+def recipe_view(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    # If the recipe is not public, only the owner can view it
+    if not recipe.is_public:
+        if not request.user.is_authenticated or request.user != recipe.user:
+            raise PermissionDenied
+
+    steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
+
+    ingredients = [
+        " ".join(
+            part for part in (
+                (i.quantity or "").strip(),
+                (i.unit or "").strip(),
+                (i.name or "").strip(),
+            ) if part
+    )
+    for i in recipe.ingredients.all()
+]
+
+    return render(request, "recipe_view.html", {
+        "recipe": recipe,
+        "steps_json": steps,
+        "ingredients_json": ingredients,
+    })
+
+@login_required
+def create_recipe(request):
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        is_public = request.POST.get("is_public") == "on"
+
+        # Server-side validation
+        if not title:
+            return render(request, "create_recipe.html", {
+                "error": "Title cannot be empty.",
+                "post_data": request.POST,
+            })
+
+        # Create recipe
+        recipe = Recipe.objects.create(
+            user=request.user,
+            title=title,
+            is_public=is_public
+        )
+
+        # Get ingredient data
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        # Get step data
+        steps = request.POST.getlist('steps[]')
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "create_recipe.html")
+

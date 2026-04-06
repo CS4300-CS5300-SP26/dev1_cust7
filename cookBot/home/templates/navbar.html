@@ -36,8 +36,13 @@
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">CookBot<span class="caret"></span></a>
                     <ul class="dropdown-menu">
                       <li><a href="#">AI Chef</a></li>
+<<<<<<< HEAD
                       <li><a href="#">Recipe Maker</a></li>
                       <li><a href="/calendar">Meal Planner</a></li>
+=======
+                      <li><a href="/recipe/create">Recipe Maker</a></li>
+                      <li><a href="#">Meal Planner</a></li>
+>>>>>>> origin/main
                     </ul>
                 </li>
 
@@ -55,8 +60,8 @@
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">Account<span class="caret"></span></a>
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
-                            <li><a href="#">My Account</a></li>
-                            <li><a href="/pantry">My Pantry</a></li>
+                            <li><a href="/account">My Account</a></li>
+                            <li><a href="/pantry/">My Pantry</a></li>
                             <li><a href="#">Meal Plans</a></li>
                             <li><a href="#">Favorites</a></li>
                             <li><a href="/logout">Log Out</a></li>

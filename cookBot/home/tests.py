@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from home.models import Pantry, Recipe, RecipeIngredient, RecipeRating, RecipeStep, MealPlan
 from django.core.cache import cache
+from .forms import RegisterForm, EditProfileForm
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
 # Model tests need to be made
@@ -928,5 +929,245 @@ class MealPlanAcceptanceTests(TestCase):
         expected_names = [f'Recipe {i}' for i in range(1, 8)]
         self.assertEqual(sorted(saved_names), sorted(expected_names))
 #### End MealPlan Acceptance Tests ####
+ 
+#### Start of tests for recipe page and create recipe pages ####
 
+class RecipeViewTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='password123'
+        )
+        self.client = Client()
+        self.client.login(username='testuser', password='password123')
+
+    def test_recipe_view_status(self):
+        """Recipe page loads successfully"""
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title="Test Recipe",
+            is_public=True
+        )
+
+        url = reverse('recipe_view', args=[recipe.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_recipe_view_steps_ordering(self):
+        """Steps should be returned in correct order"""
+        recipe = Recipe.objects.create(user=self.user, title="Test", is_public=True)
+
+        RecipeStep.objects.create(recipe=recipe, order=2, text="Step 2")
+        RecipeStep.objects.create(recipe=recipe, order=1, text="Step 1")
+
+        response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+
+        self.assertEqual(response.context["steps_json"], ["Step 1", "Step 2"])
+
+    def test_recipe_view_ingredients_format(self):
+        """Ingredients should be properly formatted"""
+        recipe = Recipe.objects.create(user=self.user, title="Test", is_public=True)
+
+        RecipeIngredient.objects.create(recipe=recipe, quantity="1", unit="cup", name="Flour")
+        RecipeIngredient.objects.create(recipe=recipe, quantity="2", unit="", name="Eggs")
+
+        response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+
+        ingredients = response.context["ingredients_json"]
+
+        self.assertIn("1 cup Flour", ingredients)
+        self.assertIn("2 Eggs".strip(), ingredients)
+
+    def test_recipe_view_404(self):
+        """Invalid recipe should return 404"""
+        response = self.client.get(reverse('recipe_view', args=[999]))
+
+        self.assertEqual(response.status_code, 404)
+
+# Create recipe tests
+class CreateRecipeTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='password123'
+        )
+        self.client = Client()
+
+    def test_create_recipe_requires_login(self):
+        """Redirects if user is not logged in"""
+        response = self.client.get(reverse('create_recipe'))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/signin', response.url)
+
+    def test_create_recipe_get(self):
+        """GET request should load the page"""
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.get(reverse('create_recipe'))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_recipe_post(self):
+        """POST should create recipe, ingredients, and steps"""
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.post(reverse('create_recipe'), {
+            "title": "New Recipe",
+            "is_public": "on",
+            "ingredient_quantity[]": ["1", "2"],
+            "ingredient_unit[]": ["cup", ""],
+            "ingredient_name[]": ["Flour", "Eggs"],
+            "steps[]": ["Mix", "Bake"]
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        recipe = Recipe.objects.get(title="New Recipe")
+        self.assertTrue(recipe.is_public)
+
+        self.assertEqual(RecipeIngredient.objects.filter(recipe=recipe).count(), 2)
+        self.assertEqual(RecipeStep.objects.filter(recipe=recipe).count(), 2)
+
+    def test_create_recipe_ignores_empty_fields(self):
+        """Empty ingredient names and steps should be ignored"""
+        self.client.login(username='testuser', password='password123')
+
+        self.client.post(reverse('create_recipe'), {
+            "title": "Edge Recipe",
+            "ingredient_quantity[]": ["1", ""],
+            "ingredient_unit[]": ["cup", ""],
+            "ingredient_name[]": ["Flour", "   "],  # empty
+            "steps[]": ["Step 1", "   "]  # empty
+        })
+
+        recipe = Recipe.objects.get(title="Edge Recipe")
+
+        self.assertEqual(RecipeIngredient.objects.filter(recipe=recipe).count(), 1)
+        self.assertEqual(RecipeStep.objects.filter(recipe=recipe).count(), 1)
+
+ #### End of tests for recipe page and create recipe pages ####
+
+# Tests for Account Management (Registration, Edit Account, Change Password)
+
+class RegisterFormTests(TestCase):
+    def test_register_form_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username="existinguser",
+            email="test@email.com",
+            password="testpass123"
+        )
+
+        form = RegisterForm(data={
+            "first_name": "Another",
+            "last_name": "User",
+            "username": "anotheruser",
+            "email": "test@email.com",
+            "password1": "StrongPassword123!",
+            "password2": "StrongPassword123!",
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+        self.assertIn(
+            "An account with this email already exists.",
+            form.errors["email"]
+        )
+class EditProfileFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@email.com",
+            password="testpass123"
+        )
+
+    def test_edit_profile_form_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username="otheruser",
+            email="taken@email.com",
+            password="testpass123"
+        )
+
+        form = EditProfileForm(
+            data={
+                "first_name": "Test",
+                "last_name": "User",
+                "username": "testuser",
+                "email": "taken@email.com",
+            },
+            instance=self.user
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+        self.assertIn(
+            "That email is already in use.",
+            form.errors["email"]
+        )
+class AccountViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@email.com",
+            password="testpass123"
+        )
+
+    def test_register_view_creates_user(self):
+        response = self.client.post(reverse("register"), {
+            "first_name": "New",
+            "last_name": "User",
+            "username": "newuser",
+            "email": "newuser@email.com",
+            "password1": "StrongPassword123!",
+            "password2": "StrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username="newuser").exists())
+
+    def test_edit_account_updates_user(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("edit_account"), {
+            "first_name": "Updated",
+            "last_name": "User",
+            "username": "testuser",
+            "email": "updated@email.com",
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Updated")
+        self.assertEqual(self.user.email, "updated@email.com")
+
+    def test_change_password_works(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("change_password"), {
+            "old_password": "testpass123",
+            "new_password1": "NewStrongPassword123!",
+            "new_password2": "NewStrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewStrongPassword123!"))
+    def test_change_password_fails_with_wrong_current_password(self):
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.post(reverse("change_password"), {
+            "old_password": "wrongpassword",
+            "new_password1": "NewStrongPassword123!",
+            "new_password2": "NewStrongPassword123!",
+        })
+
+        self.assertEqual(response.status_code, 200)
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("testpass123"))
 
