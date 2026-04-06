@@ -375,7 +375,7 @@ def aiChefBot_view(request):
     
     #Getting the spoonacular recipes
     spoonacular_recipes = []
-    pantry_items = request.user.pantry_items.values_list('ingredient_name', flat=True)
+    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
  
     if pantry_items:
         try:

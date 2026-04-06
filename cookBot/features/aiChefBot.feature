@@ -36,3 +36,47 @@ Feature: AI ChefBot chat functionality
     When I send a valid message to ChefBot
     Then I should receive a reply from ChefBot
     And the message and reply should be saved to the database
+  
+  Scenario: ChefBot includes Spoonacular recipes in its context
+    Given I am a logged in user with a chat session with Spoonacular context
+    When I send a valid message to ChefBot
+    Then the OpenAI call should include Spoonacular recipe context
+
+  Scenario: ChefBot includes saved recipes in its context
+    Given I am a logged in user with a chat session and saved recipes
+    When I send a valid message to ChefBot
+    Then the OpenAI call should include saved recipe context
+
+  Scenario: ChefBot builds the correct message structure for OpenAI
+    Given I am a logged in user with a chat session
+    When I send a valid message to ChefBot
+    Then the OpenAI call should have the system prompt as the first message
+  Scenario: collect_context_from_recipes formats Spoonacular recipes correctly
+    Given I have Spoonacular recipes
+    When I collect context from those recipes
+    Then the context should contain the Spoonacular recipe titles
+
+  Scenario: collect_context_from_recipes formats saved recipes correctly
+    Given I have saved recipe data
+    When I collect context from those recipes
+    Then the context should contain the saved recipe titles
+
+  Scenario: collect_context_from_recipes returns empty string with no recipes
+    Given I have no recipe data
+    When I collect context from those recipes
+    Then the context should be empty
+
+  Scenario: build_messages puts system prompt first
+    Given I have a conversation history
+    When I build messages for OpenAI
+    Then the first message should be the system prompt
+
+  Scenario: build_messages injects recipe context into system prompt
+    Given I have Spoonacular recipes
+    When I build messages with that recipe context
+    Then the system prompt should contain the recipe context
+
+  Scenario: call_openai raises an exception on API failure
+    Given I have a conversation history
+    When the OpenAI API returns an error
+    Then an exception should be raised with the error details
