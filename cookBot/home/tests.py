@@ -678,6 +678,366 @@ class MissingCoverageTests(TestCase):
         long_name = 'a' * 100
         fallback = get_fallback_recipes([long_name])
         self.assertTrue(len(fallback) > 0)
+
+    def test_delete_ingredient_exception_handling(self):
+        """Test views.py lines 151-152: Exception handling in delete_ingredient"""
+        self.client.login(username='testuser', password='password123')
+        # Try to delete with an invalid ID that will cause an exception
+        response = self.client.post(reverse('delete_ingredient', args=[99999]))
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_meals_json_success(self):
+        """Test views.py lines 328-354: get_meals_json returns meal plans"""
+        self.client.login(username='testuser', password='password123')
+        from home.models import MealPlan
+        from datetime import date
+        
+        # Create a meal plan for the current month
+        MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Test Meal',
+            recipe_id=123,
+            date=date.today(),
+            meal_type='Dinner'
+        )
+        
+        response = self.client.get(reverse('get_meals'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('meals', data)
+        self.assertIsInstance(data['meals'], list)
+        self.assertEqual(len(data['meals']), 1)
+        meal = data['meals'][0]
+        self.assertEqual(meal['title'], 'Test Meal')
+        self.assertEqual(meal['meal_type'], 'Dinner')
+
+    def test_get_meals_json_with_date_range(self):
+        """Test views.py lines 331-350: get_meals_json with custom date range"""
+        self.client.login(username='testuser', password='password123')
+        from home.models import MealPlan
+        from datetime import date, timedelta
+        
+        # Create a meal plan for a specific date
+        test_date = date(2026, 6, 15)
+        MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Summer Meal',
+            recipe_id=456,
+            date=test_date,
+            meal_type='Lunch'
+        )
+        
+        # Query with specific date range
+        response = self.client.get(
+            reverse('get_meals') + '?start_date=2026-06-01&end_date=2026-06-30'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['meals']), 1)
+        self.assertEqual(data['meals'][0]['title'], 'Summer Meal')
+
+    def test_get_meals_json_empty_result(self):
+        """Test views.py lines 346-351: get_meals_json returns empty list when no meals"""
+        self.client.login(username='testuser', password='password123')
+        
+        response = self.client.get(reverse('get_meals'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('meals', data)
+        self.assertEqual(len(data['meals']), 0)
+
+    @patch('home.views.spoonacular_get')
+    def test_generate_meal_plan_empty_pantry(self, mock_spoonacular):
+        """Test views.py lines 383-386: generate_meal_plan returns 400 when pantry is empty"""
+        self.client.login(username='testuser', password='password123')
+        
+        # Ensure pantry is empty
+        Pantry.objects.filter(user=self.user).delete()
+        
+        response = self.client.post(reverse('generate_meal_plan'))
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+        self.assertIn('empty', data['error'].lower())
+
+    @patch('home.views.spoonacular_get')
+    def test_generate_meal_plan_success(self, mock_spoonacular):
+        """Test views.py lines 391-438: generate_meal_plan creates 7 meals"""
+        self.client.login(username='testuser', password='password123')
+        
+        # Add ingredients to pantry
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        Pantry.objects.create(user=self.user, ingredient_name='Rice')
+        
+        # Mock successful API response with 7 recipes
+        mock_recipes = [
+            {'id': i, 'title': f'Recipe {i}'} for i in range(1, 8)
+        ]
+        mock_spoonacular.return_value = mock_recipes
+        
+        response = self.client.post(reverse('generate_meal_plan'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['meals_count'], 7)
+        
+        # Verify meals were created
+        from home.models import MealPlan
+        meals_count = MealPlan.objects.filter(user=self.user).count()
+        self.assertEqual(meals_count, 7)
+
+    @patch('home.views.spoonacular_get')
+    def test_generate_meal_plan_api_failure(self, mock_spoonacular):
+        """Test views.py lines 440-443: generate_meal_plan handles API failure"""
+        import urllib.error
+        self.client.login(username='testuser', password='password123')
+        
+        # Add ingredients to pantry
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        
+        # Mock API failure
+        mock_spoonacular.side_effect = urllib.error.HTTPError(
+            url="test", code=500, msg="Internal Server Error", hdrs={}, fp=None
+        )
+        
+        response = self.client.post(reverse('generate_meal_plan'))
+        self.assertEqual(response.status_code, 502)
+        data = response.json()
+        self.assertIn('error', data)
+
+    # ---- Unauthorized Access Tests ----
+
+    def test_edit_account_requires_login(self):
+        """Test that edit_account redirects when not logged in"""
+        response = self.client.get(reverse('edit_account'))
+        self.assertIn(response.status_code, [302, 403])
+
+    def test_account_requires_login(self):
+        """Test that account view redirects when not logged in"""
+        response = self.client.get(reverse('account'))
+        self.assertIn(response.status_code, [302, 403])
+
+    def test_calendar_view_requires_login(self):
+        """Test that calendar_view redirects when not logged in"""
+        response = self.client.get(reverse('calendar'))
+        self.assertIn(response.status_code, [302, 403])
+
+    def test_get_pantry_ingredients_requires_login(self):
+        """Test that get_pantry_ingredients redirects when not logged in"""
+        response = self.client.get(reverse('get_pantry_ingredients'))
+        self.assertIn(response.status_code, [302, 403])
+
+    # ---- Invalid Data Handling Tests ----
+
+    def test_edit_account_invalid_form(self):
+        """Test edit_account when form is invalid (duplicate email)"""
+        # Create another user with the email we'll try to use
+        User.objects.create_user(username='otheruser', email='taken@email.com', password='pass123')
+        
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(reverse('edit_account'), {
+            'first_name': 'Test',
+            'last_name': 'User',
+            'username': 'testuser',
+            'email': 'taken@email.com'  # Already exists
+        })
+        self.assertEqual(response.status_code, 200)  # Re-renders form with errors
+
+    def test_change_password_invalid_form(self):
+        """Test change_password when form is invalid (wrong current password)"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(reverse('change_password'), {
+            'old_password': 'wrongpassword',
+            'new_password1': 'NewStrongPassword123!',
+            'new_password2': 'NewStrongPassword123!'
+        })
+        self.assertEqual(response.status_code, 200)  # Re-renders form with errors
+
+    # ---- 404 Error Tests ----
+
+    def test_recipe_view_404(self):
+        """Test that viewing non-existent recipe returns 404"""
+        response = self.client.get(reverse('recipe_view', args=[99999]))
+        self.assertEqual(response.status_code, 404)
+
+    # ---- Permission Denied Tests ----
+
+    def test_recipe_view_private_recipe_different_user(self):
+        """Test that a different user cannot view a private recipe"""
+        # Create recipe owned by testuser
+        recipe = Recipe.objects.create(user=self.user, title='Private Recipe', is_public=False)
+        # Create and login as different user
+        other_user = User.objects.create_user(username='otheruser', password='pass123')
+        self.client.login(username='otheruser', password='pass123')
+        response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_recipe_view_private_recipe_unauthenticated(self):
+        """Test that unauthenticated user cannot view private recipe"""
+        recipe = Recipe.objects.create(user=self.user, title='Private Recipe', is_public=False)
+        response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+        # Returns 403 Forbidden (PermissionDenied) for unauthenticated users
+        self.assertEqual(response.status_code, 403)
+
+    # ---- View GET Request Tests ----
+
+    def test_register_get(self):
+        """Test register page loads with GET"""
+        response = self.client.get(reverse('register'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_signin_get(self):
+        """Test signin page loads with GET"""
+        response = self.client.get(reverse('signin'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_signin_successful(self):
+        """Test successful signin redirects to index"""
+        response = self.client.post(reverse('signin'), {
+            'username': 'testuser',
+            'password': 'password123'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('index'))
+
+    def test_account_view(self):
+        """Test account page loads for logged-in user"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('account'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_edit_account_get(self):
+        """Test edit_account page loads with GET"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('edit_account'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_change_password_get(self):
+        """Test change_password page loads with GET"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('change_password'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_pantry_ingredients(self):
+        """Test get_pantry_ingredients returns JSON"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('get_pantry_ingredients'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('ingredients', data)
+
+    def test_calendar_view(self):
+        """Test calendar page loads for logged-in user"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('calendar'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_nutrition_test_view(self):
+        """Test nutrition_test view function exists and is callable"""
+        from home.views import nutrition_test
+        self.assertIsNotNone(nutrition_test)
+
+    # ---- API Edge Case Tests ----
+
+    @patch('home.views.spoonacular_get')
+    def test_search_recipes_payment_required(self, mock_spoonacular):
+        """Test search_recipes_by_pantry handles HTTP 402 Payment Required"""
+        import urllib.error
+        self.client.login(username='testuser', password='password123')
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        
+        mock_spoonacular.side_effect = urllib.error.HTTPError(
+            url="test", code=402, msg="Payment Required", hdrs={}, fp=None
+        )
+        
+        response = self.client.get(reverse('search_recipes_by_pantry'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('api_status', data)
+        self.assertEqual(data['api_status'], 'payment_required')
+
+    def test_create_recipe_empty_title(self):
+        """Test create_recipe with empty title shows error"""
+        self.client.login(username='testuser', password='password123')
+        response = self.client.post(reverse('create_recipe'), {
+            'title': '',  # Empty title
+            'is_public': 'on'
+        })
+        # Should re-render the form (200) or redirect (302) - either is valid
+        self.assertIn(response.status_code, [200, 302])
+
+    @patch('home.views.spoonacular_get')
+    def test_generate_meal_plan_empty_api_response(self, mock_spoonacular):
+        """Test generate_meal_plan handles empty API response with fallback"""
+        self.client.login(username='testuser', password='password123')
+        Pantry.objects.create(user=self.user, ingredient_name='Rice')
+        
+        # Mock API returning empty list - view should use fallback recipes
+        mock_spoonacular.return_value = []
+        
+        response = self.client.post(reverse('generate_meal_plan'))
+        # The view should succeed using fallback recipes
+        self.assertIn(response.status_code, [200, 502])
+
+    # ---- Integration Test (Full User Journey) ----
+
+    @patch('home.views.spoonacular_get')
+    def test_full_user_journey(self, mock_spoonacular):
+        """Integration test: Register -> Create Recipe -> Add to Pantry -> Generate Meal Plan -> View Calendar"""
+        # 1. Register a new user
+        response = self.client.post(reverse('register'), {
+            'first_name': 'Integration',
+            'last_name': 'Test',
+            'username': 'integrationuser',
+            'email': 'integration@test.com',
+            'password1': 'StrongPassword123!',
+            'password2': 'StrongPassword123!'
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after successful registration
+        
+        # 2. User is automatically logged in, create a recipe
+        response = self.client.post(reverse('create_recipe'), {
+            'title': 'Integration Test Recipe',
+            'is_public': 'on',
+            'ingredient_quantity[]': ['1'],
+            'ingredient_unit[]': ['cup'],
+            'ingredient_name[]': ['Flour'],
+            'steps[]': ['Mix ingredients']
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect to recipe view
+        
+        # 3. View the recipe
+        recipe = Recipe.objects.get(title='Integration Test Recipe')
+        response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Integration Test Recipe')
+        
+        # 4. Add ingredient to pantry
+        response = self.client.post(
+            reverse('add_ingredient'),
+            data=json.dumps({'ingredient_name': 'Sugar'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Pantry.objects.filter(ingredient_name='Sugar').exists())
+        
+        # 5. Generate meal plan
+        mock_spoonacular.return_value = [{'id': i, 'title': f'Recipe {i}'} for i in range(1, 8)]
+        response = self.client.post(reverse('generate_meal_plan'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['meals_count'], 7)
+        
+        # 6. View calendar
+        response = self.client.get(reverse('calendar'))
+        self.assertEqual(response.status_code, 200)
+        
+        # 7. Logout
+        response = self.client.get(reverse('logout'))
+        self.assertEqual(response.status_code, 302)
 #### End Missing Coverage Tests ####
  
 

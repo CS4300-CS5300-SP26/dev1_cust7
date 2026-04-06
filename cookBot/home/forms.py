@@ -18,7 +18,7 @@ class RegisterForm(UserCreationForm):
             raise forms.ValidationError("An account with this email already exists.")
 
         return email
-    
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data['first_name']

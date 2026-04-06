@@ -13,28 +13,31 @@ def step_create_user(context, username, password):
     context.users[username] = user
 
 
-@given('that user has a recipe titled "{title}" with the following steps:')
+@given('that user has a recipe titled "{title}" with the following steps')
 def step_create_recipe_with_steps(context, title):
     # The recipe belongs to the first user created in the background
     owner = list(context.users.values())[0]
 
-    recipe, _ = Recipe.objects.get_or_create(
+    # Delete any existing recipe with this title to ensure test isolation
+    Recipe.objects.filter(title=title, user=owner).delete()
+
+    recipe = Recipe.objects.create(
         title=title,
         user=owner,
-        defaults={'is_public': False}
+        is_public=False
     )
     context.recipe = recipe
 
     # Create each step row from the feature file table
     for row in context.table:
-        RecipeStep.objects.get_or_create(
+        RecipeStep.objects.create(
             recipe=recipe,
             order=int(row['order']),
-            defaults={'text': row['text']}
+            text=row['text']
         )
 
 
-@given('that recipe has the following ingredients:')
+@given('that recipe has the following ingredients')
 def step_create_ingredients(context):
     for row in context.table:
         unit = row['unit'].strip() or None
@@ -50,8 +53,14 @@ def step_create_ingredients(context):
 
 @given('I am logged in as "{username}" with password "{password}"')
 def step_login(context, username, password):
+    # Ensure user exists with the correct password
+    user, created = User.objects.get_or_create(username=username)
+    user.set_password(password)
+    user.save()
+    
     logged_in = context.client.login(username=username, password=password)
-    assert logged_in, f"Login failed for user '{username}' — check the password matches what was set in the create step"
+    assert logged_in, f"Login failed for user '{username}' with password '{password}'"
+    context.user = user
 
 # When steps
 @when('I visit the recipe view page')

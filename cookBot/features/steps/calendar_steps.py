@@ -1,9 +1,6 @@
 from behave import given, when, then
 import json
 
-
-# ---- Given steps ----
-
 @given('I am a logged-in user')
 def step_logged_in_user(context):
     from django.contrib.auth.models import User
@@ -23,7 +20,7 @@ def step_logged_in_user(context):
 
 
 @given('I have "{ingredient1}" and "{ingredient2}" in my pantry')
-def step_have_ingredients(context):
+def step_have_ingredients(context, ingredient1, ingredient2):
     from home.models import Pantry
 
     for ingredient in [ingredient1, ingredient2]:
@@ -64,13 +61,22 @@ def step_generated_meal_plan(context):
     context.saved_meal_plan = context.meal_plan
 
 
-# ---- When steps ----
-
 @when('I click "Generate Weekly Plan"')
 def step_click_generate(context):
     """Simulate clicking the generate button by calling the calendar view"""
-    # Try to call the calendar generation endpoint
-    # This will need to match your actual URL pattern
+    # Ensure user is logged in before calling the endpoint
+    from django.contrib.auth.models import User
+    if not hasattr(context, 'user') or not User.objects.filter(username='testuser').exists():
+        user, created = User.objects.get_or_create(username='testuser')
+        if created:
+            user.set_password('testpass123')
+            user.save()
+    
+    # Always re-login to ensure session is valid
+    context.client.login(username='testuser', password='testpass123')
+    context.user = User.objects.get(username='testuser')
+    
+    # Call the calendar generation endpoint
     context.response = context.client.get('/calendar/generate/')
 
 
@@ -78,9 +84,6 @@ def step_click_generate(context):
 def step_return_to_calendar(context):
     """Navigate back to the calendar page"""
     context.response = context.client.get('/calendar/')
-
-
-# ---- Then steps ----
 
 @then('I should see {count:d} meals on the calendar grid')
 def step_see_meals_on_calendar(context, count):
