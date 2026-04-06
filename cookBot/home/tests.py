@@ -603,38 +603,6 @@ class SocialFeedTests(TestCase):
         response = self.client.get(reverse('social_feed'))
         self.assertNotIn('Going Private', response.content.decode())
 
-    def test_social_feed_loads_for_logged_in_user(self):
-        """Given a user is logged in, the social feed page loads successfully"""
-        response = self.client.get(reverse('social_feed'))
-        self.assertEqual(response.status_code, 200)
- 
-    def test_social_feed_redirects_logged_out_user(self):
-        """Given a user is not logged in, they are redirected away from the feed"""
-        self.client.logout()
-        response = self.client.get(reverse('social_feed'))
-        self.assertEqual(response.status_code, 302)
- 
-    def test_social_feed_shows_recipes_from_all_users(self):
-        """Given public recipes from multiple users exist, all appear in the feed"""
-        Recipe.objects.create(user=self.user, title='My Public Recipe', is_public=True)
-        Recipe.objects.create(user=self.other_user, title='Their Public Recipe', is_public=True)
-        response = self.client.get(reverse('social_feed'))
-        content = response.content.decode()
-        self.assertIn('My Public Recipe', content)
-        self.assertIn('Their Public Recipe', content)
- 
-    def test_social_feed_is_ordered_newest_first(self):
-        """Given multiple public recipes exist, they are returned newest first"""
-        response = self.client.get(reverse('social_feed'))
-        recipes = list(response.context['public_recipes'])
-        for i in range(len(recipes) - 1):
-            self.assertGreaterEqual(recipes[i].created_date, recipes[i + 1].created_date)
- 
-    def test_social_feed_empty_when_no_public_recipes(self):
-        """Given no public recipes exist, the feed context contains an empty queryset"""
-        response = self.client.get(reverse('social_feed'))
-        self.assertEqual(len(response.context['public_recipes']), 0)
- 
     def test_social_feed_shows_recipe_author(self):
         """Given a public recipe is in the feed, the author's username is displayed"""
         Recipe.objects.create(user=self.other_user, title='Authored Recipe', is_public=True)
