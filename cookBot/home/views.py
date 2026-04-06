@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
@@ -12,7 +12,8 @@ from django.core.exceptions import PermissionDenied
 from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage
 import json
 import urllib.request
-import urllib.parse 
+import urllib.parse
+from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai
 
 def index(request):
@@ -54,18 +55,16 @@ def nutrition_test(request):
 
 
 def register(request):
-    """User registration view"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('index')
-        else:
-            # Print form errors for debugging
-            print(f"Form errors: {form.errors}")
+
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
+
     return render(request, 'home/register.html', {'form': form})
 
 
@@ -85,6 +84,36 @@ def signin(request):
 def signout(request):
     logout(request)
     return redirect('index')
+
+@login_required
+def account(request):
+    return render(request, 'home/account_info.html', {'user': request.user})
+
+@login_required
+def edit_account(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('account')
+    else:
+        form = EditProfileForm(instance=request.user)
+
+    return render(request, 'home/edit_account.html', {'form': form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            return redirect('account')
+
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'home/change_password.html', {'form': form})
 
 @login_required
 def pantry_view(request):
@@ -368,109 +397,10 @@ def create_recipe(request):
 
     return render(request, "create_recipe.html")
 
-#Render the ChefBot chat page and starts new session and then prompts it
-#with the newly pulled spoonacular recipes and saved recipes
+#Social feed view
 @login_required
-def aiChefBot_view(request):
-    
-    #Getting the spoonacular recipes
-    spoonacular_recipes = []
-    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+def social_feed(request):
+    """Display a feed of all public recipes from all users, newest first"""
+    public_recipes = Recipe.objects.filter(is_public=True).order_by('-created_date')
+    return render(request, 'home/social_feed.html', {'public_recipes': public_recipes})
  
-    if pantry_items:
-        try:
-            from .spoonacular import spoonacular_get
-            raw = spoonacular_get("recipes/findByIngredients", {
-                "ingredients": ','.join(pantry_items),
-                "number": 5,
-                "ranking": 1,
-                "ignorePantry": False,
-            })
-            for r in raw:
-                spoonacular_recipes.append({
-                    'title': r.get('title'),
-                    'used_ingredients': [i['name'] for i in r.get('usedIngredients', [])],
-                    'missed_ingredients': [i['name'] for i in r.get('missedIngredients', [])],
-                })
-        #If Spoonacular is unavailable, continue without it
-        except Exception:
-            spoonacular_recipes = []
-    
-    #Get saved recipes
-    saved_recipes = []
-    for recipe in request.user.recipes.prefetch_related('ingredients').all():
-        saved_recipes.append({
-            'title': recipe.title,
-            'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
-        })
- 
-    #Create a new session
-    session = ChatSession.objects.create(
-        user=request.user,
-        spoonacular_context=spoonacular_recipes,
-    )
- 
-    return render(request, 'home/aiChefBot.html', {
-        'session_id': session.id,
-        'spoonacular_recipes': spoonacular_recipes,
-        'saved_recipes': saved_recipes,
-    })
-
-#Take in the user message and append it to the search history
-@login_required
-@require_POST
-def aiChefBot_chat(request):
-    
-    try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        session_id = data.get('session_id')
- 
-        if not user_message:
-            return JsonResponse({'error': 'Message cannot be empty.'}, status=400)
- 
-        if not session_id:
-            return JsonResponse({'error': 'Session ID is required.'}, status=400)
- 
-        #Load chat session
-        try:
-            session = ChatSession.objects.get(id=session_id, user=request.user)
-        except ChatSession.DoesNotExist:
-            return JsonResponse({'error': 'Chat session not found.'}, status=404)
- 
-        #Save the user's message
-        ChatMessage.objects.create(
-            session=session,
-            role='user',
-            content=user_message,
-        )
- 
-        #Build full conversation history
-        conversation_history = session.get_history()
- 
-        #Build saved recipes context
-        saved_recipes = []
-        for recipe in request.user.recipes.prefetch_related('ingredients').all():
-            saved_recipes.append({
-                'title': recipe.title,
-                'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
-            })
- 
-        #Call OpenAI
-        reply = call_openai(
-            conversation_history=conversation_history,
-            spoonacular_recipes=session.spoonacular_context,
-            saved_recipes=saved_recipes,
-        )
- 
-        #Save ChefBot's response
-        ChatMessage.objects.create(
-            session=session,
-            role='assistant',
-            content=reply,
-        )
- 
-        return JsonResponse({'reply': reply})
- 
-    except Exception as e:
-        return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)

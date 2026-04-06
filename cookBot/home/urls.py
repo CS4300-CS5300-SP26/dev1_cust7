@@ -6,10 +6,13 @@ urlpatterns = [
     #Spoonacular API
     path('nutrition/<str:ingredient_name>/', views.get_nutrition, name='get_nutrition'),
     
-    # Authentication
+    # Authentication & User Account Management
     path('register/', views.register, name='register'),
     path('signin/', views.signin, name='signin'),
     path('logout/', views.signout, name='logout'),
+    path('account/', views.account, name='account'),
+    path('account/edit/', views.edit_account, name='edit_account'),
+    path('account/change-password/', views.change_password, name='change_password'),
     
     # Pantry functionality
     path('pantry/', views.pantry_view, name='pantry'),
@@ -25,4 +28,8 @@ urlpatterns = [
     #ChefBot openai
     path('aiChefBot/', views.aiChefBot_view, name='aiChefBot'),
     path('aiChefBot/chat/', views.aiChefBot_chat, name='aiChefBot_chat'),
+
+    # Social feed
+    path('social/', views.social_feed, name='social_feed'),
+
 ]
