@@ -460,16 +460,19 @@ class MissingCoverageTests(TestCase):
 
     def test_register_form_validation_errors(self):
         """Test views.py lines 72-82: Form validation errors in register view"""
-        with patch('home.views.print') as mock_print:
-            response = self.client.post(reverse('register'), {
-                'username': 'testuser',  # Already exists
-                'password1': 'password123',
-                'password2': 'password123'
-            })
-            # Should render form with errors, not redirect
-            self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'form')
-            mock_print.assert_called()  # Form errors should be printed
+        response = self.client.post(reverse('register'), {
+            'username': 'testuser',  # Already exists
+            'password1': 'password123',
+            'password2': 'password123'
+        })
+        # Should render form with errors, not redirect
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'form')
+        # Check that form has errors
+        form = response.context.get('form')
+        self.assertIsNotNone(form)
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
 
     def test_signin_invalid_credentials(self):
         """Test views.py line 103: Invalid username/password in signin"""
@@ -618,15 +621,19 @@ class MissingCoverageTests(TestCase):
 
     def test_register_form_invalid_data(self):
         """Test views.py lines 77-78, 82: Form validation with invalid data"""
-        with patch('home.views.print') as mock_print:
-            response = self.client.post(reverse('register'), {
-                'username': 'test@user!',  # Invalid characters
-                'password1': '123',  # Too short
-                'password2': '456'  # Doesn't match
-            })
-            self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'form')
-            mock_print.assert_called()
+        response = self.client.post(reverse('register'), {
+            'username': 'test@user!',  # Invalid characters
+            'password1': '123',  # Too short
+            'password2': '456'  # Doesn't match
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'form')
+        # Check that form has errors
+        form = response.context.get('form')
+        self.assertIsNotNone(form)
+        self.assertFalse(form.is_valid())
+        # Verify multiple validation errors are caught
+        self.assertTrue(len(form.errors) > 0)
 
     def test_add_ingredient_malformed_json(self):
         """Test views.py lines 140-141: Malformed JSON handling"""
