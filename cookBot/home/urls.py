@@ -25,7 +25,11 @@ urlpatterns = [
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
     path('recipe/create/', views.create_recipe, name='create_recipe'),
 
+    #ChefBot openai
+    path('aiChefBot/', views.aiChefBot_view, name='aiChefBot'),
+    path('aiChefBot/chat/', views.aiChefBot_chat, name='aiChefBot_chat'),
+
     # Social feed
     path('social/', views.social_feed, name='social_feed'),
-    
+
 ]
