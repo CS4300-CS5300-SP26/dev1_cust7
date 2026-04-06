@@ -1,5 +1,123 @@
-{% for recipe in public_recipes %}
-    <a href="{% url 'recipe_view' recipe.id %}">{{ recipe.title }}</a>
-{% empty %}
-    <p>No recipes have been shared yet.</p>
-{% endfor %}
+{% extends "navbar.html" %}
+{% load static %}
+ 
+{% block content %}
+<div class="social-page">
+ 
+  <div class="social-header">
+    <h1>Social Feed</h1>
+    <p class="social-subheading">Discover recipes shared by the CookBot community</p>
+  </div>
+ 
+  <div class="social-feed">
+    {% for recipe in public_recipes %}
+      <div class="recipe-card">
+        <div class="recipe-card-header">
+          <span class="recipe-card-author">&#128065; {{ recipe.user.username }}</span>
+          <span class="recipe-card-date">{{ recipe.created_date|date:"M d, Y" }}</span>
+        </div>
+        <h2 class="recipe-card-title">{{ recipe.title }}</h2>
+        <div class="recipe-card-meta">
+          {% with avg=recipe.average_rating %}
+            {% if avg %}
+              <span>&#11088; {{ avg|floatformat:1 }} / 5</span>
+            {% else %}
+              <span class="no-rating">No ratings yet</span>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <a class="recipe-card-link" href="{% url 'recipe_view' recipe.id %}">View Recipe &rarr;</a>
+      </div>
+    {% empty %}
+      <div class="feed-empty">
+        <p>No recipes have been shared yet.</p>
+        <a href="{% url 'create_recipe' %}">Be the first to share one &rarr;</a>
+      </div>
+    {% endfor %}
+  </div>
+ 
+</div>
+ 
+<style>
+  .social-page {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
+ 
+  .social-header {
+    margin-bottom: 2rem;
+  }
+ 
+  .social-header h1 {
+    margin-bottom: 0.25rem;
+  }
+ 
+  .social-subheading {
+    color: #666;
+    margin: 0;
+  }
+ 
+  .social-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+ 
+  .recipe-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+ 
+  .recipe-card-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 0.5rem;
+  }
+ 
+  .recipe-card-title {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+  }
+ 
+  .recipe-card-meta {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 1rem;
+  }
+ 
+  .no-rating {
+    color: #aaa;
+  }
+ 
+  .recipe-card-link {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 2px solid currentColor;
+  }
+ 
+  .feed-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+  }
+ 
+  .feed-empty a {
+    display: inline-block;
+    margin-top: 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+    color: inherit;
+    border-bottom: 2px solid currentColor;
+  }
+</style>
+ 
+{% endblock %}
