@@ -13,6 +13,13 @@
     <div id="generate-message" style="margin-top: 10px; font-weight: 500;"></div>
 </div>
 
+<!-- API endpoints (used by JavaScript) -->
+<div id="calendar-api-endpoints" 
+     data-get-meals-url="{% url 'get_meals' %}" 
+     data-generate-meal-plan-url="{% url 'generate_meal_plan' %}"
+     style="display: none;">
+</div>
+
 <style>
     /* Calendar container styling */
     #calendar {
@@ -87,6 +94,11 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Get API URLs from data attributes
+    var apiEndpoints = document.getElementById('calendar-api-endpoints');
+    var getMealsUrl = apiEndpoints.getAttribute('data-get-meals-url');
+    var generateMealPlanUrl = apiEndpoints.getAttribute('data-generate-meal-plan-url');
+    
     var calendarEl = document.getElementById('calendar');
     
     var calendar = new FullCalendar.Calendar(calendarEl, {
@@ -103,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Fetch events from our API
         events: function(info, successCallback, failureCallback) {
-            fetch('/api/get-meals/')
+            fetch(getMealsUrl)
                 .then(response => response.json())
                 .then(data => {
                     // Transform API response to FullCalendar events
@@ -156,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = 'Generating...';
         msgDiv.textContent = '';
         
-        fetch('/api/generate-meal-plan/', {
+        fetch(generateMealPlanUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
