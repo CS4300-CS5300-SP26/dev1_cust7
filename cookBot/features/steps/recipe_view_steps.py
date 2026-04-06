@@ -13,7 +13,7 @@ def step_create_user(context, username, password):
     context.users[username] = user
 
 
-@given('that user has a recipe titled "{title}" with the following steps:')
+@given('that user has a recipe titled "{title}" with the following steps')
 def step_create_recipe_with_steps(context, title):
     # The recipe belongs to the first user created in the background
     owner = list(context.users.values())[0]
@@ -34,7 +34,7 @@ def step_create_recipe_with_steps(context, title):
         )
 
 
-@given('that recipe has the following ingredients:')
+@given('that recipe has the following ingredients')
 def step_create_ingredients(context):
     for row in context.table:
         unit = row['unit'].strip() or None

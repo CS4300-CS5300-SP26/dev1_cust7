@@ -396,3 +396,11 @@ def create_recipe(request):
         return redirect("recipe_view", recipe_id=recipe.id)
 
     return render(request, "create_recipe.html")
+
+#Social feed view
+@login_required
+def social_feed(request):
+    """Display a feed of all public recipes from all users, newest first"""
+    public_recipes = Recipe.objects.filter(is_public=True).order_by('-created_date')
+    return render(request, 'home/social_feed.html', {'public_recipes': public_recipes})
+ 
