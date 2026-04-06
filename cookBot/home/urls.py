@@ -25,7 +25,6 @@ urlpatterns = [
     path('api/get-meals/', views.get_meals_json, name='get_meals'),
     path('api/generate-meal-plan/', views.generate_meal_plan, name='generate_meal_plan'),
     path('calendar/', views.calendar_view, name='calendar'),
-    path('calendar/generate/', views.calendar_generate, name='calendar_generate'),
 
     # Paths for create recipe and display recipe pages
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),

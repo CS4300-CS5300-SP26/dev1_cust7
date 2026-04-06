@@ -371,16 +371,6 @@ def calendar_view(request):
     return render(request, 'home/calendar.html')
 
 
-def calendar_generate(request):
-    """Placeholder view for calendar generation endpoint"""
-    # Return 7 mock meals for testing (placeholder response)
-    meals = [
-        {'id': i, 'title': f'Meal {i}', 'start': f'2026-04-{i:02d}'}
-        for i in range(1, 8)
-    ]
-    return JsonResponse({'meals': meals, 'status': 'ok'}, status=200)
-
-
 @login_required
 @require_POST
 def generate_meal_plan(request):
@@ -399,59 +389,66 @@ def generate_meal_plan(request):
     # Join ingredients for Spoonacular API
     ingredients = ','.join(pantry_items)
     
+    # Fetch 7 recipes from Spoonacular based on pantry ingredients
+    recipes_data = None
     try:
-        # Fetch 7 recipes from Spoonacular based on pantry ingredients
         recipes_data = spoonacular_get("recipes/findByIngredients", {
             "ingredients": ingredients,
             "number": 7,
             "ranking": 1,
             "ignorePantry": False,
         })
+    except Exception:
+        # If API call fails, use fallback recipes
+        pass
+    
+    if not recipes_data:
+        # Fallback to suggested recipes
+        recipes_data = get_fallback_recipes(pantry_items)
+    
+    # Get today's date and calculate next 7 days
+    today = date.today()
+    meal_types = ['Breakfast', 'Lunch', 'Dinner']
+    
+    # Delete existing meal plans for the next 7 days to avoid duplicates
+    for i in range(7):
+        day_date = today + timedelta(days=i)
+        MealPlan.objects.filter(
+            user=request.user,
+            date=day_date
+        ).delete()
+    
+    # Create MealPlan entries for each day
+    created_meals = []
+    for i in range(7):
+        day_date = today + timedelta(days=i)
+        recipe = recipes_data[i % len(recipes_data)]  # Cycle through recipes if less than 7
         
-        if not recipes_data:
-            # Fallback to suggested recipes
-            recipes_data = get_fallback_recipes(pantry_items)
+        # Create one meal per day (rotate through meal types)
+        meal_type = meal_types[i % 3]  # Rotate: Breakfast, Lunch, Dinner
         
-        # Get today's date and calculate next 7 days
-        today = date.today()
-        meal_types = ['Breakfast', 'Lunch', 'Dinner']
+        # Get recipe_id - ensure it's an integer or None (fallback recipes have string IDs)
+        rid = recipe.get('id')
+        if rid is not None:
+            try:
+                rid = int(rid)
+            except (ValueError, TypeError):
+                rid = None
         
-        # Delete existing meal plans for the next 7 days to avoid duplicates
-        for i in range(7):
-            day_date = today + timedelta(days=i)
-            MealPlan.objects.filter(
-                user=request.user,
-                date=day_date
-            ).delete()
-        
-        # Create MealPlan entries for each day
-        created_meals = []
-        for i in range(7):
-            day_date = today + timedelta(days=i)
-            recipe = recipes_data[i % len(recipes_data)]  # Cycle through recipes if less than 7
-            
-            # Create one meal per day (rotate through meal types)
-            meal_type = meal_types[i % 3]  # Rotate: Breakfast, Lunch, Dinner
-            
-            meal_plan = MealPlan.objects.create(
-                user=request.user,
-                recipe_name=recipe.get('title', f'Meal {i+1}'),
-                recipe_id=recipe.get('id'),
-                date=day_date,
-                meal_type=meal_type
-            )
-            created_meals.append(meal_plan)
-        
-        return JsonResponse({
-            'success': True,
-            'message': f'Generated {len(created_meals)} meals for the next 7 days!',
-            'meals_count': len(created_meals)
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'error': f'Failed to generate meal plan: {str(e)}'
-        }, status=502)
+        meal_plan = MealPlan.objects.create(
+            user=request.user,
+            recipe_name=recipe.get('title', f'Meal {i+1}'),
+            recipe_id=rid,
+            date=day_date,
+            meal_type=meal_type
+        )
+        created_meals.append(meal_plan)
+    
+    return JsonResponse({
+        'success': True,
+        'message': f'Generated {len(created_meals)} meals for the next 7 days!',
+        'meals_count': len(created_meals)
+    })
 
 # This is for the Recipe viewing page and Recipe Input page
 def recipe_view(request, recipe_id):

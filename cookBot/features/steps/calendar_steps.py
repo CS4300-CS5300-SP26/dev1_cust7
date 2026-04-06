@@ -1,5 +1,6 @@
 from behave import given, when, then
 import json
+from django.urls import reverse
 
 @given('I am a logged-in user')
 def step_logged_in_user(context):
@@ -37,34 +38,27 @@ def step_empty_pantry(context):
 
 @given('I have generated a weekly meal plan')
 def step_generated_meal_plan(context):
-    """Simulate generating a meal plan - stores it in context for persistence test"""
-    from home.models import Pantry
+    """Actually generate a meal plan by calling the real endpoint"""
+    from home.models import Pantry, MealPlan
+    from datetime import date, timedelta
+    from django.urls import reverse
 
-    # Get user's pantry items
-    pantry_items = list(Pantry.objects.filter(user=context.user).values_list('ingredient_name', flat=True))
+    # Call the real generate_meal_plan endpoint to create actual database entries
+    context.client.post(reverse('generate_meal_plan'))
 
-    # Create mock meal plan data (in real implementation, this would call the API)
-    context.meal_plan = {
+    # Store the generated meals for later verification
+    meals = MealPlan.objects.filter(user=context.user)
+    context.saved_meal_plan = {
         'meals': [
-            {'day': 'Monday', 'meal': f'{pantry_items[0]} {pantry_items[1]}'},
-            {'day': 'Tuesday', 'meal': f'{pantry_items[0]} Stir Fry'},
-            {'day': 'Wednesday', 'meal': f'{pantry_items[1]} Bowl'},
-            {'day': 'Thursday', 'meal': f'Grilled {pantry_items[0]}'},
-            {'day': 'Friday', 'meal': f'{pantry_items[1]} Salad'},
-            {'day': 'Saturday', 'meal': f'{pantry_items[0]} Soup'},
-            {'day': 'Sunday', 'meal': f'Baked {pantry_items[0]}'},
+            {'day': meal.date.strftime('%A'), 'meal': meal.recipe_name}
+            for meal in meals
         ]
     }
-
-    # In a real implementation, this would save to the database
-    # For now, store in context for the test
-    context.saved_meal_plan = context.meal_plan
 
 
 @when('I click "Generate Weekly Plan"')
 def step_click_generate(context):
-    """Simulate clicking the generate button by calling the calendar view"""
-    # Ensure user is logged in before calling the endpoint
+    """Simulate clicking the generate button by calling the meal plan generator"""
     from django.contrib.auth.models import User
     if not hasattr(context, 'user') or not User.objects.filter(username='testuser').exists():
         user, created = User.objects.get_or_create(username='testuser')
@@ -76,8 +70,8 @@ def step_click_generate(context):
     context.client.login(username='testuser', password='testpass123')
     context.user = User.objects.get(username='testuser')
     
-    # Call the calendar generation endpoint
-    context.response = context.client.get('/calendar/generate/')
+    # POST to the real generate_meal_plan endpoint (with CSRF token)
+    context.response = context.client.post(reverse('generate_meal_plan'))
 
 
 @when('I return to the calendar page')
@@ -94,19 +88,14 @@ def step_return_to_calendar(context):
 @then('I should see {count:d} meals on the calendar grid')
 def step_see_meals_on_calendar(context, count):
     """Verify the correct number of meals are displayed"""
+    from home.models import MealPlan
+    
+    # Query the database to verify the correct number of meals were created
+    meals = MealPlan.objects.filter(user=context.user)
+    assert len(meals) == count, f"Expected {count} meals in database, got {len(meals)}"
+    
+    # Also verify the response was successful (either from generate or calendar view)
     assert context.response.status_code == 200, f"Expected 200, got {context.response.status_code}"
-
-    # Check if response is JSON
-    try:
-        data = json.loads(context.response.content)
-        meals = data.get('meals', [])
-        assert len(meals) == count, f"Expected {count} meals, got {len(meals)}"
-    except json.JSONDecodeError:
-        # If not JSON, check HTML content
-        content = context.response.content.decode('utf-8')
-        # Count meal entries in the HTML (adjust selector based on your template)
-        meal_count = content.count('class="meal-entry"')
-        assert meal_count == count, f"Expected {count} meals in HTML, found {meal_count}"
 
 
 @then('I should see a warning message "{message}"')
@@ -125,28 +114,19 @@ def step_see_warning_message(context, message):
 
 @then('the previously generated meals should still be visible')
 def step_meals_still_visible(context):
-    """Verify that previously generated meals persist"""
-    assert context.response.status_code == 200, f"Expected 200, got {context.response.status_code}"
-
-    # Check if we have saved meal plan data
+    """Verify that previously generated meals persist in the database"""
+    from home.models import MealPlan
+    
+    # Query the database directly to verify meals exist for this user
+    meals = MealPlan.objects.filter(user=context.user)
+    assert meals.exists(), "No meal plans found in database for user"
+    assert len(meals) > 0, f"Expected meals to persist, but found {len(meals)} meals"
+    
+    # If we have saved meal plan data, verify the meal names match
     if hasattr(context, 'saved_meal_plan'):
         meal_plan = context.saved_meal_plan
-
-        # Check if response is JSON
-        try:
-            data = json.loads(context.response.content)
-            returned_meals = data.get('meals', [])
-            assert len(returned_meals) > 0, "No meals found in response"
-
-            # Verify at least some meals match
-            for meal in meal_plan['meals']:
-                found = any(meal['meal'] in rm.get('meal', '') for rm in returned_meals)
-                assert found, f"Meal '{meal['meal']}' not found in returned meals"
-        except json.JSONDecodeError:
-            # If not JSON, check HTML content
-            content = context.response.content.decode('utf-8')
-            for meal in meal_plan['meals']:
-                assert meal['meal'] in content, f"Meal '{meal['meal']}' not found in page"
-    else:
-        # If no saved meal plan, just verify we get a valid response
-        assert context.response.status_code == 200
+        db_meal_names = [meal.recipe_name for meal in meals]
+        
+        for meal in meal_plan['meals']:
+            found = any(meal['meal'] in db_name for db_name in db_meal_names)
+            assert found, f"Meal '{meal['meal']}' not found in database meals: {db_meal_names}"

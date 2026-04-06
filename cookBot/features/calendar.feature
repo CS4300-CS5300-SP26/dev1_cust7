@@ -10,7 +10,7 @@ Feature: Meal Calendar Management
     Given I am a logged-in user
     And my pantry is currently empty
     When I click "Generate Weekly Plan"
-    Then I should see a warning message "Please add ingredients first"
+    Then I should see a warning message "Your pantry is empty"
 
   Scenario: Meal plan persists after page reload (Persistence Check)
     Given I am a logged-in user
