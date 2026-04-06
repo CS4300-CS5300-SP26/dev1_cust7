@@ -1,0 +1,30 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block content %}
+<main class="account-page">
+    <section class="account-info">
+        <h1>Account</h1>
+        <p>Welcome {{ user.first_name|default:user.username }}!</p>
+
+        <div class="card account-section">
+            <h2>Profile</h2>
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>First Name:</strong> {{ user.first_name|default:"Not set" }}</p>
+            <p><strong>Last Name:</strong> {{ user.last_name|default:"Not set" }}</p>
+            <p><strong>Email:</strong> {{ user.email|default:"Not set" }}</p>
+
+            <div class="account-actions">
+                <a href="{% url 'edit_account' %}" class="auth-btn">Edit Profile</a>
+            </div>
+        </div>
+    </section>
+    <section class="card account-security">
+      <h2>Security</h2>
+        <div class="change-password">
+                <a href="{% url 'change_password' %}" class="auth-btn">Change Password</a>
+            </div>
+
+    </section>
+</main>
+{% endblock %}
