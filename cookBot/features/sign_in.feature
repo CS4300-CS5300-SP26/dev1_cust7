@@ -1,4 +1,4 @@
-Feature: User authentication
+Feature: User Sign in
 
   Scenario: User can sign in
     Given a registered user exists

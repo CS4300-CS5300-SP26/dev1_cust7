@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.conf import settings
@@ -13,6 +13,7 @@ from .models import Recipe, RecipeStep, RecipeIngredient
 import json
 import urllib.request
 import urllib.parse
+from .forms import RegisterForm, EditProfileForm
 
 
 def index(request):
@@ -54,18 +55,16 @@ def nutrition_test(request):
 
 
 def register(request):
-    """User registration view"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('index')
-        else:
-            # Print form errors for debugging
-            print(f"Form errors: {form.errors}")
+
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
+
     return render(request, 'home/register.html', {'form': form})
 
 
@@ -85,6 +84,36 @@ def signin(request):
 def signout(request):
     logout(request)
     return redirect('index')
+
+@login_required
+def account(request):
+    return render(request, 'home/account_info.html', {'user': request.user})
+
+@login_required
+def edit_account(request):
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('account')
+    else:
+        form = EditProfileForm(instance=request.user)
+
+    return render(request, 'home/edit_account.html', {'form': form})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            return redirect('account')
+
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(request, 'home/change_password.html', {'form': form})
 
 @login_required
 def pantry_view(request):
