@@ -7,20 +7,28 @@
 {{ steps_json|json_script:"steps-data" }}
 {{ ingredients_json|json_script:"ingredients-data" }}
 
-<div class="recipe-page">
-
-  <div class="recipe-header">
+<section class="banner">
+  <div class="banner-content">
     <h1>{{ recipe.title }}</h1>
     <div class="recipe-meta">
-      <span>By {{ recipe.user.username }}</span>
-      <!-- Public or Private and rating logic (not really done as we don't have the systems fully in place) -->
-      {% if recipe.is_public %}<span class="badge">Public</span>
-      {% else %}<span class="badge">Private</span>{% endif %}
+      <span class="name">By {{ recipe.user.username }}</span>
+
+      {% if recipe.is_public %}
+        <span class="badge">Public</span>
+      {% else %}
+        <span class="badge">Private</span>
+      {% endif %}
+
       {% with avg=recipe.average_rating %}
-        {% if avg %}<span>&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
+        {% if avg %}
+          <span>&#11088; {{ avg|floatformat:1 }} / 5</span>
+        {% endif %}
       {% endwith %}
     </div>
   </div>
+</section>
+
+<div class="recipe-page">
 
   <!-- Stuff to use voice commands -->
   <div class="voice-bar">
