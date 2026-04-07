@@ -84,7 +84,6 @@ class RecipeRating(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title} - {self.stars} stars"
 
-
 class MealPlan(models.Model):
     """Model to store user's meal calendar entries"""
     
@@ -107,3 +106,44 @@ class MealPlan(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.meal_type} on {self.date}: {self.recipe_name}"
+
+#conversation history between the user and ChefBot 
+#Stores spoonacular recipe information for consistent recipe information
+class ChatSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions')
+    created_date = models.DateTimeField(default=timezone.now)
+    pantry_context = models.JSONField(default=list, blank=True)
+    
+    #Spoonacular results 
+    spoonacular_context = models.JSONField(default=list, blank=True)
+    
+    class Meta:
+        #Most recent session
+        ordering = ['-created_date']
+ 
+    def __str__(self):
+        return f"{self.user.username} - Session {self.id} ({self.created_date.strftime('%Y-%m-%d')})"
+    
+    #Conversation history as a list of role/content dicts fro OpenAI
+    def get_history(self):
+        return list(
+            self.messages.order_by('timestamp').values('role', 'content')
+        )
+
+#Save chat messages to the DB from both the user and ChefBot(assistant)
+class ChatMessage(models.Model):
+    ROLES = [
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+    ]
+ 
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
+    role = models.CharField(max_length=10, choices=ROLES)
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+ 
+    class Meta:
+        ordering = ['timestamp']
+ 
+    def __str__(self):
+        return f"[{self.role}] Session {self.session.id} @ {self.timestamp.strftime('%H:%M:%S')}"

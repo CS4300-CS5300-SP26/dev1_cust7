@@ -1,0 +1,94 @@
+<!-- Made with the help of basic Claude.ai -->
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'aiChefBot.css' %}">
+ 
+<main class="container" id="chefbot-main"
+  data-session-id="{{ session_id }}"
+  data-chat-url="{% url 'aiChefBot_chat' %}"
+  data-csrf-token="{{ csrf_token }}"
+>
+ 
+  <!-- Banner -->
+  <section class="banner" role="banner" aria-label="ChefBot">
+    <div class="banner-content">
+      <h1>AI Chef</h1>
+      <p>Your personal cooking specialist — recipes, tips, and substitutions on demand.</p>
+    </div>
+  </section>
+ 
+  <!-- Chat layout -->
+  <section class="chefbot-area">
+ 
+    <!-- Sidebar -->
+    <aside class="chefbot-sidebar">
+ 
+      <div class="context-card">
+        <h3>🥦 Pantry Matches</h3>
+        {% if spoonacular_recipes %}
+          <ul>
+            {% for recipe in spoonacular_recipes %}
+              <li title="{{ recipe.title }}">{{ recipe.title }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty-note">No pantry matches found. Add ingredients to your pantry!</p>
+        {% endif %}
+      </div>
+ 
+      <div class="context-card">
+        <h3>📖 Saved Recipes</h3>
+        {% if saved_recipes %}
+          <ul>
+            {% for recipe in saved_recipes %}
+              <li title="{{ recipe.title }}">{{ recipe.title }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty-note">No saved recipes yet.</p>
+        {% endif %}
+      </div>
+ 
+    </aside>
+ 
+    <!-- Chat window -->
+    <div class="chat-container">
+ 
+      <div class="chat-messages" id="chatMessages">
+        <div class="message assistant">
+          <div class="avatar">🍴</div>
+          <div class="bubble">Hey there! I'm ChefBot, your personal cooking specialist. I can see your pantry ingredients and saved recipes — ask me anything about recipes, substitutions, or cooking tips!</div>
+        </div>
+      </div>
+ 
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="avatar">🍴</div>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+ 
+      <!-- Input -->
+      <div class="chat-input-area">
+        <div class="chat-input-bar">
+          <textarea
+            id="userInput"
+            rows="1"
+            placeholder="Ask ChefBot for a recipe, substitution, or tip..."
+          ></textarea>
+          <button id="sendBtn" title="Send">&#9658;</button>
+        </div>
+        <div class="error-toast" id="errorToast"></div>
+      </div>
+ 
+    </div>
+  </section>
+ 
+</main>
+ 
+<script src="{% static 'aiChefBot.js' %}" defer></script>
+
+{% endblock %}
