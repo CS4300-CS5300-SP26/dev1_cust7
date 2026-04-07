@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from home.models import Pantry, Recipe, RecipeIngredient, RecipeRating, RecipeStep
+from home.models import Pantry, Recipe, RecipeIngredient, RecipeRating, RecipeStep, MealPlan, ChatSession, ChatMessage
 from django.core.cache import cache
 from .forms import RegisterForm, EditProfileForm
 from home.chefBot import collect_context_from_recipes, build_messages, SYSTEM_PROMPT
