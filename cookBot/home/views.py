@@ -61,7 +61,8 @@ def register(request):
             user = form.save()
             login(request, user)
             return redirect('index')
-
+        # Form is invalid - render with errors
+        return render(request, 'home/register.html', {'form': form})
     else:
         form = RegisterForm()
 
@@ -320,6 +321,134 @@ def get_fallback_recipes(pantry_items):
     fallback_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
     
     return fallback_recipes[:5]  # Return top 5 suggestions
+
+@login_required
+@require_GET
+def get_meals_json(request):
+    """API endpoint to get user's meal plans for FullCalendar.io"""
+    from .models import MealPlan
+    from datetime import datetime, timedelta
+    
+    # Get optional date range parameters from query string
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    # Default to current month if not provided
+    if not start_date or not end_date:
+        today = datetime.now()
+        start_date = today.replace(day=1).strftime('%Y-%m-%d')
+        # End of current month
+        if today.month == 12:
+            end_of_month = today.replace(year=today.year+1, month=1, day=1) - timedelta(days=1)
+        else:
+            end_of_month = today.replace(month=today.month+1, day=1) - timedelta(days=1)
+        end_date = end_of_month.strftime('%Y-%m-%d')
+    
+    # Query only the current user's meal plans within date range
+    meals = MealPlan.objects.filter(
+        user=request.user,
+        date__gte=start_date,
+        date__lte=end_date
+    )
+    
+    # Format for FullCalendar.io
+    calendar_events = []
+    for meal in meals:
+        calendar_events.append({
+            'id': meal.id,
+            'title': meal.recipe_name,
+            'start': meal.date.isoformat(),
+            'meal_type': meal.meal_type,
+            'recipe_id': meal.recipe_id,
+        })
+    
+    return JsonResponse({'meals': calendar_events})
+
+
+@login_required
+def calendar_view(request):
+    """Render the meal calendar page"""
+    return render(request, 'home/calendar.html')
+
+
+@login_required
+@require_POST
+def generate_meal_plan(request):
+    """Generate a 7-day meal plan based on user's pantry ingredients"""
+    from .models import MealPlan
+    from datetime import timedelta, date
+    
+    # Get user's pantry ingredients
+    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+    
+    if not pantry_items:
+        return JsonResponse({
+            'error': 'Your pantry is empty! Add some ingredients to generate a meal plan.'
+        }, status=400)
+    
+    # Join ingredients for Spoonacular API
+    ingredients = ','.join(pantry_items)
+    
+    # Fetch 7 recipes from Spoonacular based on pantry ingredients
+    recipes_data = None
+    try:
+        recipes_data = spoonacular_get("recipes/findByIngredients", {
+            "ingredients": ingredients,
+            "number": 7,
+            "ranking": 1,
+            "ignorePantry": False,
+        })
+    except Exception:
+        # If API call fails, use fallback recipes
+        pass
+    
+    if not recipes_data:
+        # Fallback to suggested recipes
+        recipes_data = get_fallback_recipes(pantry_items)
+    
+    # Get today's date and calculate next 7 days
+    today = date.today()
+    meal_types = ['Breakfast', 'Lunch', 'Dinner']
+    
+    # Delete existing meal plans for the next 7 days to avoid duplicates
+    for i in range(7):
+        day_date = today + timedelta(days=i)
+        MealPlan.objects.filter(
+            user=request.user,
+            date=day_date
+        ).delete()
+    
+    # Create MealPlan entries for each day
+    created_meals = []
+    for i in range(7):
+        day_date = today + timedelta(days=i)
+        recipe = recipes_data[i % len(recipes_data)]  # Cycle through recipes if less than 7
+        
+        # Create one meal per day (rotate through meal types)
+        meal_type = meal_types[i % 3]  # Rotate: Breakfast, Lunch, Dinner
+        
+        # Get recipe_id - ensure it's an integer or None (fallback recipes have string IDs)
+        rid = recipe.get('id')
+        if rid is not None:
+            try:
+                rid = int(rid)
+            except (ValueError, TypeError):
+                rid = None
+        
+        meal_plan = MealPlan.objects.create(
+            user=request.user,
+            recipe_name=recipe.get('title', f'Meal {i+1}'),
+            recipe_id=rid,
+            date=day_date,
+            meal_type=meal_type
+        )
+        created_meals.append(meal_plan)
+    
+    return JsonResponse({
+        'success': True,
+        'message': f'Generated {len(created_meals)} meals for the next 7 days!',
+        'meals_count': len(created_meals)
+    })
 
 # This is for the Recipe viewing page and Recipe Input page
 def recipe_view(request, recipe_id):

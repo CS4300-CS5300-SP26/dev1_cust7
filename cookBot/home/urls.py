@@ -20,6 +20,11 @@ urlpatterns = [
     path('pantry/delete/<int:ingredient_id>/', views.delete_ingredient, name='delete_ingredient'),
     path('pantry/api/', views.get_pantry_ingredients, name='get_pantry_ingredients'),
     path('pantry/search-recipes/', views.search_recipes_by_pantry, name='search_recipes_by_pantry'),
+   
+    # Meal Calendar API
+    path('api/get-meals/', views.get_meals_json, name='get_meals'),
+    path('api/generate-meal-plan/', views.generate_meal_plan, name='generate_meal_plan'),
+    path('calendar/', views.calendar_view, name='calendar'),
 
     # Paths for create recipe and display recipe pages
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
