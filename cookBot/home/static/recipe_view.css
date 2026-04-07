@@ -1,21 +1,3 @@
-section.banner {
-  background: linear-gradient(120deg, #009470, #42a06d);
-  padding: 3.5rem 5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  overflow: hidden;
-  margin-top: 0;
-}
-
-.banner-content h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin-bottom: 0.5rem;
-}
-
 .name {
     font-size: 1rem;
     font-weight: 800;
@@ -190,3 +172,4 @@ section.banner {
       align-items: flex-start;
     }
   }
+  

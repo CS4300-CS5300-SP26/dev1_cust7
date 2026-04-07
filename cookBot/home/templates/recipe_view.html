@@ -1,6 +1,9 @@
 {% extends "navbar.html" %}
 {% load static %}
  <!-- Claude helped Roman make this work with the JS -->
+ {% block extra_head %}
+ <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
+ {% endblock %}
 
 {% block content %}
  <!-- Make json/ensure json is here for Javascript to use -->

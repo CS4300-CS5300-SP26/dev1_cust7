@@ -8,7 +8,8 @@
     <!-- LINK ALL STYLES HERE -->
     <link rel="stylesheet" href="{% static 'navbarStyle.css' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
+    {% block extra_head %}
+    {% endblock %}
 </head>
 <body>
     <!-- NAV formatting help from ChatGPT and https://www.w3schools.com/bootstrap/bootstrap_navbar.asp -->
