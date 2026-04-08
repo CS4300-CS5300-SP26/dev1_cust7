@@ -17,6 +17,8 @@ jobs:
         uses: actions/setup-python@v6 
         with: 
           python-version: '3.12.3'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
       - name: Install Dependencies
         run: | 
           python -m pip install --upgrade pip 
@@ -35,7 +37,11 @@ jobs:
             echo "## Flake8 Results"
             echo ""
             echo '```'
-            cat flake8_results.txt
+            if [ -f flake8_results.txt ] && [ -s flake8_results.txt ]; then
+              cat flake8_results.txt
+            else
+              echo "No flake8 issues found."
+            fi
             echo '```'
             echo ""
             
