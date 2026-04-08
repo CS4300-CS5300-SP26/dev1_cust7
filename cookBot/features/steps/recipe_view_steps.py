@@ -2,13 +2,14 @@ from behave import given, when, then
 from django.contrib.auth.models import User
 from home.models import Recipe, RecipeStep, RecipeIngredient
 
+
 @given('a user exists with username "{username}" and password "{password}"')
 def step_create_user(context, username, password):
     user, _ = User.objects.get_or_create(username=username)
     user.set_password(password)
     user.save()
     # Store on context so other steps can find the user by username
-    if not hasattr(context, 'users'):
+    if not hasattr(context, "users"):
         context.users = {}
     context.users[username] = user
 
@@ -21,33 +22,27 @@ def step_create_recipe_with_steps(context, title):
     # Delete any existing recipe with this title to ensure test isolation
     Recipe.objects.filter(title=title, user=owner).delete()
 
-    recipe = Recipe.objects.create(
-        title=title,
-        user=owner,
-        is_public=False
-    )
+    recipe = Recipe.objects.create(title=title, user=owner, is_public=False)
     context.recipe = recipe
 
     # Create each step row from the feature file table
     for row in context.table:
         RecipeStep.objects.create(
-            recipe=recipe,
-            order=int(row['order']),
-            text=row['text']
+            recipe=recipe, order=int(row["order"]), text=row["text"]
         )
 
 
-@given('that recipe has the following ingredients')
+@given("that recipe has the following ingredients")
 def step_create_ingredients(context):
     for row in context.table:
-        unit = row['unit'].strip() or None
+        unit = row["unit"].strip() or None
         RecipeIngredient.objects.get_or_create(
             recipe=context.recipe,
-            name=row['name'],
+            name=row["name"],
             defaults={
-                'quantity': row['quantity'],
-                'unit': unit,
-            }
+                "quantity": row["quantity"],
+                "unit": unit,
+            },
         )
 
 
@@ -57,46 +52,47 @@ def step_login(context, username, password):
     user, created = User.objects.get_or_create(username=username)
     user.set_password(password)
     user.save()
-    
+
     logged_in = context.client.login(username=username, password=password)
     assert logged_in, f"Login failed for user '{username}' with password '{password}'"
     context.user = user
 
+
 # When steps
-@when('I visit the recipe view page')
+@when("I visit the recipe view page")
 def step_visit_recipe_page(context):
-    url = f'/recipe/{context.recipe.id}/'
+    url = f"/recipe/{context.recipe.id}/"
     context.response = context.client.get(url)
 
+
 # Then steps
-@then('the page should load successfully')
+@then("the page should load successfully")
 def step_page_loads(context):
-    assert context.response.status_code == 200, (
-        f"Expected status 200 but got {context.response.status_code}"
-    )
+    assert (
+        context.response.status_code == 200
+    ), f"Expected status 200 but got {context.response.status_code}"
 
 
-@then('the response status should be {status_code:d}')
+@then("the response status should be {status_code:d}")
 def step_check_status(context, status_code):
-    assert context.response.status_code == status_code, (
-        f"Expected status {status_code} but got {context.response.status_code}"
-    )
+    assert (
+        context.response.status_code == status_code
+    ), f"Expected status {status_code} but got {context.response.status_code}"
 
 
 @then('I should see the heading "{text}"')
 def step_see_heading(context, text):
-    content = context.response.content.decode('utf-8')
-    assert f'<h1>{text}</h1>' in content, (
-        f"Could not find heading '<h1>{text}</h1>' in page content"
-    )
+    content = context.response.content.decode("utf-8")
+    assert (
+        f"<h1>{text}</h1>" in content
+    ), f"Could not find heading '<h1>{text}</h1>' in page content"
 
 
 @then('I should see "{text}" on the page')
 def step_see_text(context, text):
-    content = context.response.content.decode('utf-8')
-    assert text in content, (
-        f"Could not find '{text}' anywhere in the page content"
-    )
+    content = context.response.content.decode("utf-8")
+    assert text in content, f"Could not find '{text}' anywhere in the page content"
+
 
 # user control tests
 @given('a second user exists with username "{username}" and password "{password}"')

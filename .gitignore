@@ -25,6 +25,9 @@ MANIFEST
 venv/
 env/
 ENV/
+!.env.example
+.env
+.env.*
 
 # Django
 *.log
