@@ -34,9 +34,17 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         run: |
           {
-            echo "## Flake8 Results"
+            echo "## Linting Results"
             echo ""
-            echo '```'
+            echo "### Black (Formatting)"
+            if black --check . > /dev/null 2>&1; then
+              echo "✅ Code is properly formatted"
+            else
+              echo "❌ Formatting issues detected (run \`black .\` locally)"
+            fi
+            echo ""
+            echo "### Flake8 (Linting)"
+            
             if [ -f flake8_results.txt ] && [ -s flake8_results.txt ]; then
               cat flake8_results.txt
             else
