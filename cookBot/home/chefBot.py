@@ -29,7 +29,7 @@ would you like tips on that, or a variation?"
 """.strip()
 
 
-# Grab all information from both spooancular recipes suggested and saved recipes
+# Grab all information from both Spoonacular suggested recipes and saved recipes
 # So that the AI is aware of these
 def collect_context_from_recipes(
     spoonacular_recipes=None, saved_recipes=None, pantry_items=None
