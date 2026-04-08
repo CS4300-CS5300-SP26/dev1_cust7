@@ -13,8 +13,6 @@ jobs:
     steps: 
       - name: Pull Repository 
         uses: actions/checkout@v4 
-        with: 
-          fetch-depth: 2 
       - name: Install Python
         uses: actions/setup-python@v6 
         with: 
@@ -26,7 +24,7 @@ jobs:
           pip install flake8
       - name: Run codebase through flake8
         run: |
-          flake8 --output-file=flake8_results.txt ./
+          flake8 --output-file=flake8_results.txt ./dev1_cust7
       - name: create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
