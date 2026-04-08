@@ -39,11 +39,7 @@ def step_submit_valid_signin(context):
 def step_visit_logout(context):
     context.response = context.client.get('/logout/')
 
-@then('I should be redirected to the home page')
-def step_redirected_to_home(context):
-    assert context.response.status_code == 302
-    assert context.response.url == '/'
-
+# Note: 'I should be redirected to the home page' is defined in browser_steps.py
 @then('the user should be authenticated')
 def step_user_authenticated(context):
     user_id = context.client.session.get('_auth_user_id')

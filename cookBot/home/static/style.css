@@ -169,3 +169,259 @@ section.banner {
   }
 
 }
+
+/*styles for the authentication pages (signin and register) */
+
+.auth-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background: #ffffff;
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 460px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 0.4rem;
+}
+
+.auth-header p {
+  font-size: 1rem;
+  color: #4f6f60;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-field label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a3d2b;
+}
+
+.form-field input {
+  width: 100%;
+  border: 1.5px solid #d7ebe3;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  color: #1a3d2b;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input:focus {
+  border-color: #009470;
+  box-shadow: 0 0 0 3px rgba(0, 148, 112, 0.12);
+}
+
+.auth-btn {
+  margin-top: 0.4rem;
+  border: none;
+  border-radius: 999px;
+  background: #009470;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.95rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.auth-btn:hover {
+  background: #42a06d;
+}
+
+.auth-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-error {
+  background: #fff3f0;
+  border: 1px solid #f0c7bb;
+  color: #a0432b;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.auth-links {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.auth-links p {
+  margin-bottom: 0.6rem;
+  color: #4f6f60;
+}
+
+.auth-links a {
+  color: #009470;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 2rem 1rem;
+  }
+
+  .auth-panel {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .auth-header h1 {
+    font-size: 1.7rem;
+  }
+}
+
+/* Account info page styles */
+.account-page {
+  min-height: calc(100vh - 80px);
+  padding: 3rem 2rem;
+  background: #ffffff;
+}
+.card {
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
+
+.account-info {
+  flex: 2;
+}
+
+.account-header {
+  margin-bottom: 1.5rem;
+}
+
+.account-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 0.75rem;
+}
+
+.account-header p {
+  font-size: 1.3rem;
+  color: #4f6f60;
+  margin: 0;
+}
+
+.account-section {
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
+
+.account-section h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 1.5rem;
+}
+
+.account-section p {
+  font-size: 1.1rem;
+  color: #1a3d2b;
+  margin-bottom: 1rem;
+  line-height: 1.0;
+}
+
+.account-section p strong {
+  display: inline-block;
+  min-width: 140px;
+  color: #1a3d2b;
+}
+
+.account-actions {
+  margin-top: 2.5rem;
+}
+
+.account-actions .auth-btn {
+  text-decoration: none;
+  display: inline-block;
+}
+.account-security {
+  flex: 1;
+}
+.change-password {
+  margin-top: 2.5rem;
+}
+.account-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+@media (max-width: 768px) {
+  .account-page {
+    padding: 2rem 1rem;
+  }
+
+  .account-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .account-header p {
+    font-size: 1.1rem;
+  }
+
+  .account-section {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .account-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .account-section p strong {
+    display: block;
+    min-width: auto;
+    margin-bottom: 0.2rem;
+  }
+
+  .account-actions .auth-btn {
+    width: 100%;
+    text-align: center;
+  }
+  .account-layout {
+    flex-direction: column;
+
+  }
+}
+/* end of account info page styles */

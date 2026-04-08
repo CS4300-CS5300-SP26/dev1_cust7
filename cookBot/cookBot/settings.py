@@ -26,6 +26,9 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-fallback-key-for-loca
 #Spoonacular API key
 SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for_local_dev').split(',')
 
+#OPENAI KEY
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='placeholder')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 

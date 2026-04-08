@@ -8,6 +8,8 @@
     <!-- LINK ALL STYLES HERE -->
     <link rel="stylesheet" href="{% static 'navbarStyle.css' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
+    {% block extra_head %}
+    {% endblock %}
 </head>
 <body>
     <!-- NAV formatting help from ChatGPT and https://www.w3schools.com/bootstrap/bootstrap_navbar.asp -->
@@ -35,17 +37,17 @@
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">CookBot<span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                      <li><a href="#">AI Chef</a></li>
+                      <li><a href="/calendar">Meal Planner</a></li>
+                      <li><a href="{% url 'aiChefBot' %}">AI Chef</a></li>
                       <li><a href="/recipe/create">Recipe Maker</a></li>
-                      <li><a href="#">Meal Planner</a></li>
                     </ul>
-                </li> 
+                </li>
 
                 <!-- Social dropdown options -->
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">Social<span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                      <li><a href="#">Social Home</a></li>
+                      <li><a href="{% url 'social_feed' %}">Social Home</a></li>
                       <li><a href="#">Share Recipe</a></li>
                     </ul>
                 </li> 
@@ -55,8 +57,8 @@
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">Account<span class="caret"></span></a>
                     <ul class="dropdown-menu">
                         {% if user.is_authenticated %}
-                            <li><a href="#">My Account</a></li>
-                            <li><a href="/pantry">My Pantry</a></li>
+                            <li><a href="/account">My Account</a></li>
+                            <li><a href="/pantry/">My Pantry</a></li>
                             <li><a href="#">Meal Plans</a></li>
                             <li><a href="#">Favorites</a></li>
                             <li><a href="/logout">Log Out</a></li>
