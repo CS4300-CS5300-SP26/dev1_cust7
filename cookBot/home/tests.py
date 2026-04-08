@@ -32,8 +32,8 @@ class TestAPI(APITestCase):
 
 
 # Spoonacular nutrition label tests #
-# Mock found with Claud #
-# Sample data that mimics a real Spoonaclur ingredient search response
+# Mock found with Claude #
+# Sample data that mimics a real Spoonacular ingredient search response
 MOCK_SEARCH_RESPONSE = {
     "results": [{"id": 9040, "name": "banana"}],
     "offset": 0,
