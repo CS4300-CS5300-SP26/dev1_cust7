@@ -26,7 +26,6 @@ jobs:
           pip install flake8 black
       - name: Run codebase through Black Formatter
         run: |
-          ls
           black --check .
       - name: Run codebase through flake8
         run: |
