@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | __pycache__
+  | migrations
+  | venv
+  | env
+  | \.env
+  | htmlcov
+  | \.pytest_cache
+  | \.tox
+  | \.nox
+)/
+'''
