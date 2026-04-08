@@ -16,7 +16,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Setting API Key inside the openai_client object
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Getting file content from diff.txt
+# Getting file content from difference.txt
 with open("difference.txt", "r") as diff_file:
     diff = diff_file.read()
 
