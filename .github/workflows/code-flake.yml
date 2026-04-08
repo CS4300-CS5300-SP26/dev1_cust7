@@ -30,7 +30,7 @@ jobs:
           black --check .
       - name: Run codebase through flake8
         run: |
-          flake8 --output-file=flake8_results.txt ./dev1_cust7   
+          flake8 --output-file=flake8_results.txt .   
       - name: create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
