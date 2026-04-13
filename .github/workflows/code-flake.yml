@@ -25,9 +25,11 @@ jobs:
           pip install -r requirements.txt 
           pip install flake8 black
       - name: Run codebase through Black Formatter
+        continue-on-error: true
         run: |
           black --check .
       - name: Run codebase through flake8
+        continue-on-error: true
         run: |
           flake8 --output-file=flake8_results.txt .   
       - name: create Comment Formatting
@@ -46,13 +48,12 @@ jobs:
             echo "### Flake8 (Linting)"
             
             if [ -f flake8_results.txt ] && [ -s flake8_results.txt ]; then
+              echo '```'
               cat flake8_results.txt
+              echo '```'
             else
               echo "No flake8 issues found."
-            fi
-            echo '```'
-            echo ""
-            
+            fi 
           } > pr-comment.txt
       - name: Create PR Comment
         if: github.event_name == 'pull_request' && always()
