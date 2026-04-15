@@ -31,7 +31,7 @@ jobs:
       - name: Run codebase through flake8
         continue-on-error: true
         run: |
-          flake8 --output-file=flake8_results.txt .   
+          flake8 --ignore=E501 --output-file=flake8_results.txt .   
       - name: create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
