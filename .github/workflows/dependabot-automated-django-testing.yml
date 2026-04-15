@@ -31,7 +31,7 @@ jobs:
       - name: Run Test Coverage Cases
         env:
           SECRET_KEY: "test-secret-key"
-          SPOONACULAR_API_KEY: "test-spoonacular-key"
+          SPOONACULAR_API_KEY: "test-spoonacular-key1,test-spoonacular-key2"
         run: |
           set -eo pipefail
           cd cookBot
@@ -42,7 +42,7 @@ jobs:
       - name: Run Behave Testing
         env:
           SECRET_KEY: "test-secret-key"
-          SPOONACULAR_API_KEY: "test-spoonacular-key"
+          SPOONACULAR_API_KEY: "test-spoonacular-key1,test-spoonacular-key2"
           DJANGO_SETTINGS_MODULE: cookBot.settings
         run: |
           cd cookBot
