@@ -1,1 +1,78 @@
+name: Dependabot Automated Django Testing
 
+on:
+  pull_request:
+    paths:
+      - 'requirements.txt'
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.3"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest coverage behave behave-django
+
+      - name: Run Test Coverage Cases
+        env:
+          SECRET_KEY: "test-secret-key"
+          SPOONACULAR_API_KEY: "test-spoonacular-key"
+        run: |
+          set -eo pipefail
+          cd cookBot
+          echo "================ RUNNING DJANGO TESTS ================"
+          coverage run manage.py test
+          coverage report -m --fail-under=80 | tee ../coverage.txt
+          echo "================ TESTS FINISHED ======================"
+      - name: Run Behave Testing
+        env:
+          SECRET_KEY: "test-secret-key"
+          SPOONACULAR_API_KEY: "test-spoonacular-key"
+          DJANGO_SETTINGS_MODULE: cookBot.settings
+        run: |
+          cd cookBot
+          echo "================ RUNNING BEHAVE TESTS ================"
+          coverage erase
+          coverage run manage.py behave --junit --junit-directory behave-reports | tee ../behave-output.txt
+          coverage report -m --fail-under=80 | tee ../behave-coverage.txt
+          echo "================ BEHAVE TESTS FINISHED ==============="
+      - name: Build Coverage Comment
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Django Test Coverage"
+            echo ""
+            echo '```'
+            cat coverage.txt
+            echo '```'
+            echo ""
+            echo "## Behave Test Coverage"
+            echo ""
+            echo '```'
+            cat behave-coverage.txt
+            echo '```'
+            echo ""
+          } > pr-comment.txt
+      - name: Post Sticky Coverage Comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: 'automated-django-test-cases'
+          path: pr-comment.txt
+      
+        
