@@ -12,7 +12,7 @@ six==1.16.0
 sqlparse==0.4.4
 supervisor==4.2.5
 urllib3==2.6.3
-wheel==0.42.0
+wheel==0.46.3
 djangorestframework==3.17.1
 behave==1.2.6
 behave-django==1.4.0
