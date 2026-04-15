@@ -3,13 +3,12 @@ name: Pull Request Code Reveiw
 on: 
   pull_request: 
     types: [opened, synchronize, reopened]
-    branches-ignore:
-      - 'dependabot/**'
 permissions: 
   contents: read 
   pull-requests: write 
 jobs: 
   code_reveiw: 
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps: 
       - name: Pull Repository 
