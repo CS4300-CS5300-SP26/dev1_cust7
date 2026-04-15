@@ -30,7 +30,7 @@ jobs:
 
       - name: Run Test Coverage Cases
         env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          SECRET_KEY: "dummy-key"
           SPOONACULAR_API_KEY: ${{ secrets.SPOONACULAR_API_KEY }}
         run: |
           set -eo pipefail
