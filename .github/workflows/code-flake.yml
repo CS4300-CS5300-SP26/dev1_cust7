@@ -56,7 +56,7 @@ jobs:
               cat flake8_results.txt
               echo '```'
             else
-              echo "✅ No flake8 issues found."
+              echo "✅ No flake8 issues found"
             fi 
           } > pr-comment.txt
       - name: Create PR Comment
