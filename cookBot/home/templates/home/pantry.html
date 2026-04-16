@@ -5,12 +5,16 @@
     
     <link rel="stylesheet" href="{% static 'pantry.css' %}">
 
+    <!-- Banner -->
+    <section class="pantry-banner">
+        <div class="pantry-banner-content">
+            <h1>My Pantry</h1>
+            <p>Manage your ingredients and discover recipes you can make right now.</p>
+        </div>
+    </section>
+    
     <!-- Main Content -->
     <main class="pantry-container">
-        <div class="pantry-header">
-            <h1>My Pantry</h1>
-            <button onclick="window.location.href='/'" style="background: #6c757d; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">← Back to Home</button>
-        </div>
 
         <!-- Messages -->
         <div id="error-message" class="error-message"></div>
@@ -46,7 +50,7 @@
         <div class="recipes-section">
             <div class="recipes-header">
                 <h3>Recipe Suggestions</h3>
-                <button onclick="searchRecipes()" style="background: #007bff; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">Refresh Recipes</button>
+                <button onclick="searchRecipes()" style="background: #009470; padding: 0.5rem 1rem; border: none; border-radius: 4px; color: white; cursor: pointer;">Refresh Recipes</button>
             </div>
             <div id="recipes-list" class="recipes-grid">
                 <div class="empty-state">Add ingredients to your pantry to see recipe suggestions!</div>

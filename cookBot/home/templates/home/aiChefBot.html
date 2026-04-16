@@ -4,21 +4,21 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'aiChefBot.css' %}">
- 
+
+<!-- Banner -->
+<section class="ai-banner">
+  <div class="ai-banner-content">
+    <h1>AI Chef</h1>
+    <p>Your personal cooking specialist — recipes, tips, and substitutions on demand.</p>
+  </div>
+</section>
+
 <main class="container" id="chefbot-main"
   data-session-id="{{ session_id }}"
   data-chat-url="{% url 'aiChefBot_chat' %}"
   data-csrf-token="{{ csrf_token }}"
 >
- 
-  <!-- Banner -->
-  <section class="banner" role="banner" aria-label="ChefBot">
-    <div class="banner-content">
-      <h1>AI Chef</h1>
-      <p>Your personal cooking specialist — recipes, tips, and substitutions on demand.</p>
-    </div>
-  </section>
- 
+
   <!-- Chat layout -->
   <section class="chefbot-area">
  
@@ -88,7 +88,7 @@
   </section>
  
 </main>
- 
+
 <script src="{% static 'aiChefBot.js' %}" defer></script>
 
 {% endblock %}
