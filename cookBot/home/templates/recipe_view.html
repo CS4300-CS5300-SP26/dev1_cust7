@@ -1,51 +1,37 @@
 {% extends "navbar.html" %}
 {% load static %}
- <!-- Claude helped Roman make this work with the JS -->
- {% block extra_head %}
- <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
- {% endblock %}
-
+<!-- Claude helped Roman make this work with the JS -->
+ 
 {% block content %}
- <!-- Make json/ensure json is here for Javascript to use -->
+<!-- Make json/ensure json is here for Javascript to use -->
 {{ steps_json|json_script:"steps-data" }}
 {{ ingredients_json|json_script:"ingredients-data" }}
-
-<section class="banner">
-  <div class="banner-content">
+{{ pantry_names_json|json_script:"pantry-data" }}
+ 
+<div class="recipe-page">
+ 
+  <div class="recipe-header">
     <h1>{{ recipe.title }}</h1>
     <div class="recipe-meta">
-      <span class="name">By {{ recipe.user.username }}</span>
-
-      {% if recipe.is_public %}
-        <span class="badge">Public</span>
-      {% else %}
-        <span class="badge">Private</span>
-      {% endif %}
-
+      <span>By {{ recipe.user.username }}</span>
+      {% if recipe.is_public %}<span class="badge">Public</span>
+      {% else %}<span class="badge">Private</span>{% endif %}
       {% with avg=recipe.average_rating %}
-        {% if avg %}
-          <span>&#11088; {{ avg|floatformat:1 }} / 5</span>
-        {% endif %}
+        {% if avg %}<span>&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
       {% endwith %}
     </div>
   </div>
-</section>
-
-<div class="recipe-page">
-
-  <!-- Stuff to use voice commands -->
+ 
+  <!-- Voice bar -->
   <div class="voice-bar">
     <div class="voice-indicator" id="voiceIndicator"></div>
     <div class="voice-info">
-      <!-- Shows how to use the voice activation -->
       <div class="voice-status" id="voiceStatus">Loading&#8230;</div>
       <div class="voice-heard"  id="voiceHeard">Say &#8220;Hey Chef&#8221; to activate</div>
     </div>
-    <!-- NO onclick="" attributes as they were causing issues -->
     <button class="voice-btn start" id="btnStart">&#127897; Start</button>
     <button class="voice-btn stop"  id="btnStop">&#9209; Stop</button>
     <div class="voice-hint">
-      <!-- Example commands -->
       Commands: <strong>&#8220;Hey Chef, next&#8221;</strong> &middot;
       <strong>&#8220;read step 3&#8221;</strong> &middot;
       <strong>&#8220;go back&#8221;</strong> &middot;
@@ -53,8 +39,8 @@
       <strong>&#8220;repeat&#8221;</strong>
     </div>
   </div>
-
-  <!-- Shows all the ingredients and Instructions -->
+ 
+  <!-- Ingredients and Steps -->
   <div class="recipe-grid">
     <div class="card">
       <div class="card-title">Ingredients</div>
@@ -64,16 +50,29 @@
       <div class="card-title">Instructions</div>
       <ol class="steps-list" id="stepsList"></ol>
       <div class="step-nav">
-        <!-- voice.js attaches listeners to these IDs -->
-        <button class="nav-btn"        id="prevBtn" disabled>&#8592; Previous</button>
-        <button class="nav-btn primary" id="nextBtn">Next &#8594;</button>
+        <button class="nav-btn"         id="prevBtn" disabled>&#8592; Previous</button>
+        <button class="nav-btn primary"  id="nextBtn">Next &#8594;</button>
       </div>
     </div>
   </div>
-
+ 
+  <!-- Kroger store results panel (hidden until a Find Near Me button is clicked) -->
+  <div class="kroger-panel" id="krogerPanel" style="display:none;">
+    <div class="kroger-panel-header">
+      <span id="krogerPanelTitle">Nearby stores carrying <strong id="krogerIngredientName"></strong></span>
+      <button class="kroger-close-btn" id="krogerCloseBtn">&#x2715; Close</button>
+    </div>
+    <div id="krogerResults"></div>
+  </div>
+ 
 </div>
-
-<!-- External script -->
-<script src="{% static 'voice.js' %}"></script>
-
+ 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
 {% endblock %}
+ 
+<script src="{% static 'voice.js' %}"></script>
+<script src="{% static 'recipe_view.js' %}"></script>
+ 
+{% endblock %}
+ 

@@ -1,0 +1,93 @@
+// ── Render ingredients with Find Near Me buttons for missing ones ──
+const ingredientsDataEl = document.getElementById('ingredients-data');
+const pantryDataEl      = document.getElementById('pantry-data');
+const list              = document.getElementById('ingredientsList');
+ 
+if (ingredientsDataEl && pantryDataEl && list) {
+  const ingredientsRaw = JSON.parse(ingredientsDataEl.textContent);
+  const pantryNames    = new Set(JSON.parse(pantryDataEl.textContent));
+ 
+  ingredientsRaw.forEach(ing => {
+    const li       = document.createElement('li');
+    const inPantry = pantryNames.has(ing.name.toLowerCase());
+ 
+    if (inPantry) {
+      li.textContent = ing.display;
+    } else {
+      const nameSpan = document.createElement('span');
+      nameSpan.className   = 'missing-ingredient';
+      nameSpan.textContent = ing.display;
+ 
+      const btn = document.createElement('button');
+      btn.className          = 'find-near-me-btn';
+      btn.textContent        = '📍 Find Near Me';
+      btn.dataset.ingredient = ing.name;
+      btn.addEventListener('click', () => findNearMe(ing.name));
+ 
+      li.appendChild(nameSpan);
+      li.appendChild(btn);
+    }
+ 
+    list.appendChild(li);
+  });
+}
+ 
+// ── Kroger store finder ──
+function findNearMe(ingredientName) {
+  const panel     = document.getElementById('krogerPanel');
+  const results   = document.getElementById('krogerResults');
+  const titleIngr = document.getElementById('krogerIngredientName');
+ 
+  titleIngr.textContent = ingredientName;
+  results.innerHTML     = '<p class="kroger-loading">Getting your location&#8230;</p>';
+  panel.style.display   = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+ 
+  if (!navigator.geolocation) {
+    results.innerHTML = '<p class="kroger-error">Geolocation is not supported by your browser.</p>';
+    return;
+  }
+ 
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+ 
+      results.innerHTML = '<p class="kroger-loading">Searching for nearby stores&#8230;</p>';
+ 
+      fetch(`/kroger/stores/?lat=${lat}&lon=${lon}&ingredient=${encodeURIComponent(ingredientName)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            results.innerHTML = `<p class="kroger-error">Error: ${data.error}</p>`;
+            return;
+          }
+          if (!data.stores || data.stores.length === 0) {
+            results.innerHTML = '<p class="kroger-empty">No Kroger-family stores found within 10 miles.</p>';
+            return;
+          }
+          results.innerHTML = data.stores.map(store => `
+            <div class="store-card">
+              <div class="store-name">${store.name}</div>
+              <div class="store-address">${store.address}, ${store.city}, ${store.state} ${store.zip}</div>
+              ${store.distance !== '' ? `<span class="store-distance">${parseFloat(store.distance).toFixed(1)} mi away</span>` : ''}
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          results.innerHTML = '<p class="kroger-error">Failed to reach the store finder. Please try again.</p>';
+        });
+    },
+    () => {
+      results.innerHTML = '<p class="kroger-error">Location access was denied. Please allow location access and try again.</p>';
+    }
+  );
+}
+ 
+// ── Close panel ──
+const closeBtn = document.getElementById('krogerCloseBtn');
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    document.getElementById('krogerPanel').style.display = 'none';
+  });
+}

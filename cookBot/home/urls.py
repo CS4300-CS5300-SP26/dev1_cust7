@@ -37,4 +37,6 @@ urlpatterns = [
     # Social feed
     path('social/', views.social_feed, name='social_feed'),
 
+    # Kroger store finder
+    path('kroger/stores/', views.find_kroger_stores, name='find_kroger_stores'),
 ]

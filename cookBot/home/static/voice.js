@@ -49,29 +49,6 @@ function updateNav() {
 }
 
 // ─────────────────────────────────────────────────
-// RENDER INGREDIENTS made by Claude and Roman
-// ─────────────────────────────────────────────────
-function renderIngredients() {
-  var list = document.getElementById('ingredientsList');
-  if (!list) return;
-  list.innerHTML = '';
-  ingredients.forEach(function(item) {
-    var li    = document.createElement('li');
-    var check = document.createElement('span');
-    check.className = 'ing-check';
-    var label = document.createElement('span');
-    label.innerText = item;
-    li.appendChild(check);
-    li.appendChild(label);
-    li.addEventListener('click', function() {
-      li.classList.toggle('checked');
-      check.innerText = li.classList.contains('checked') ? '\u2713' : '';
-    });
-    list.appendChild(li);
-  });
-}
-
-// ─────────────────────────────────────────────────
 // RENDER STEPS made by Claude and Roman
 // ─────────────────────────────────────────────────
 function renderSteps() {
@@ -345,7 +322,6 @@ function wireButtons() {
 // Was issues with the JS not loading correctly
 // Made by Claude
 // ─────────────────────────────────────────────────
-renderIngredients();
 
 if (steps.length === 0) {
   setStatus('No steps found for this recipe.', '');
