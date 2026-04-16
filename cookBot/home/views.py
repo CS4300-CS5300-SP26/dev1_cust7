@@ -2,12 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
-from django.utils import timezone
 from django.core.exceptions import PermissionDenied
 from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage
 import json
@@ -21,7 +18,7 @@ def index(request):
     return render(request, "index.html")
 
 
-####Help from Claude and Spoonacular documents on fetching data from spoonacular####
+# Help from Claude and Spoonacular documents on fetching data from spoonacular #
 def get_nutrition(request, ingredient_name):
     try:
         # Step 1: find ingredient ID
@@ -60,7 +57,7 @@ def get_nutrition(request, ingredient_name):
     return JsonResponse(nutrition_data)
 
 
-####End spoonacular API call function####
+# End spoonacular API call function #
 
 
 def nutrition_test(request):

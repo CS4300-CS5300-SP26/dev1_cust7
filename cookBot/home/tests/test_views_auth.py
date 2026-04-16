@@ -256,7 +256,7 @@ class IntegrationTest(TestCase):
 
     def test_full_user_journey(self):
         """Integration test: Register -> Create Recipe -> Add to Pantry -> Generate Meal Plan -> View Calendar -> Logout"""
-        from home.models import MealPlan, Pantry, Recipe
+        from home.models import Pantry, Recipe
 
         with self._mock_spoonacular() as mock_spoonacular:
             # 1. Register a new user

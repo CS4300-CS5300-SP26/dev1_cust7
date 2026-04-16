@@ -55,7 +55,7 @@ class RecipeViewTests(TestCase):
         recipe = Recipe.objects.create(
             user=self.user, title="Private Recipe", is_public=False
         )
-        other_user = User.objects.create_user(username="otheruser", password="pass123")
+        _ = User.objects.create_user(username="otheruser", password="pass123")
         self.client.login(username="otheruser", password="pass123")
         response = self.client.get(reverse("recipe_view", args=[recipe.id]))
         self.assertEqual(response.status_code, 403)

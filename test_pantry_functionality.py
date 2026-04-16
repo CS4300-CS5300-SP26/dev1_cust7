@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import requests
-import json
 
 # Test the pantry functionality
 base_url = "http://127.0.0.1:8000"
@@ -24,7 +23,7 @@ def test_pantry():
     # Test 2: Login with test user
     print("\n2. Testing login...")
     # First get the signin page to extract CSRF token
-    signin_response = session.get(f"{base_url}/signin/")
+    session.get(f"{base_url}/signin/")
     csrf_token = session.cookies.get("csrftoken")
 
     login_data = {

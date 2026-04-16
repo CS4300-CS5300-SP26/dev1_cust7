@@ -21,7 +21,7 @@ class MealPlanAPITests(TestCase):
     def test_user_cannot_access_another_user_meals(self):
         """Security AC: Given two users, User B cannot see User A's meal plans via the API"""
         user_a = User.objects.create_user(username="userA", password="password123")
-        user_b = User.objects.create_user(username="userB", password="password123")
+        _ = User.objects.create_user(username="userB", password="password123")
         MealPlan.objects.create(
             user=user_a,
             recipe_name="Chicken Pasta",
@@ -85,7 +85,7 @@ class MealPlanNegativeTests(TestCase):
     def test_unauthorized_meal_access(self):
         """Negative Test: User B should not see User A's meals via API - returns empty list or 403"""
         user_a = User.objects.create_user(username="userA_neg", password="password123")
-        user_b = User.objects.create_user(username="userB_neg", password="password123")
+        _ = User.objects.create_user(username="userB_neg", password="password123")
         MealPlan.objects.create(
             user=user_a,
             recipe_name="Secret Recipe",

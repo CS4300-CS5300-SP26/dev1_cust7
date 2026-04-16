@@ -40,7 +40,6 @@ def step_registration_succeeds(context):
 
 @then("the user should be able to log in")
 def step_user_can_log_in(context):
-    from django.contrib.auth.models import User
     from django.test import Client
 
     context.client = Client()

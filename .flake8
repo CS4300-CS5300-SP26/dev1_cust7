@@ -13,4 +13,5 @@ exclude =
     .nox
 extend-ignore =
     E203,
-    W503
+    W503,
+    E501

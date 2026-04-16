@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 
-from home.chefBot import collect_context_from_recipes, build_messages, SYSTEM_PROMPT
+from home.chefBot import collect_context_from_recipes, build_messages
 from home.models import ChatSession, ChatMessage, Recipe
 
 

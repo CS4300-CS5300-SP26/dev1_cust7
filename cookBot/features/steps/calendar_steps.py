@@ -6,7 +6,6 @@ from django.urls import reverse
 @given("I am a logged-in user")
 def step_logged_in_user(context):
     from django.contrib.auth.models import User
-    from django.contrib.auth import login
     from django.test import Client
 
     # Create or get test user
@@ -41,7 +40,6 @@ def step_empty_pantry(context):
 def step_generated_meal_plan(context):
     """Actually generate a meal plan by calling the real endpoint"""
     from home.models import MealPlan
-    from datetime import date, timedelta
     from django.urls import reverse
 
     # Call the real generate_meal_plan endpoint to create actual database entries

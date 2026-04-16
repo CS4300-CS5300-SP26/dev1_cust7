@@ -3,6 +3,7 @@ import os
 import sys
 import django
 from pathlib import Path
+from django.contrib.auth.models import User
 
 # Add the project directory to the Python path
 base_dir = Path(__file__).resolve().parent / "cookBot"
@@ -13,8 +14,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cookBot.settings")
 
 # Setup Django
 django.setup()
-
-from django.contrib.auth.models import User
 
 
 def create_test_user():

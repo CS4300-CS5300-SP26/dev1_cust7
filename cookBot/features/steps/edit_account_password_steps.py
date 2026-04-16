@@ -1,5 +1,4 @@
-from behave import given, when, then
-from django.urls import reverse
+from behave import when, then
 
 
 @when("I submit a valid password change")
