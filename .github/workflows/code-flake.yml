@@ -28,10 +28,12 @@ jobs:
         continue-on-error: true
         run: |
           black --check . > black_results.txt 2>&1
+          echo $? > black_exit_code.txt
       - name: Run codebase through flake8
         continue-on-error: true
         run: |
           flake8 --output-file=flake8_results.txt .
+          echo $? > flake8_exit_code.txt
       - name: create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
