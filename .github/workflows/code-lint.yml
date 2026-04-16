@@ -34,7 +34,7 @@ jobs:
         run: |
           flake8 --output-file=flake8_results.txt .
           echo $? > flake8_exit_code.txt
-      - name: create Comment Formatting
+      - name: Create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
           {
