@@ -50,11 +50,11 @@ jobs:
             
             if [ -f flake8_results.txt ] && [ -s flake8_results.txt ]; then
               echo '```'
-              echo "####❌ flake8 issues detected, please review the following"
+              echo "❌ flake8 issues detected, please review the following"
               cat flake8_results.txt
               echo '```'
             else
-              echo "####✅ No flake8 issues found."
+              echo "✅ No flake8 issues found."
             fi 
           } > pr-comment.txt
       - name: Create PR Comment
