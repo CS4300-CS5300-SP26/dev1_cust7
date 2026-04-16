@@ -1,4 +1,4 @@
-name: Code Flake on Existing Code
+name: Code Lint
 
 on: 
   pull_request: 
@@ -27,11 +27,11 @@ jobs:
       - name: Run codebase through Black Formatter
         continue-on-error: true
         run: |
-          black --check .
+          black --check . > black_results.txt 2>&1
       - name: Run codebase through flake8
         continue-on-error: true
         run: |
-          flake8 --output-file=flake8_results.txt .   
+          flake8 --output-file=flake8_results.txt .
       - name: create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
@@ -39,20 +39,22 @@ jobs:
             echo "## Linting Results"
             echo ""
             echo "### Black (Formatting)"
-            if black --check . > /dev/null 2>&1; then
-              echo "✅ Code is properly formatted"
+            if [ -f black_results.txt ] && [ -s black_results.txt ]; then
+              echo "❌ Black formatter issues detected (run \`black .\` locally)"
+              
             else
-              echo "❌ Formatting issues detected (run \`black .\` locally)"
+              echo "✅ Code is properly formatted"
             fi
             echo ""
             echo "### Flake8 (Linting)"
             
             if [ -f flake8_results.txt ] && [ -s flake8_results.txt ]; then
               echo '```'
+              echo "####❌ flake8 issues detected, please review the following"
               cat flake8_results.txt
               echo '```'
             else
-              echo "No flake8 issues found."
+              echo "####✅ No flake8 issues found."
             fi 
           } > pr-comment.txt
       - name: Create PR Comment
@@ -61,7 +63,14 @@ jobs:
         with:
           header: 'code-flake'
           path: pr-comment.txt
+      - name: Fail workflow if linting failed
+        if: always()
+        run: |
+          if [ -s black_results.txt ] || [ -s flake8_results.txt ]; then
+            echo "Linting failed."
+            exit 1
+          fi
       - name: Clean up temporary files
         if: always()
         run: |
-          rm -f flake8_results.txt pr-comment.txt
+          rm -f flake8_results.txt pr-comment.txt black_results.txt
