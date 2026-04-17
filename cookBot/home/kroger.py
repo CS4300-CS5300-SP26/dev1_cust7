@@ -46,7 +46,7 @@ def _get_access_token():
     expires_in = data.get("expires_in", 1800)
  
     # Cache with a 60-second buffer before expiry
-    cache.set("kroger_access_token", token, timeout=expires_in - 60)
+    cache.set("kroger_access_token", token, timeout=max(expires_in - 60, 0))
     return token
  
  
