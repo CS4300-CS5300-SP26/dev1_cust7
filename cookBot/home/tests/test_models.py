@@ -2,6 +2,7 @@ from datetime import date
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
 from home.models import MealPlan, Recipe, RecipeIngredient, RecipeRating, RecipeStep, Tag, RecipeTag
@@ -260,7 +261,7 @@ class TagModelTest(TestCase):
 
     def test_tag_name_is_unique(self):
         """Creating a tag with a duplicate name raises an error"""
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Tag.objects.create(name='Vegan', tag_type='dietary')
 
     def test_tag_default_type_is_other(self):
@@ -304,7 +305,7 @@ class RecipeTagTest(TestCase):
     def test_duplicate_tag_on_recipe_raises_error(self):
         """Adding the same tag to a recipe twice raises an error"""
         self.recipe.tags.add(self.tag)
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             RecipeTag.objects.create(recipe=self.recipe, tag=self.tag)
 
     def test_remove_tag_from_recipe(self):
