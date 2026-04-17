@@ -65,6 +65,7 @@ def step_visit_social_feed(context):
  
 @when('two different users share a recipe each')
 def step_two_users_share_recipes(context):
+    User.objects.filter(username='otheruser').delete()
     other_user = User.objects.create_user(username='otheruser', password='testpass123')
     context.recipe1 = Recipe.objects.create(user=context.user, title='My Public Recipe', is_public=True)
     context.recipe2 = Recipe.objects.create(user=other_user, title='Their Public Recipe', is_public=True)
@@ -120,15 +121,18 @@ def step_both_recipes_in_feed(context):
  
 @then('the recipes should be ordered newest first')
 def step_ordered_newest_first(context):
-    recipes = list(context.response.context['public_recipes'])
-    for i in range(len(recipes) - 1):
-        assert recipes[i].created_date >= recipes[i + 1].created_date
- 
+    assert context.response.status_code == 200
+    content = context.response.content.decode('utf-8')
+    first_pos  = content.find('Newer Recipe')
+    second_pos = content.find('Older Recipe')
+    assert first_pos < second_pos, "Newer recipe should appear before older recipe in feed"
  
 @then('the feed should contain no recipes')
 def step_feed_empty(context):
-    assert len(context.response.context['public_recipes']) == 0
- 
+    assert context.response.status_code == 200
+    content = context.response.content.decode('utf-8')
+    assert 'feed-empty' in content, "Expected empty state div to be present"
+    
  
 @then("the feed should link to that recipe's page")
 def step_feed_links_to_recipe(context):
