@@ -123,16 +123,21 @@ def step_both_recipes_in_feed(context):
 def step_ordered_newest_first(context):
     assert context.response.status_code == 200
     content = context.response.content.decode('utf-8')
-    first_pos  = content.find('Newer Recipe')
-    second_pos = content.find('Older Recipe')
-    assert first_pos < second_pos, "Newer recipe should appear before older recipe in feed"
- 
+    # The when-step creates 'Older Recipe' first then 'Newer Recipe' second,
+    # so 'Newer Recipe' has the later created_date and should appear first in the feed
+    older_pos = content.find('Older Recipe')
+    newer_pos = content.find('Newer Recipe')
+    assert older_pos != -1, "Older Recipe not found in feed"
+    assert newer_pos != -1, "Newer Recipe not found in feed"
+    assert newer_pos < older_pos, \
+        f"Expected Newer Recipe (pos {newer_pos}) before Older Recipe (pos {older_pos})"
+        
 @then('the feed should contain no recipes')
 def step_feed_empty(context):
     assert context.response.status_code == 200
     content = context.response.content.decode('utf-8')
     assert 'feed-empty' in content, "Expected empty state div to be present"
-    
+
  
 @then("the feed should link to that recipe's page")
 def step_feed_links_to_recipe(context):
