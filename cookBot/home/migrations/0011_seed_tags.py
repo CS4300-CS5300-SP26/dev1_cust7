@@ -78,4 +78,3 @@ def seed_tags(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [('home', '0010_alter_recipe_tags')]
     operations = [migrations.RunPython(seed_tags, migrations.RunPython.noop)]
-    
