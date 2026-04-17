@@ -41,8 +41,9 @@ class RecipeViewTests(TestCase):
         RecipeIngredient.objects.create(recipe=recipe, quantity="2", unit="", name="Eggs")
         response = self.client.get(reverse('recipe_view', args=[recipe.id]))
         ingredients = response.context["ingredients_json"]
-        self.assertIn("1 cup Flour", ingredients)
-        self.assertIn("2 Eggs".strip(), ingredients)
+        ingredient_displays = [i['display'] for i in ingredients]
+        self.assertIn("1 cup Flour", ingredient_displays)
+        self.assertIn("2 Eggs", ingredient_displays)
 
     def test_recipe_view_404(self):
         """Invalid recipe should return 404"""

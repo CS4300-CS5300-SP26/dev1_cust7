@@ -453,31 +453,44 @@ def generate_meal_plan(request):
 # This is for the Recipe viewing page and Recipe Input page
 def recipe_view(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
-
+ 
     # If the recipe is not public, only the owner can view it
     if not recipe.is_public:
         if not request.user.is_authenticated or request.user != recipe.user:
             raise PermissionDenied
-
+ 
     steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
-
+ 
     ingredients = [
-        " ".join(
-            part for part in (
-                (i.quantity or "").strip(),
-                (i.unit or "").strip(),
-                (i.name or "").strip(),
-            ) if part
-    )
-    for i in recipe.ingredients.all()
-]
-
+        {
+            "display": " ".join(
+                part for part in (
+                    (i.quantity or "").strip(),
+                    (i.unit or "").strip(),
+                    (i.name or "").strip(),
+                ) if part
+            ),
+            "name": i.name.strip().lower(),
+        }
+        for i in recipe.ingredients.all()
+    ]
+ 
+    # Build a set of pantry ingredient names (lowercase) for the current user
+    if request.user.is_authenticated:
+        pantry_names = set(
+            request.user.pantry_items.values_list('ingredient_name', flat=True)
+        )
+        pantry_names = {name.lower() for name in pantry_names}
+    else:
+        pantry_names = set()
+ 
     return render(request, "recipe_view.html", {
         "recipe": recipe,
         "steps_json": steps,
         "ingredients_json": ingredients,
+        "pantry_names_json": list(pantry_names),
     })
-
+ 
 @login_required
 def create_recipe(request):
     if request.method == "POST":
@@ -644,3 +657,26 @@ def aiChefBot_chat(request):
     except Exception as e:
         return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
  
+@login_required
+@require_GET
+def find_kroger_stores(request):
+    """Returns a JSON list of nearby Kroger stores given a lat/lon from the browser"""
+    lat = request.GET.get("lat")
+    lon = request.GET.get("lon")
+    ingredient = request.GET.get('ingredient')
+
+    if not lat or not lon or not ingredient:
+        return JsonResponse({"error": "lat, lon, and ingredient are required"}, status=400)
+
+    try:
+        lat = float(lat)
+        lon = float(lon)
+    except ValueError:
+        return JsonResponse({"error": "lat and lon must be valid numbers"}, status=400)
+
+    try:
+        from .kroger import get_nearby_stores
+        stores = get_nearby_stores(lat, lon)
+        return JsonResponse({"stores": stores})
+    except Exception as e:
+        return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)

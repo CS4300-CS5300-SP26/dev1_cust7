@@ -29,6 +29,10 @@ SPOONACULAR_API_KEY = config('SPOONACULAR_API_KEY', default='placeholder_key_for
 #OPENAI KEY
 OPENAI_API_KEY = config('OPENAI_API_KEY', default='placeholder')
 
+#KROGER ID AND SECRET
+KROGER_CLIENT_ID = config('KROGER_CLIENT_ID', default = 'placeholder')
+KROGER_CLIENT_SECRET = config('KROGER_CLIENT_SECRET', default = 'placeholder')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
