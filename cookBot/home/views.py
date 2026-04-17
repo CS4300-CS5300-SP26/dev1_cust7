@@ -669,6 +669,12 @@ def find_kroger_stores(request):
         return JsonResponse({"error": "lat, lon, and ingredient are required"}, status=400)
 
     try:
+        lat = float(lat)
+        lon = float(lon)
+    except ValueError:
+        return JsonResponse({"error": "lat and lon must be valid numbers"}, status=400)
+
+    try:
         from .kroger import get_nearby_stores
         stores = get_nearby_stores(lat, lon)
         return JsonResponse({"stores": stores})
