@@ -50,13 +50,9 @@ def _get_access_token():
     return token
  
  
-def kroger_get(endpoint, params={}):
-    """
-    Makes an authenticated GET request to the Kroger API.
-    Automatically handles token retrieval and caching.
-    """
+def kroger_get(endpoint, params=None):
+    params = params or {}
     token = _get_access_token()
- 
     encoded = urllib.parse.urlencode(params)
     url = f"{KROGER_BASE_URL}/{endpoint}?{encoded}"
  
