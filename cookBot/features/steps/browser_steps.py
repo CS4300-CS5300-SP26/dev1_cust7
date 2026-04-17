@@ -29,7 +29,7 @@ def step_navigate_to_pantry(context):
 
 @when('I navigate to the create recipe page')
 def step_navigate_to_create_recipe(context):
-    context.response = context.client.get('/recipe/create/', follow=True)
+    context.response = context.client.get(reverse('create_recipe'), follow=True)
     assert context.response.status_code == 200, \
         f"Expected 200 on create recipe page, got {context.response.status_code}. " \
         f"Final URL: {context.response.redirect_chain}"
@@ -94,8 +94,17 @@ def step_fill_registration_form(context):
 def step_submit_registration(context):
     """Submit the registration form"""
     form_data = getattr(context, 'form_data', {})
-    context.response = context.client.post(reverse('register'), form_data)
-
+    username = form_data.get('username')
+    email = form_data.get('email')
+    # Clean up stale users from previous runs, but preserve testuser
+    # which is used by other tests and duplicate-check scenarios
+    protected_usernames = {'testuser'}
+    if username and username not in protected_usernames:
+        User.objects.filter(username=username).delete()
+    if email:
+        User.objects.filter(email=email).delete()
+    context.response = context.client.post(reverse('register'), form_data, follow=True)
+    
 @when('I submit the recipe form without a title')
 def step_submit_recipe_without_title(context):
     """Submit the recipe form without a title"""
@@ -275,13 +284,18 @@ def step_see_signin_page(context):
 def step_redirected_to_home(context):
     response = context.response
     # If it's a redirect (302), follow it and check final status
+
     if hasattr(response, 'url'):
         assert response.status_code == 302
+        assert response.url == reverse('index'), \
+            f"Expected redirect to home page, got {response.url}"
     else:
-        # Response was already followed — check we landed on a valid page
+        # Response was followed — check we landed on the home page
         assert response.status_code == 200, \
-            f"Expected redirect to home, got {response.status_code}"
-            
+            f"Expected 200 on home page, got {response.status_code}"
+        assert any(url == reverse('index') for url, _ in response.redirect_chain), \
+            f"Redirect chain did not pass through home page: {response.redirect_chain}"
+
 @then('I should see the recipe view page')
 def step_see_recipe_view(context):
     """Verify the recipe view page is displayed"""
