@@ -245,7 +245,7 @@ class TagModelTest(TestCase):
     def setUp(self):
         self.tag, _ = Tag.objects.get_or_create(
             name='Vegan',
-            defaults={'tag_type': 'dietary', 'description': 'Contains no animal products'}
+            defaults={'tag_type': 'dietary', 'description': ''}
         )
 
     def test_tag_creation(self):

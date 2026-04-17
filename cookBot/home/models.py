@@ -17,7 +17,7 @@ class Pantry(models.Model):
         return f"{self.user.username} - {self.ingredient_name}"
 
 class Tag(models.Model):
-    """A Tag system for both recipes and users"""
+    """A Tag system for recipes"""
     class TagType(models.TextChoices):
         """A sub model for tags to help filter and define them"""
         DIETARY   = 'dietary',  'Dietary'      # vegan, gluten-free, nut-free
