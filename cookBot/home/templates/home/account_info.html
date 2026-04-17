@@ -2,11 +2,18 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'create_recipe.css' %}">
+<!-- Banner -->
+<section class="create-banner">
+  <div class="create-banner-content">
+    <h1>My Account</h1>
+    <p>Welcome {{ user.first_name|default:user.username }}!</p>
+    <p>Manage your CookBot profile and security settings.</p>
+  </div>
+</section>
+
 <main class="account-page">
     <section class="account-info">
-        <h1>Account</h1>
-        <p>Welcome {{ user.first_name|default:user.username }}!</p>
-
         <div class="card account-section">
             <h2>Profile</h2>
             <p><strong>Username:</strong> {{ user.username }}</p>

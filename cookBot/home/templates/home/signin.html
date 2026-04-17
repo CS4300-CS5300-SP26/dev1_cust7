@@ -2,11 +2,18 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'create_recipe.css' %}">
+
+<!-- Banner -->
+<section class="create-banner">
+    <div class="create-banner-content">
+      <h1>Sign In</h1>
+      <p>Welcome back to CookBot — sign in to continue.</p>
+    </div>
+</section>
+
 <main class="auth-page">
     <section class="auth-panel">
-        <div class="auth-header">
-            <h1>Sign In</h1>
-        </div>
 
         {% if error_message %}
             <div class="error-message auth-error" role="alert">
