@@ -76,5 +76,6 @@ def seed_tags(apps, schema_editor):
         Tag.objects.get_or_create(name=name, defaults={'tag_type': tag_type})
 
 class Migration(migrations.Migration):
-    dependencies = [('home', '0009_tag_recipetag_recipe_tags')]
+    dependencies = [('home', '0010_alter_recipe_tags')]
     operations = [migrations.RunPython(seed_tags, migrations.RunPython.noop)]
+    

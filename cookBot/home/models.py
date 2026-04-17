@@ -42,7 +42,7 @@ class Recipe(models.Model):
     title = models.CharField(max_length=200)
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
-    tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes')
+    tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes', blank=True)
     
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically
