@@ -61,6 +61,7 @@ INITIAL_TAGS = [
     ('Umami', 'other'),
     ('Smoky', 'other'),
     ('One-Pot', 'other'),
+    ('One-Pan', 'other'),
     ('Slow Cooker', 'other'),
     ('No-Cook', 'other'),
     ('Air Fryer', 'other'),
