@@ -7,7 +7,7 @@ python-decouple==3.8
 python-dotenv==1.2.2
 pytz==2024.1
 requests==2.33.1
-setuptools==68.1.2
+setuptools==82.0.1
 six==1.17.0
 sqlparse==0.4.4
 supervisor==4.3.0
