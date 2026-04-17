@@ -271,11 +271,13 @@ class TagModelTest(TestCase):
 
     def test_tag_ordering(self):
         """Tags are ordered by tag_type then name"""
-        Tag.objects.get_or_create(name='Italian', defaults={'tag_type': 'cuisine'})
+        Tag.objects.get_or_create(name='Zucchini', defaults={'tag_type': 'cuisine'})
+        Tag.objects.get_or_create(name='Apple', defaults={'tag_type': 'cuisine'})
         Tag.objects.get_or_create(name='Gluten-Free', defaults={'tag_type': 'dietary'})
+        Tag.objects.get_or_create(name='Dairy-Free', defaults={'tag_type': 'dietary'})
         tags = list(Tag.objects.all())
-        tag_types = [t.tag_type for t in tags]
-        self.assertEqual(tag_types, sorted(tag_types))
+        tag_pairs = [(t.tag_type, t.name) for t in tags]
+        self.assertEqual(tag_pairs, sorted(tag_pairs))
 
     def test_all_tag_types_are_valid(self):
         """All TagType choices can be saved to the database"""
