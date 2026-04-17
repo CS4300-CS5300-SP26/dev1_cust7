@@ -252,7 +252,7 @@ class TagModelTest(TestCase):
         """Tag is created with correct fields"""
         self.assertEqual(self.tag.name, 'Vegan')
         self.assertEqual(self.tag.tag_type, 'dietary')
-        self.assertEqual(self.tag.description, 'desc')
+        self.assertEqual(self.tag.description, '')
 
     def test_tag_str(self):
         """Tag __str__ returns correct format"""
