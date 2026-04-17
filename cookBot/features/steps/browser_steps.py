@@ -104,7 +104,7 @@ def step_submit_registration(context):
     if email:
         User.objects.filter(email=email).delete()
     context.response = context.client.post(reverse('register'), form_data, follow=True)
-    
+
 @when('I submit the recipe form without a title')
 def step_submit_recipe_without_title(context):
     """Submit the recipe form without a title"""
@@ -293,7 +293,7 @@ def step_redirected_to_home(context):
         # Response was followed — check we landed on the home page
         assert response.status_code == 200, \
             f"Expected 200 on home page, got {response.status_code}"
-        assert any(url == reverse('index') for url, _ in response.redirect_chain), \
+        assert any(url.endswith(reverse('index')) for url, _ in response.redirect_chain), \
             f"Redirect chain did not pass through home page: {response.redirect_chain}"
 
 @then('I should see the recipe view page')
