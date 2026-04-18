@@ -22,6 +22,57 @@
     </div>
   </div>
  
+  <!-- Edit/Delete buttons — only visible to the recipe owner -->
+  {% if is_owner %}
+  <div class="recipe-actions">
+      <a href="{% url 'edit_recipe' recipe.id %}">Edit Recipe</a>
+      <button onclick="document.getElementById('delete-modal').style.display='flex'">
+          Delete Recipe
+      </button>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
+      <div style="background:white; padding:2rem; border-radius:8px; max-width:400px; width:90%;">
+          <h2>Delete "{{ recipe.title }}"?</h2>
+          <p>This action is permanent and cannot be undone.</p>
+
+          <label style="display:flex; align-items:center; gap:0.5rem; margin:1rem 0;">
+              <input type="checkbox" id="delete-confirm-check">
+              I understand this recipe will be permanently deleted
+          </label>
+
+          <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
+              <button onclick="closeDeleteModal()">Cancel</button>
+              <form method="POST" action="{% url 'delete_recipe' recipe.id %}">
+                  {% csrf_token %}
+                  <button type="submit" id="delete-confirm-btn" disabled>Delete Recipe</button>
+              </form>
+          </div>
+      </div>
+  </div>
+
+  <script>
+      const deleteCheck = document.getElementById('delete-confirm-check');
+      const deleteBtn = document.getElementById('delete-confirm-btn');
+
+      deleteCheck.addEventListener('change', () => {
+          deleteBtn.disabled = !deleteCheck.checked;
+      });
+
+      function closeDeleteModal() {
+          document.getElementById('delete-modal').style.display = 'none';
+          deleteCheck.checked = false;
+          deleteBtn.disabled = true;
+      }
+
+      // Close if user clicks the dark backdrop
+      document.getElementById('delete-modal').addEventListener('click', function(e) {
+          if (e.target === this) closeDeleteModal();
+      });
+  </script>
+  {% endif %}
+
   <!-- Voice bar -->
   <div class="voice-bar">
     <div class="voice-indicator" id="voiceIndicator"></div>
@@ -55,6 +106,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Tags -->
+  {% if tags %}
+  <div class="recipe-tags">
+      {% for tag in tags %}
+          <span class="tag tag-{{ tag.tag_type }}">{{ tag.name }}</span>
+      {% endfor %}
+  </div>
+  {% endif %}
  
   <!-- Kroger store results panel (hidden until a Find Near Me button is clicked) -->
   <div class="kroger-panel" id="krogerPanel" style="display:none;">

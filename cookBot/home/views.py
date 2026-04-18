@@ -490,6 +490,8 @@ def recipe_view(request, recipe_id):
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "tags": recipe.tags.all(),
+        "is_owner": request.user == recipe.user,
     })
  
 @login_required
@@ -553,6 +555,91 @@ def create_recipe(request):
     return render(request, "create_recipe.html", {
         "grouped_tags": get_grouped_tags()
     })
+
+#Edit recipe
+@login_required
+def edit_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    def get_grouped_tags():
+        tags = Tag.objects.all().order_by('tag_type', 'name')
+        grouped = defaultdict(list)
+        for tag in tags:
+            grouped[tag.tag_type].append(tag)
+        return dict(grouped)
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        is_public = request.POST.get("is_public") == "on"
+
+        if not title:
+            return render(request, "edit_recipe.html", {
+                "error": "Title cannot be empty.",
+                "recipe": recipe,
+                "grouped_tags": get_grouped_tags(),
+                "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
+            })
+
+        recipe.title = title
+        recipe.is_public = is_public
+        recipe.save()
+
+        # Replace ingredients
+        recipe.ingredients.all().delete()
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        # Replace steps
+        recipe.steps.all().delete()
+        steps = request.POST.getlist('steps[]')
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        # Replace tags
+        RecipeTag.objects.filter(recipe=recipe).delete()
+        tag_ids = request.POST.getlist('tags[]')
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
+
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "edit_recipe.html", {
+        "recipe": recipe,
+        "grouped_tags": get_grouped_tags(),
+        "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
+    })
+
+#Delete a recipe action
+@login_required
+def delete_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        recipe.delete()
+        return redirect("index")
+
+    #If someone tries to GET this URL directly, send them back to the recipe
+    return redirect("recipe_view", recipe_id=recipe_id)
 
 #Social feed view
 @login_required
