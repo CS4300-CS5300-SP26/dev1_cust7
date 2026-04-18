@@ -9,7 +9,8 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage
+from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag
+from collections import defaultdict
 import json
 import urllib.request
 import urllib.parse
@@ -493,25 +494,31 @@ def recipe_view(request, recipe_id):
  
 @login_required
 def create_recipe(request):
+
+    def get_grouped_tags():
+        tags = Tag.objects.all().order_by('tag_type', 'name')
+        grouped = defaultdict(list)
+        for tag in tags:
+            grouped[tag.tag_type].append(tag)
+        return dict(grouped)
+
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
 
-        # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
                 "error": "Title cannot be empty.",
                 "post_data": request.POST,
+                "grouped_tags": get_grouped_tags()
             })
 
-        # Create recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
             is_public=is_public
         )
 
-        # Get ingredient data
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
         names = request.POST.getlist('ingredient_name[]')
@@ -525,7 +532,6 @@ def create_recipe(request):
                     name=name.strip()
                 )
 
-        # Get step data
         steps = request.POST.getlist('steps[]')
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
@@ -535,9 +541,18 @@ def create_recipe(request):
                     text=step_text.strip()
                 )
 
+        tag_ids = request.POST.getlist('tags[]')
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(
+                recipe=recipe,
+                tag_id=tag_id
+            )
+
         return redirect("recipe_view", recipe_id=recipe.id)
 
-    return render(request, "create_recipe.html")
+    return render(request, "create_recipe.html", {
+        "grouped_tags": get_grouped_tags()
+    })
 
 #Social feed view
 @login_required

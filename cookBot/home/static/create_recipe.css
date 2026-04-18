@@ -295,3 +295,54 @@
  
   .submit-btn:hover  { background: #42a06d; }
   .submit-btn:active { transform: scale(0.97); }
+
+  .tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  /* Base tag style similar to default */
+  .tag-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1.5px solid #d7ebe3;
+    background: #f9fcfa;
+    color: #1a3d2b;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+  }
+  
+  .tag-chip:hover {
+    border-color: #009470;
+    background: #f0faf7;
+    color: #009470;
+  }
+  
+  .tag-chip.selected {
+    background: #009470;
+    color: #ffffff;
+    border-color: #009470;
+  }
+  
+  .tag-type {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-left: 4px;
+    font-weight: 400;
+  }
+
+  .tag-group {
+    margin-bottom: 1rem;
+  }
+  
+  .tag-group-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #9ab8ac;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }

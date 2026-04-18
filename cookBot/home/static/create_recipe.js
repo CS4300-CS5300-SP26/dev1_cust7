@@ -28,3 +28,24 @@ function renumberSteps() {
       renumberSteps();
     }
   }
+
+  function toggleTag(el) {
+    const tagId = el.dataset.id;
+    const container = document.getElementById("selected-tags");
+  
+    // Toggle visual state
+    el.classList.toggle("selected");
+  
+    // Check if already exists
+    let existing = document.querySelector(`input[value="${tagId}"]`);
+  
+    if (existing) {
+      existing.remove();
+    } else {
+      let input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "tags[]";
+      input.value = tagId;
+      container.appendChild(input);
+    }
+  }

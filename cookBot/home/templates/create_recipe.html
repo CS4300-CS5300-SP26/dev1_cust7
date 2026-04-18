@@ -90,6 +90,32 @@
       </div>
       <button type="button" class="add-btn" onclick="addStep()">+ Add Step</button>
     </div>
+
+    <!--Tags-->
+    <div class="form-card">
+      <div class="form-card-title">Tags</div>
+    
+      {% for type, tags in grouped_tags.items %}
+        <div class="tag-group">
+          <div class="tag-group-title">
+            {{ type|title }}
+          </div>
+    
+          <div class="tag-container">
+            {% for tag in tags %}
+              <button type="button"
+                      class="tag-chip"
+                      data-id="{{ tag.id }}"
+                      onclick="toggleTag(this)">
+                {{ tag.name }}
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    
+      <div id="selected-tags"></div>
+    </div>
  
     <div class="form-actions">
       <a href="/" class="cancel-btn">Cancel</a>
