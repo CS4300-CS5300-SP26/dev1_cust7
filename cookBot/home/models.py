@@ -16,12 +16,33 @@ class Pantry(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.ingredient_name}"
 
+class Tag(models.Model):
+    """A Tag system for recipes"""
+    class TagType(models.TextChoices):
+        """A sub model for tags to help filter and define them"""
+        DIETARY   = 'dietary',  'Dietary'      # vegan, gluten-free, nut-free
+        CUISINE   = 'cuisine',  'Cuisine'      # french, italian, thai, bbq
+        COOK_TIME = 'cooktime', 'Cook Time'    # 15-20 mins, under 30 mins
+        MEAL_TYPE = 'meal',     'Meal Type'    # breakfast, dinner, snack
+        OTHER     = 'other',    'Other'        # spicy, one-pan, meal-prep
+
+    name        = models.CharField(max_length=150, unique=True)
+    tag_type    = models.CharField(max_length=30, choices=TagType.choices, default=TagType.OTHER)
+    description = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['tag_type', 'name']
+
+    def __str__(self):
+        return f"[{self.tag_type}] {self.name}"
+
 class Recipe(models.Model):
     """Model to store recipes with ingredients and instructions"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
+    tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes', blank=True)
     
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically
@@ -83,6 +104,18 @@ class RecipeRating(models.Model):
  
     def __str__(self):
         return f"{self.user.username} - {self.recipe.title} - {self.stars} stars"
+
+class RecipeTag(models.Model):
+    """Model linking recipes to tags"""
+    recipe      = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_tags')
+    tag         = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='recipe_tags')
+    tagged_date = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ['recipe', 'tag']
+
+    def __str__(self):
+        return f"{self.recipe.title} — {self.tag.name}"
 
 class MealPlan(models.Model):
     """Model to store user's meal calendar entries"""

@@ -2,9 +2,10 @@ from datetime import date
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
-from home.models import MealPlan, Recipe, RecipeIngredient, RecipeRating, RecipeStep
+from home.models import MealPlan, Recipe, RecipeIngredient, RecipeRating, RecipeStep, Tag, RecipeTag
 
 
 # https://docs.djangoproject.com/en/6.0/topics/testing/overview/ Reference as needed
@@ -239,3 +240,101 @@ class MealPlanModelTests(TestCase):
         self.assertEqual(meal_plan.recipe_id, 12345)
         self.assertEqual(meal_plan.date, date(2026, 4, 3))
         self.assertEqual(meal_plan.meal_type, 'Dinner')
+
+class TagModelTest(TestCase):
+
+    def setUp(self):
+        self.tag, _ = Tag.objects.get_or_create(
+            name='Vegan',
+            defaults={'tag_type': 'dietary', 'description': ''}
+        )
+
+    def test_tag_creation(self):
+        """Tag is created with correct fields"""
+        self.assertEqual(self.tag.name, 'Vegan')
+        self.assertEqual(self.tag.tag_type, 'dietary')
+        self.assertEqual(self.tag.description, '')
+
+    def test_tag_str(self):
+        """Tag __str__ returns correct format"""
+        self.assertEqual(str(self.tag), '[dietary] Vegan')
+
+    def test_tag_name_is_unique(self):
+        """Creating a tag with a duplicate name raises an error"""
+        with self.assertRaises(IntegrityError):
+            Tag.objects.create(name='Vegan', tag_type='dietary')
+
+    def test_tag_default_type_is_other(self):
+        """Tag defaults to 'other' type when none is provided"""
+        tag, _ = Tag.objects.get_or_create(name='One-Pan')
+        self.assertEqual(tag.tag_type, 'other')
+
+    def test_tag_ordering(self):
+        """Tags are ordered by tag_type then name"""
+        Tag.objects.get_or_create(name='Zucchini', defaults={'tag_type': 'cuisine'})
+        Tag.objects.get_or_create(name='Apple', defaults={'tag_type': 'cuisine'})
+        Tag.objects.get_or_create(name='Gluten-Free', defaults={'tag_type': 'dietary'})
+        Tag.objects.get_or_create(name='Dairy-Free', defaults={'tag_type': 'dietary'})
+        tags = list(Tag.objects.all())
+        tag_pairs = [(t.tag_type, t.name) for t in tags]
+        self.assertEqual(tag_pairs, sorted(tag_pairs))
+
+    def test_all_tag_types_are_valid(self):
+        """All TagType choices can be saved to the database"""
+        valid_types = ['dietary', 'cuisine', 'cooktime', 'meal', 'other']
+        for i, tag_type in enumerate(valid_types):
+            tag, _ = Tag.objects.get_or_create(name=f'Test Tag {i}', defaults={'tag_type': tag_type})
+            self.assertEqual(tag.tag_type, tag_type)
+
+
+class RecipeTagTest(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='pass')
+        self.recipe = Recipe.objects.create(user=self.user, title='Pasta')
+        self.tag, _ = Tag.objects.get_or_create(name='Italian', defaults={'tag_type': 'cuisine'})
+
+    def test_add_tag_to_recipe(self):
+        """A tag can be added to a recipe"""
+        self.recipe.tags.add(self.tag)
+        self.assertIn(self.tag, self.recipe.tags.all())
+
+    def test_recipe_tag_through_model_created(self):
+        """Adding a tag creates a RecipeTag row"""
+        self.recipe.tags.add(self.tag)
+        self.assertTrue(RecipeTag.objects.filter(recipe=self.recipe, tag=self.tag).exists())
+
+    def test_duplicate_tag_on_recipe_raises_error(self):
+        """Adding the same tag to a recipe twice raises an error"""
+        self.recipe.tags.add(self.tag)
+        with self.assertRaises(IntegrityError):
+            RecipeTag.objects.create(recipe=self.recipe, tag=self.tag)
+
+    def test_remove_tag_from_recipe(self):
+        """A tag can be removed from a recipe"""
+        self.recipe.tags.add(self.tag)
+        self.recipe.tags.remove(self.tag)
+        self.assertNotIn(self.tag, self.recipe.tags.all())
+
+    def test_recipe_can_have_multiple_tags(self):
+        """A recipe can have multiple tags"""
+        tag2, _ = Tag.objects.get_or_create(name='Vegan', defaults={'tag_type': 'dietary'})
+        self.recipe.tags.add(self.tag, tag2)
+        self.assertEqual(self.recipe.tags.count(), 2)
+
+    def test_tag_deletion_removes_recipe_tag(self):
+        """Deleting a tag removes its RecipeTag entries"""
+        self.recipe.tags.add(self.tag)
+        self.tag.delete()
+        self.assertEqual(RecipeTag.objects.filter(recipe=self.recipe).count(), 0)
+
+    def test_filter_recipes_by_tag(self):
+        """Recipes can be filtered by tag"""
+        tag2, _ = Tag.objects.get_or_create(name='Vegan', defaults={'tag_type': 'dietary'})
+        recipe2 = Recipe.objects.create(user=self.user, title='Salad')
+        self.recipe.tags.add(self.tag)
+        recipe2.tags.add(tag2)
+
+        results = Recipe.objects.filter(tags__name='Italian')
+        self.assertIn(self.recipe, results)
+        self.assertNotIn(recipe2, results)
