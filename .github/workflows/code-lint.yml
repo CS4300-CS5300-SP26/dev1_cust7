@@ -34,6 +34,12 @@ jobs:
         run: |
           flake8 --output-file=flake8_results.txt .
           echo $? > flake8_exit_code.txt
+      - name: Debug flake8 outputs
+        if: always()
+        run: |
+          echo "flake8 exit code: $(cat flake8_exit_code.txt)"
+          echo "flake8 results:"
+          cat flake8_results.txt || true
       - name: Create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
@@ -43,7 +49,7 @@ jobs:
             echo "### Black (Formatting)"
             if [ "$(cat black_exit_code.txt)" -ne 0 ]; then
               echo "❌ Black formatter issues detected (run \`black .\` locally)"
-              
+              cat black_results.txt
             else
               echo "✅ Code is properly formatted"
             fi
