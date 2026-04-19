@@ -32,8 +32,10 @@ jobs:
       - name: Run codebase through flake8
         continue-on-error: true
         run: |
+          set +e
           flake8 --output-file=flake8_results.txt .
           echo $? > flake8_exit_code.txt
+          exit 0
       - name: Debug flake8 outputs
         if: always()
         run: |
