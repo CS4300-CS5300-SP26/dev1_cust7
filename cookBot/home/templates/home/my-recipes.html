@@ -1,0 +1,68 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'my-recipes.css' %}">
+    <!-- Banner -->
+<section class="create-banner">
+    <div class="create-banner-content">
+      <h1>My Recipes</h1>
+      <p>View and manage your saved recipes.</p>
+    </div>
+</section>
+<div class="recipes-page">
+
+    {% if recipes %}
+        <div class="recipes-list">
+            {% for recipe in recipes %}
+                <div class="recipe-row-card">
+
+                    <div class="recipe-image-box">
+                        <div class="recipe-image-placeholder">
+                            🍳
+                        </div>
+                    </div>
+
+                    <div class="recipe-main">
+                        <h2>{{ recipe.title }}</h2>
+                        {% if recipe.is_public %}
+                        <span class="recipe-tag tag">Public</span>
+                        {% else %}
+                        <span class="recipe-tag tag">Private</span>
+                        {% endif %}
+
+                        <div class="recipe-badges">
+                            {% if recipe.prep_time %}
+                                <span class="recipe-badge">Prep: {{ recipe.prep_time }} mins</span>
+                            {% endif %}
+
+                            {% if recipe.cook_time %}
+                                <span class="recipe-badge">Cook: {{ recipe.cook_time }} mins</span>
+                            {% endif %}
+
+                            {% if recipe.servings %}
+                                <span class="recipe-badge">Serves: {{ recipe.servings }}</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="recipe-description">
+                            {% if recipe.description %}
+                                {{ recipe.description|truncatewords:20 }}
+                            {% else %}
+                                No description provided.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="recipe-side-actions">
+                        <a href="/recipe/{{ recipe.id }}/" class="recipe-view-btn">View</a>
+                        <a href="/recipe/{{ recipe.id }}/edit/" class="recipe-text-link edit-link">Edit</a>
+                        <a href="/recipes/{{ recipe.id }}/delete/" class="recipe-text-link delete-link">Delete</a>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

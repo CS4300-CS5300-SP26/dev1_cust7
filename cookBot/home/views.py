@@ -543,7 +543,7 @@ def create_recipe(request):
 def my_recipes(request):
     """Display a list of the current user's recipes"""
     user_recipes = request.user.recipes.order_by('-created_date')
-    return render(request, 'home/my_recipes.html', {'recipes': user_recipes})
+    return render(request, 'home/my-recipes.html', {'recipes': user_recipes})
 
 #Social feed view
 @login_required
