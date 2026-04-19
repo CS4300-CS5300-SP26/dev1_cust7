@@ -484,11 +484,17 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
+    # Check if current user has bookmarked this recipe (efficient single query)
+    is_saved_by_user = False
+    if request.user.is_authenticated:
+        is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
+
     return render(request, "recipe_view.html", {
         "recipe": recipe,
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "is_saved_by_user": is_saved_by_user,
     })
  
 @login_required
@@ -680,3 +686,26 @@ def find_kroger_stores(request):
         return JsonResponse({"stores": stores})
     except Exception as e:
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
+
+@login_required
+@require_POST
+def toggle_favorite(request, recipe_id):
+    """Toggle a recipe in user's favorites"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.favorites.filter(id=request.user.id).exists():
+        recipe.favorites.remove(request.user)
+        saved = False
+    else:
+        recipe.favorites.add(request.user)
+        saved = True
+    
+    return JsonResponse({
+        'saved': saved,
+        'recipe_id': recipe.id
+    })
+
+@login_required
+def favorites_list(request):
+    """Display user's favorited recipes"""
+    favorite_recipes = request.user.favorite_recipes.all().select_related('user').prefetch_related('ratings')
+    return render(request, 'home/favorites_list.html', {'favorite_recipes': favorite_recipes})
