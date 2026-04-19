@@ -1,3 +1,19 @@
+// ── Helper: Get CSRF token from cookies ──
+const getCookie = (name) => {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
 // ── Render ingredients with Find Near Me buttons for missing ones ──
 const ingredientsDataEl = document.getElementById('ingredients-data');
 const pantryDataEl      = document.getElementById('pantry-data');
@@ -107,22 +123,6 @@ if (bookmarkBtn) {
     // Add loading state
     bookmarkBtn.classList.add('loading');
     bookmarkBtn.disabled = true;
-    
-    // Helper to get CSRF token from cookies
-    const getCookie = (name) => {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    };
 
     fetch(`/toggle-favorite/${recipeId}/`, {
       method: 'POST',
@@ -131,7 +131,15 @@ if (bookmarkBtn) {
         'Content-Type': 'application/json',
       },
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 403 || response.redirected) {
+          throw new Error('Session expired. Please sign in again.');
+        }
+        throw new Error(`Server error: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.saved) {
         bookmarkBtn.classList.add('saved');
@@ -145,6 +153,7 @@ if (bookmarkBtn) {
     })
     .catch(error => {
       console.error('Error toggling bookmark:', error);
+      alert(error.message);
     })
     .finally(() => {
       bookmarkBtn.classList.remove('loading');
