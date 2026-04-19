@@ -116,7 +116,10 @@ def step_submit_new_recipe(context, title):
 @when('I include the tag "{tag_name}" in the submission')
 def step_include_tag_in_submission(context, tag_name):
     tag = Tag.objects.get(name=tag_name)
-    Recipe.objects.filter(title=context.last_post_data['title']).delete()
+    Recipe.objects.filter(
+        title=context.last_post_data['title'],
+        user=context.user
+    ).delete()
     context.last_post_data['tags[]'] = [str(tag.id)]
     context.response = context.client.post('/recipe/create/', context.last_post_data)
 

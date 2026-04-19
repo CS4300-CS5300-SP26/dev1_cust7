@@ -21,7 +21,7 @@ Feature: Create Recipe Page
     Then a recipe titled "Banana Bread" should exist in the database
     And the response status should be 302
 
-Scenario: Submitting a recipe with no title shows an error
+  Scenario: Submitting a recipe with no title shows an error
     When I submit a new recipe with no title
     Then I should see "Title cannot be empty" on the page
 
