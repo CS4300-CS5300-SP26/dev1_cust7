@@ -1,8 +1,11 @@
 {% extends "navbar.html" %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'social_feed.css' %}">
+{% endblock %}
+
+{% block content %}
 
 <div class="social-banner">
   <div class="social-banner-content">
