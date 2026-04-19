@@ -1,7 +1,7 @@
 from behave import given, when, then
 from django.urls import reverse
 from django.contrib.auth.models import User
-from cookBot.home.models import Recipe
+from home.models import Recipe
 import json
 
 @given('I am a logged in user and a recipe exists')
