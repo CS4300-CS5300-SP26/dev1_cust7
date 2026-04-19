@@ -46,8 +46,10 @@ jobs:
             echo ""
             echo "### Black (Formatting)"
             if [ "$(cat black_exit_code.txt)" -ne 0 ]; then
+              echo "```"
               echo "❌ Black formatter issues detected (run \`black .\` locally)"
               cat black_results.txt
+              echo "```"
             else
               echo "✅ Code is properly formatted"
             fi
