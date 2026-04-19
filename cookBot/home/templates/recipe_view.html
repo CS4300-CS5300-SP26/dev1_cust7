@@ -8,10 +8,17 @@
 {{ ingredients_json|json_script:"ingredients-data" }}
 {{ pantry_names_json|json_script:"pantry-data" }}
  
-<!-- Banner sits OUTSIDE .recipe-page so it spans full width -->
-<div class="recipe-banner">
-  <div class="recipe-banner-content">
-    <h1>{{ recipe.title }}</h1>
+<div class="recipe-page">
+ 
+  <div class="recipe-header">
+    <div class="title-row">
+      <h1>{{ recipe.title }}</h1>
+      {% if user.is_authenticated %}
+        <button id="bookmarkBtn" class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}" data-recipe-id="{{ recipe.id }}" aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}">
+          <span class="icon">{% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}</span>
+        </button>
+      {% endif %}
+    </div>
     <div class="recipe-meta">
       <span>By {{ recipe.user.username }}</span>
       {% if recipe.is_public %}<span class="badge">Public</span>

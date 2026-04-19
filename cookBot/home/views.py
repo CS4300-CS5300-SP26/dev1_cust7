@@ -485,11 +485,17 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
+    # Check if current user has bookmarked this recipe (efficient single query)
+    is_saved_by_user = False
+    if request.user.is_authenticated:
+        is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
+
     return render(request, "recipe_view.html", {
         "recipe": recipe,
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "is_saved_by_user": is_saved_by_user,
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
     })
