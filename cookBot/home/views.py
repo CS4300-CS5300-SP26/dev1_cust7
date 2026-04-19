@@ -680,3 +680,26 @@ def find_kroger_stores(request):
         return JsonResponse({"stores": stores})
     except Exception as e:
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
+
+@login_required
+@require_POST
+def toggle_favorite(request, recipe_id):
+    """Toggle a recipe in user's favorites"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.favorites.filter(id=request.user.id).exists():
+        recipe.favorites.remove(request.user)
+        saved = False
+    else:
+        recipe.favorites.add(request.user)
+        saved = True
+    
+    return JsonResponse({
+        'saved': saved,
+        'recipe_id': recipe.id
+    })
+
+@login_required
+def favorites_list(request):
+    """Display user's favorited recipes"""
+    favorite_recipes = request.user.favorite_recipes.all().select_related('user').prefetch_related('ratings')
+    return render(request, 'home/favorites_list.html', {'favorite_recipes': favorite_recipes})

@@ -43,6 +43,7 @@ class Recipe(models.Model):
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
     tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes', blank=True)
+    favorites = models.ManyToManyField(User, related_name='favorite_recipes', blank=True)
     
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically

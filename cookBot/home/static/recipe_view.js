@@ -91,3 +91,65 @@ if (closeBtn) {
     document.getElementById('krogerPanel').style.display = 'none';
   });
 }
+
+// ── Bookmark Toggle ──
+const bookmarkBtn = document.getElementById('bookmarkBtn');
+if (bookmarkBtn) {
+  let isLoading = false;
+  
+  bookmarkBtn.addEventListener('click', () => {
+    if (isLoading) return;
+    isLoading = true;
+    
+    const recipeId = bookmarkBtn.dataset.recipeId;
+    const icon = bookmarkBtn.querySelector('.icon');
+    
+    // Add loading state
+    bookmarkBtn.classList.add('loading');
+    bookmarkBtn.disabled = true;
+    
+    // Helper to get CSRF token from cookies
+    const getCookie = (name) => {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    };
+
+    fetch(`/toggle-favorite/${recipeId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.saved) {
+        bookmarkBtn.classList.add('saved');
+        icon.innerHTML = '&#9733;'; // Filled star
+        bookmarkBtn.setAttribute('aria-label', 'Remove from saved recipes');
+      } else {
+        bookmarkBtn.classList.remove('saved');
+        icon.innerHTML = '&#9734;'; // Empty star
+        bookmarkBtn.setAttribute('aria-label', 'Save this recipe');
+      }
+    })
+    .catch(error => {
+      console.error('Error toggling bookmark:', error);
+    })
+    .finally(() => {
+      bookmarkBtn.classList.remove('loading');
+      bookmarkBtn.disabled = false;
+      isLoading = false;
+    });
+  });
+}
