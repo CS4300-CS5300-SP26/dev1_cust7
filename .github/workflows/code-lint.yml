@@ -63,7 +63,7 @@ jobs:
         if: github.event_name == 'pull_request' && always()
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: 'code-flake'
+          header: 'code-lint'
           path: pr-comment.txt
       - name: Fail workflow if linting failed
         if: always()
