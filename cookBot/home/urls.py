@@ -41,4 +41,8 @@ urlpatterns = [
 
     # Kroger store finder
     path('kroger/stores/', views.find_kroger_stores, name='find_kroger_stores'),
+
+    # Favorites functionality
+    path('toggle-favorite/<int:recipe_id>/', views.toggle_favorite, name='toggle_favorite'),
+    path('favorites/', views.favorites_list, name='favorites_list'),
 ]
