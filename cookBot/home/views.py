@@ -493,16 +493,16 @@ def recipe_view(request, recipe_id):
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
     })
- 
-@login_required
-def create_recipe(request):
 
-    def get_grouped_tags():
+def get_grouped_tags():
         tags = Tag.objects.all().order_by('tag_type', 'name')
         grouped = defaultdict(list)
         for tag in tags:
             grouped[tag.tag_type].append(tag)
         return dict(grouped)
+ 
+@login_required
+def create_recipe(request):
 
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
@@ -564,34 +564,32 @@ def edit_recipe(request, recipe_id):
     if request.user != recipe.user:
         raise PermissionDenied
 
-    def get_grouped_tags():
-        tags = Tag.objects.all().order_by('tag_type', 'name')
-        grouped = defaultdict(list)
-        for tag in tags:
-            grouped[tag.tag_type].append(tag)
-        return dict(grouped)
-
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
+
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+        steps = request.POST.getlist('steps[]')
+        tag_ids = request.POST.getlist('tags[]')
 
         if not title:
             return render(request, "edit_recipe.html", {
                 "error": "Title cannot be empty.",
                 "recipe": recipe,
+                "post_data": request.POST,  # for title/is_public
+                "ingredients_data": zip(quantities, units, names),
+                "steps_data": list(enumerate(steps, start=1)),
                 "grouped_tags": get_grouped_tags(),
-                "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
+                "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
 
         recipe.title = title
         recipe.is_public = is_public
         recipe.save()
 
-        # Replace ingredients
         recipe.ingredients.all().delete()
-        quantities = request.POST.getlist('ingredient_quantity[]')
-        units = request.POST.getlist('ingredient_unit[]')
-        names = request.POST.getlist('ingredient_name[]')
         for qty, unit, name in zip(quantities, units, names):
             if name.strip():
                 RecipeIngredient.objects.create(
@@ -601,9 +599,7 @@ def edit_recipe(request, recipe_id):
                     name=name.strip()
                 )
 
-        # Replace steps
         recipe.steps.all().delete()
-        steps = request.POST.getlist('steps[]')
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
                 RecipeStep.objects.create(
@@ -612,9 +608,7 @@ def edit_recipe(request, recipe_id):
                     text=step_text.strip()
                 )
 
-        # Replace tags
         RecipeTag.objects.filter(recipe=recipe).delete()
-        tag_ids = request.POST.getlist('tags[]')
         for tag_id in tag_ids:
             RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
 
