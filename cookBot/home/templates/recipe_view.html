@@ -71,6 +71,44 @@
   <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
 {% endblock %}
  
+<!-- Comments Section -->
+<div class="comments-section">
+  <h3>Comments ({{ comments.count }})</h3>
+  
+  <div class="comments-list">
+    {% for comment in comments %}
+      <div class="comment">
+        <div class="comment-header">
+          <span class="username">{{ comment.user.username }}</span>
+          <span class="timestamp">{{ comment.created_at|timesince }} ago</span>
+        </div>
+        <div class="comment-text">
+          {{ comment.text }}
+        </div>
+      </div>
+    {% empty %}
+      <div class="comments-empty">
+        No comments yet. Be the first to comment!
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if user.is_authenticated %}
+  <div class="comment-form-container">
+    <h4>Leave a Comment</h4>
+    <form method="POST" action="{% url 'post_comment' recipe.id %}">
+      {% csrf_token %}
+      {{ comment_form.text }}
+      <button type="submit" class="comment-submit-btn">Post Comment</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="comment-login-prompt">
+    <a href="{% url 'signin' %}">Sign in</a> to leave a comment.
+  </div>
+  {% endif %}
+</div>
+
 <script src="{% static 'voice.js' %}"></script>
 <script src="{% static 'recipe_view.js' %}"></script>
  

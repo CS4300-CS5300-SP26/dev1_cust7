@@ -11,6 +11,6 @@ Feature: Recipe Comments
     And the comment should be associated with my user account
 
   Scenario: Cannot post comment when not logged in
-    Given I am not logged in
+    Given I am not logged in and viewing a recipe
     When I submit a comment with text "Great recipe!"
     Then no comment should be created

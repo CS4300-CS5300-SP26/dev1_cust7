@@ -13,7 +13,7 @@ from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessa
 import json
 import urllib.request
 import urllib.parse
-from .forms import RegisterForm, EditProfileForm
+from .forms import RegisterForm, EditProfileForm, CommentForm
 from .chefBot import call_openai
 
 def index(request):
@@ -484,11 +484,19 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
+    # Get comments for this recipe
+    comments = recipe.comments.select_related('user').all()
+    
+    # Create comment form for logged in users
+    comment_form = CommentForm() if request.user.is_authenticated else None
+
     return render(request, "recipe_view.html", {
         "recipe": recipe,
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "comments": comments,
+        "comment_form": comment_form,
     })
  
 @login_required
@@ -680,3 +688,19 @@ def find_kroger_stores(request):
         return JsonResponse({"stores": stores})
     except Exception as e:
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
+
+
+@login_required
+@require_POST
+def post_comment(request, recipe_id):
+    """Post a comment on a recipe"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    form = CommentForm(request.POST)
+    
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.user = request.user
+        comment.recipe = recipe
+        comment.save()
+    
+    return redirect('recipe_view', recipe_id=recipe.id)

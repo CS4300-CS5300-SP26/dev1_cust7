@@ -39,4 +39,7 @@ urlpatterns = [
 
     # Kroger store finder
     path('kroger/stores/', views.find_kroger_stores, name='find_kroger_stores'),
+    
+    # Comments
+    path('recipe/<int:recipe_id>/comment/', views.post_comment, name='post_comment'),
 ]

@@ -271,3 +271,136 @@
 }
  
 .kroger-error { color: #c0392b; }
+
+/* ================================================
+   COMMENTS SECTION
+   ================================================ */
+
+.comments-section {
+  margin-top: 40px;
+}
+
+.comments-section h3 {
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.comments-list {
+  margin-bottom: 30px;
+}
+
+.comment {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.comment:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transform: translateY(-1px);
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.comment-header .username {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.comment-header .timestamp {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: normal;
+}
+
+.comment-text {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.comments-empty {
+  color: #6b7280;
+  font-style: italic;
+  padding: 30px 0;
+  text-align: center;
+}
+
+.comment-form-container {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.comment-form-container h4 {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.comment-form-container textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-form-container textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.comment-submit-btn {
+  margin-top: 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.comment-submit-btn:hover {
+  background: #059669;
+}
+
+.comment-login-prompt {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 8px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.comment-login-prompt a {
+  color: #10b981;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.comment-login-prompt a:hover {
+  text-decoration: underline;
+}

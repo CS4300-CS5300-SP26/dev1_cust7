@@ -6,15 +6,20 @@ from home.models import Recipe, Comment
 
 @given('I am logged in and viewing a recipe')
 def step_logged_in_viewing_recipe(context):
-    # Create test user
-    User.objects.filter(username='comment_user').delete()
-    context.user = User.objects.create_user(username='comment_user', password='testpass123')
+    # Create or get test user
+    context.user, created = User.objects.get_or_create(
+        username='comment_user',
+        defaults={'password': 'testpass123'}
+    )
+    if not created:
+        context.user.set_password('testpass123')
+        context.user.save()
     
     # Create test recipe
-    context.recipe = Recipe.objects.create(
+    context.recipe, created = Recipe.objects.get_or_create(
         user=context.user,
         title='Test Recipe for Comments',
-        is_public=True
+        defaults={'is_public': True}
     )
     
     # Log in
@@ -26,10 +31,10 @@ def step_logged_in_viewing_recipe(context):
 
 @when('I submit a comment with text "{comment_text}"')
 def step_submit_comment(context, comment_text):
-    url = reverse('post_comment', args=[context.recipe.id])
+    url = reverse('post_comment', kwargs={'recipe_id': context.recipe.id})
     context.response = context.client.post(url, {
         'text': comment_text
-    })
+    }, follow=True)
 
 
 @then('the comment should be saved to the database')
@@ -49,15 +54,24 @@ def step_verify_comment_owned_by_user(context):
     assert context.comment.user == context.user
 
 
-@given('I am not logged in')
-def step_not_logged_in(context):
+@given('I am not logged in and viewing a recipe')
+def step_not_logged_in_viewing_recipe(context):
     context.client.logout()
     
+    # Create or get test user
+    other_user, created = User.objects.get_or_create(
+        username='other_user',
+        defaults={'password': 'test123'}
+    )
+    if not created:
+        other_user.set_password('test123')
+        other_user.save()
+    
     # Create test recipe
-    context.recipe = Recipe.objects.create(
-        user=User.objects.create_user(username='other_user', password='test123'),
+    context.recipe, created = Recipe.objects.get_or_create(
+        user=other_user,
         title='Public Recipe',
-        is_public=True
+        defaults={'is_public': True}
     )
 
 
