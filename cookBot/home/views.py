@@ -545,6 +545,21 @@ def my_recipes(request):
     user_recipes = request.user.recipes.order_by('-created_date')
     return render(request, 'home/my-recipes.html', {'recipes': user_recipes})
 
+@login_required
+def delete_recipe(request, recipe_id):
+    recipe = get_object_or_404(request.user.recipes, id=recipe_id)
+    if request.method == "POST":
+        recipe.delete()
+        return redirect("/my-recipes/")
+    return render(request, "home/delete_recipe.html", {"recipe": recipe})
+
+    #Create a new session
+    session = ChatSession.objects.create(
+        user=request.user,
+        spoonacular_context=spoonacular_recipes,
+        pantry_context=pantry_items,
+    )
+
 #Social feed view
 @login_required
 def social_feed(request):
@@ -588,12 +603,6 @@ def aiChefBot_view(request):
             'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
         })
 
-    #Create a new session
-    session = ChatSession.objects.create(
-        user=request.user,
-        spoonacular_context=spoonacular_recipes,
-        pantry_context=pantry_items,
-    )
 
     return render(request, 'home/aiChefBot.html', {
         'session_id': session.id,
