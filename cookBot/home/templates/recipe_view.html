@@ -8,68 +8,78 @@
 {{ ingredients_json|json_script:"ingredients-data" }}
 {{ pantry_names_json|json_script:"pantry-data" }}
  
-<div class="recipe-page">
- 
-  <div class="recipe-header">
+<!-- Banner sits OUTSIDE .recipe-page so it spans full width -->
+<div class="recipe-banner">
+  <div class="recipe-banner-content">
     <h1>{{ recipe.title }}</h1>
     <div class="recipe-meta">
       <span>By {{ recipe.user.username }}</span>
       {% if recipe.is_public %}<span class="badge">Public</span>
-      {% else %}<span class="badge">Private</span>{% endif %}
+      {% else %}<span class="badge private">Private</span>{% endif %}
       {% with avg=recipe.average_rating %}
-        {% if avg %}<span>&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
+        {% if avg %}<span class="badge">&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
       {% endwith %}
     </div>
-  </div>
- 
-  <!-- Edit/Delete buttons — only visible to the recipe owner -->
-  {% if is_owner %}
-  <div class="recipe-actions">
-      <a href="{% url 'edit_recipe' recipe.id %}">Edit Recipe</a>
-      <button onclick="document.getElementById('delete-modal').style.display='flex'">
-          Delete Recipe
+
+    {% if is_owner %}
+    <div class="recipe-actions">
+      <a href="{% url 'edit_recipe' recipe.id %}" class="action-btn edit-btn">&#9998; Edit Recipe</a>
+      <button class="action-btn delete-btn" onclick="document.getElementById('delete-modal').style.display='flex'">
+        &#128465; Delete Recipe
       </button>
+    </div>
+    {% endif %}
   </div>
+
+  <!-- Tags in banner -->
+  {% if tags %}
+  <div class="recipe-tags">
+    {% for tag in tags %}
+      <span class="tag tag-{{ tag.tag_type }}">{{ tag.name }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="recipe-page">
 
   <!-- Delete confirmation modal -->
-  <div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
-      <div style="background:white; padding:2rem; border-radius:8px; max-width:400px; width:90%;">
-          <h2>Delete "{{ recipe.title }}"?</h2>
-          <p>This action is permanent and cannot be undone.</p>
-
-          <label style="display:flex; align-items:center; gap:0.5rem; margin:1rem 0;">
-              <input type="checkbox" id="delete-confirm-check">
-              I understand this recipe will be permanently deleted
-          </label>
-
-          <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
-              <button onclick="closeDeleteModal()">Cancel</button>
-              <form method="POST" action="{% url 'delete_recipe' recipe.id %}">
-                  {% csrf_token %}
-                  <button type="submit" id="delete-confirm-btn" disabled>Delete Recipe</button>
-              </form>
-          </div>
+  {% if is_owner %}
+  <div id="delete-modal" class="delete-modal-overlay">
+    <div class="delete-modal-box">
+      <h2>Delete "{{ recipe.title }}"?</h2>
+      <p>This action is permanent and cannot be undone.</p>
+      <label class="delete-modal-checkbox">
+        <input type="checkbox" id="delete-confirm-check">
+        I understand this recipe will be permanently deleted
+      </label>
+      <div class="delete-modal-actions">
+        <button class="action-btn edit-btn" onclick="closeDeleteModal()">Cancel</button>
+        <form method="POST" action="{% url 'delete_recipe' recipe.id %}">
+          {% csrf_token %}
+          <button type="submit" id="delete-confirm-btn" class="action-btn delete-btn" disabled>Delete Recipe</button>
+        </form>
       </div>
+    </div>
   </div>
 
   <script>
-      const deleteCheck = document.getElementById('delete-confirm-check');
-      const deleteBtn = document.getElementById('delete-confirm-btn');
+    const deleteCheck = document.getElementById('delete-confirm-check');
+    const deleteBtn = document.getElementById('delete-confirm-btn');
 
-      deleteCheck.addEventListener('change', () => {
-          deleteBtn.disabled = !deleteCheck.checked;
-      });
+    deleteCheck.addEventListener('change', () => {
+      deleteBtn.disabled = !deleteCheck.checked;
+    });
 
-      function closeDeleteModal() {
-          document.getElementById('delete-modal').style.display = 'none';
-          deleteCheck.checked = false;
-          deleteBtn.disabled = true;
-      }
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').style.display = 'none';
+      deleteCheck.checked = false;
+      deleteBtn.disabled = true;
+    }
 
-      // Close if user clicks the dark backdrop
-      document.getElementById('delete-modal').addEventListener('click', function(e) {
-          if (e.target === this) closeDeleteModal();
-      });
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
   </script>
   {% endif %}
 
@@ -78,10 +88,10 @@
     <div class="voice-indicator" id="voiceIndicator"></div>
     <div class="voice-info">
       <div class="voice-status" id="voiceStatus">Loading&#8230;</div>
-      <div class="voice-heard"  id="voiceHeard">Say &#8220;Hey Chef&#8221; to activate</div>
+      <div class="voice-heard" id="voiceHeard">Say &#8220;Hey Chef&#8221; to activate</div>
     </div>
     <button class="voice-btn start" id="btnStart">&#127897; Start</button>
-    <button class="voice-btn stop"  id="btnStop">&#9209; Stop</button>
+    <button class="voice-btn stop" id="btnStop">&#9209; Stop</button>
     <div class="voice-hint">
       Commands: <strong>&#8220;Hey Chef, next&#8221;</strong> &middot;
       <strong>&#8220;read step 3&#8221;</strong> &middot;
@@ -101,22 +111,13 @@
       <div class="card-title">Instructions</div>
       <ol class="steps-list" id="stepsList"></ol>
       <div class="step-nav">
-        <button class="nav-btn"         id="prevBtn" disabled>&#8592; Previous</button>
-        <button class="nav-btn primary"  id="nextBtn">Next &#8594;</button>
+        <button class="nav-btn" id="prevBtn" disabled>&#8592; Previous</button>
+        <button class="nav-btn primary" id="nextBtn">Next &#8594;</button>
       </div>
     </div>
   </div>
-
-  <!-- Tags -->
-  {% if tags %}
-  <div class="recipe-tags">
-      {% for tag in tags %}
-          <span class="tag tag-{{ tag.tag_type }}">{{ tag.name }}</span>
-      {% endfor %}
-  </div>
-  {% endif %}
  
-  <!-- Kroger store results panel (hidden until a Find Near Me button is clicked) -->
+  <!-- Kroger store results panel -->
   <div class="kroger-panel" id="krogerPanel" style="display:none;">
     <div class="kroger-panel-header">
       <span id="krogerPanelTitle">Nearby stores carrying <strong id="krogerIngredientName"></strong></span>
@@ -135,4 +136,3 @@
 <script src="{% static 'recipe_view.js' %}"></script>
  
 {% endblock %}
- 

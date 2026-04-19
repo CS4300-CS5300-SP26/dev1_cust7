@@ -209,7 +209,7 @@ function handleCmd(t) {
     goTo(0); speak('Starting from the beginning. Step 1. ' + steps[0]);
     return;
   }
-  speak("Sorry, I didn't catch that. Try: next, go back, read step 2, or list ingredients.");
+  speak("Sorry, I didn't catch that.");
 }
 
 // ─────────────────────────────────────────────────
