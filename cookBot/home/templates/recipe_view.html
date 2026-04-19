@@ -11,29 +11,48 @@
 <!-- Banner sits OUTSIDE .recipe-page so it spans full width -->
 <div class="recipe-banner">
   <div class="recipe-banner-content">
-    <h1>{{ recipe.title }}</h1>
+
+    <!-- Top row: title + bookmark -->
+    <div class="title-row">
+      <h1>{{ recipe.title }}</h1>
+
+      {% if user.is_authenticated %}
+      <button type="button"
+              id="bookmarkBtn"
+              class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}"
+              data-recipe-id="{{ recipe.id }}"
+              data-toggle-url="{% url 'toggle_favorite' recipe.id %}"
+              aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}">
+        <span class="icon">
+          {% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}
+        </span>
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Meta info -->
     <div class="recipe-meta">
       <span>By {{ recipe.user.username }}</span>
-      {% if recipe.is_public %}<span class="badge">Public</span>
-      {% else %}<span class="badge private private">Private</span>{% endif %}
-      {% with avg=recipe.average_rating %}
-        {% if avg %}<span class="badge" class="badge">&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
-      {% endwith %}
+      {% if recipe.is_public %}
+        <span class="badge">Public</span>
+      {% else %}
+        <span class="badge private">Private</span>
+      {% endif %}
     </div>
-  </div>
- 
-  <!-- Edit/Delete buttons — only visible to the recipe owner -->
-  {% if is_owner %}
-  <div class="recipe-actions">
-      <a href="{% url 'edit_recipe' recipe.id %}">Edit Recipe</a>
-      <button onclick="document.getElementById('delete-modal').style.display='flex'">
-          Delete Recipe
+
+    <!-- Actions -->
+    {% if is_owner %}
+    <div class="recipe-actions">
+      <a href="{% url 'edit_recipe' recipe.id %}" class="action-btn edit-btn">&#9998; Edit Recipe</a>
+      <button class="action-btn delete-btn"
+              onclick="document.getElementById('delete-modal').style.display='flex'">
+        &#128465; Delete Recipe
       </button>
     </div>
     {% endif %}
   </div>
 
-  <!-- Tags in banner -->
+  <!-- Tags -->
   {% if tags %}
   <div class="recipe-tags">
     {% for tag in tags %}

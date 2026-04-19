@@ -497,6 +497,7 @@ def recipe_view(request, recipe_id):
         "pantry_names_json": list(pantry_names),
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
+        "is_saved_by_user": is_saved_by_user,
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
     })

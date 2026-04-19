@@ -37,9 +37,9 @@ KROGER_CLIENT_SECRET = config('KROGER_CLIENT_SECRET', default = 'placeholder')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*', '.devedu.io']
-#CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
+CSRF_TRUSTED_ORIGINS = ['https://app-rjoska-21.devedu.io'] # Change this for your devedu
 #Comment the line below out and uncomment above when working through DevEdu
-CSRF_TRUSTED_ORIGINS = ['https://app-cs5300-21.devedu.io', 'https://cookbot.me', 'https://www.cookbot.me']
+#CSRF_TRUSTED_ORIGINS = ['https://cookbot.me', 'https://www.cookbot.me']
 # Application definition
 
 INSTALLED_APPS = [
