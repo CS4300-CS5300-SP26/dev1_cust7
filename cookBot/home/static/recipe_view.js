@@ -117,14 +117,14 @@ if (bookmarkBtn) {
     if (isLoading) return;
     isLoading = true;
     
-    const recipeId = bookmarkBtn.dataset.recipeId;
+    const toggleUrl = bookmarkBtn.dataset.toggleUrl;
     const icon = bookmarkBtn.querySelector('.icon');
     
     // Add loading state
     bookmarkBtn.classList.add('loading');
     bookmarkBtn.disabled = true;
 
-    fetch(`/toggle-favorite/${recipeId}/`, {
+    fetch(toggleUrl, {
       method: 'POST',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
