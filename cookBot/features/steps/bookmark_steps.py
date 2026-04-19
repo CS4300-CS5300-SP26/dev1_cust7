@@ -17,11 +17,8 @@ def step_logged_in_user_with_recipe(context):
         is_public=True
     )
     
-    # Log in
-    context.client.post(reverse('signin'), {
-        'username': 'bookmark_user',
-        'password': 'testpass123',
-    })
+    # Log in (bypasses CSRF and form validation for test setup)
+    context.client.force_login(context.user)
 
 @when('I click the bookmark icon for the recipe')
 def step_click_bookmark_icon(context):
