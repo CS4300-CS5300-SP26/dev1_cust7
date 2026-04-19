@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class Pantry(models.Model):
@@ -37,12 +39,17 @@ class Tag(models.Model):
         return f"[{self.tag_type}] {self.name}"
 
 class Recipe(models.Model):
+    def recipe_image_path(instance, filename):
+        ext = filename.split('.')[-1]
+        return f"recipes/images/{instance.id}.{ext}"
+
     """Model to store recipes with ingredients and instructions"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
     tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes', blank=True)
+    image = models.ImageField(upload_to=recipe_image_path, blank=True, null=True)
     
     class Meta:
         ordering = ['title']  # Sort recipes alphabetically
@@ -56,6 +63,7 @@ class Recipe(models.Model):
  
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+    
 
 class RecipeStep(models.Model):
     """Model to store individual ordered steps for a recipe"""
@@ -180,3 +188,9 @@ class ChatMessage(models.Model):
  
     def __str__(self):
         return f"[{self.role}] Session {self.session.id} @ {self.timestamp.strftime('%H:%M:%S')}"
+    
+#Method to delete recipe images when a recipe is deleted
+@receiver(post_delete, sender=Recipe)
+def delete_recipe_image(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)

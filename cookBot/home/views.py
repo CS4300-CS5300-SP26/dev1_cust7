@@ -496,6 +496,7 @@ def create_recipe(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
+        image = request.FILES.get("image")
 
         # Server-side validation
         if not title:
@@ -503,13 +504,17 @@ def create_recipe(request):
                 "error": "Title cannot be empty.",
                 "post_data": request.POST,
             })
+        
 
         # Create recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
-            is_public=is_public
+            is_public=is_public,
         )
+        if image:
+            recipe.image = image
+            recipe.save()
 
         # Get ingredient data
         quantities = request.POST.getlist('ingredient_quantity[]')
