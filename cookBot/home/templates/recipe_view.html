@@ -8,31 +8,26 @@
 {{ ingredients_json|json_script:"ingredients-data" }}
 {{ pantry_names_json|json_script:"pantry-data" }}
  
-<div class="recipe-page">
- 
-  <div class="recipe-header">
-    <div class="title-row">
-      <h1>{{ recipe.title }}</h1>
-      {% if user.is_authenticated %}
-        <button type="button" id="bookmarkBtn" class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}" data-recipe-id="{{ recipe.id }}" data-toggle-url="{% url 'toggle_favorite' recipe.id %}" aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}"></button>
-          <span class="icon">{% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}</span>
-        </button>
-      {% endif %}
-    </div>
+<!-- Banner sits OUTSIDE .recipe-page so it spans full width -->
+<div class="recipe-banner">
+  <div class="recipe-banner-content">
+    <h1>{{ recipe.title }}</h1>
     <div class="recipe-meta">
       <span>By {{ recipe.user.username }}</span>
       {% if recipe.is_public %}<span class="badge">Public</span>
-      {% else %}<span class="badge private">Private</span>{% endif %}
+      {% else %}<span class="badge private private">Private</span>{% endif %}
       {% with avg=recipe.average_rating %}
-        {% if avg %}<span class="badge">&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
+        {% if avg %}<span class="badge" class="badge">&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
       {% endwith %}
     </div>
-
-    {% if is_owner %}
-    <div class="recipe-actions">
-      <a href="{% url 'edit_recipe' recipe.id %}" class="action-btn edit-btn">&#9998; Edit Recipe</a>
-      <button class="action-btn delete-btn" onclick="document.getElementById('delete-modal').style.display='flex'">
-        &#128465; Delete Recipe
+  </div>
+ 
+  <!-- Edit/Delete buttons — only visible to the recipe owner -->
+  {% if is_owner %}
+  <div class="recipe-actions">
+      <a href="{% url 'edit_recipe' recipe.id %}">Edit Recipe</a>
+      <button onclick="document.getElementById('delete-modal').style.display='flex'">
+          Delete Recipe
       </button>
     </div>
     {% endif %}
@@ -90,57 +85,6 @@
   </script>
   {% endif %}
 
-  <!-- Edit/Delete buttons — only visible to the recipe owner -->
-  {% if is_owner %}
-  <div class="recipe-actions">
-      <a href="{% url 'edit_recipe' recipe.id %}">Edit Recipe</a>
-      <button onclick="document.getElementById('delete-modal').style.display='flex'">
-          Delete Recipe
-      </button>
-  </div>
-
-  <!-- Delete confirmation modal -->
-  <div id="delete-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000;">
-      <div style="background:white; padding:2rem; border-radius:8px; max-width:400px; width:90%;">
-          <h2>Delete "{{ recipe.title }}"?</h2>
-          <p>This action is permanent and cannot be undone.</p>
-
-          <label style="display:flex; align-items:center; gap:0.5rem; margin:1rem 0;">
-              <input type="checkbox" id="delete-confirm-check">
-              I understand this recipe will be permanently deleted
-          </label>
-
-          <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1rem;">
-              <button onclick="closeDeleteModal()">Cancel</button>
-              <form method="POST" action="{% url 'delete_recipe' recipe.id %}">
-                  {% csrf_token %}
-                  <button type="submit" id="delete-confirm-btn" disabled>Delete Recipe</button>
-              </form>
-          </div>
-      </div>
-  </div>
-
-  <script>
-      const deleteCheck = document.getElementById('delete-confirm-check');
-      const deleteBtn = document.getElementById('delete-confirm-btn');
-
-      deleteCheck.addEventListener('change', () => {
-          deleteBtn.disabled = !deleteCheck.checked;
-      });
-
-      function closeDeleteModal() {
-          document.getElementById('delete-modal').style.display = 'none';
-          deleteCheck.checked = false;
-          deleteBtn.disabled = true;
-      }
-
-      // Close if user clicks the dark backdrop
-      document.getElementById('delete-modal').addEventListener('click', function(e) {
-          if (e.target === this) closeDeleteModal();
-      });
-  </script>
-  {% endif %}
-
   <!-- Voice bar -->
   <div class="voice-bar">
     <div class="voice-indicator" id="voiceIndicator"></div>
@@ -184,7 +128,7 @@
   </div>
   {% endif %}
  
-  <!-- Kroger store results panel -->
+  <!-- Kroger store results panel (hidden until a Find Near Me button is clicked) -->
   <div class="kroger-panel" id="krogerPanel" style="display:none;">
     <div class="kroger-panel-header">
       <span id="krogerPanelTitle">Nearby stores carrying <strong id="krogerIngredientName"></strong></span>
