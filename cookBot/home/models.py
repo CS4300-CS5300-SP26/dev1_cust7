@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from PIL import Image
 
 
 class Pantry(models.Model):
@@ -63,6 +64,15 @@ class Recipe(models.Model):
  
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            img_path = self.image.path
+            img = Image.open(img_path)
+            max_size = (800, 800)
+            img.thumbnail(max_size)
+            img.save(img_path)
     
 
 class RecipeStep(models.Model):

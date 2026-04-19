@@ -18,9 +18,14 @@
                 <div class="recipe-row-card">
 
                     <div class="recipe-image-box">
+                         {% if recipe.image %}
+                              <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" class="recipe-image">
+                        {% else %}
                         <div class="recipe-image-placeholder">
-                            🍳
+                              🍳
                         </div>
+
+    {% endif %}
                     </div>
 
                     <div class="recipe-main">

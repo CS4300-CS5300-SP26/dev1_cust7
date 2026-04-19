@@ -15,6 +15,8 @@ import urllib.request
 import urllib.parse
 from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai
+from PIL import Image
+
 
 def index(request):
     return render(request, 'index.html')
@@ -498,6 +500,29 @@ def create_recipe(request):
         is_public = request.POST.get("is_public") == "on"
         image = request.FILES.get("image")
 
+        #Image upload checking for proper format 
+        # MIME check
+
+        if image.content_type not in ["image/jpeg", "image/png"]:
+            return render(request, "create_recipe.html", {
+                "error": "Only JPEG and PNG images are allowed.",
+                "post_data": request.POST,
+            })
+        # Pillow check
+        try:
+            img = Image.open(image)
+            if img.format not in ["JPEG", "PNG"]:
+                return render(request, "create_recipe.html", {
+                "error": "Only JPEG and PNG formats are allowed.",
+                "post_data": request.POST,
+            })
+            image.seek(0)
+        except Exception:
+            return render(request, "create_recipe.html", {
+                "error": "Invalid image file.",
+                "post_data": request.POST,
+            })
+    
         # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
@@ -580,7 +605,7 @@ def aiChefBot_view(request):
     #Getting the spoonacular recipes
     spoonacular_recipes = []
     pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
-
+    session = ChatSession.objects.filter(user=request.user).first()
     if pantry_items:
         try:
             from .spoonacular import spoonacular_get
