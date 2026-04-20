@@ -3,11 +3,11 @@ import tempfile
 from io import BytesIO
 from PIL import Image
 from django.contrib.auth.models import User
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from home.models import Recipe, RecipeIngredient, RecipeStep, Tag, RecipeTag
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase, override_settings
+
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp()
 

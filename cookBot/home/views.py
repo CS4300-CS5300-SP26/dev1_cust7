@@ -530,6 +530,18 @@ def get_grouped_tags():
             grouped[tag.tag_type].append(tag)
         return dict(grouped)
  
+def image_check(image):
+        if image.content_type not in ["image/jpeg", "image/png"]:
+            return "Only JPEG and PNG images are allowed."
+        try:
+            img = Image.open(image)
+            if img.format not in ["JPEG", "PNG"]:
+                return "Only JPEG and PNG formats are allowed."
+            image.seek(0)
+        except Exception:
+            return "Invalid image file."
+        return None
+
 @login_required
 def create_recipe(request):
 
@@ -543,11 +555,12 @@ def create_recipe(request):
         # MIME check
 
         if image:
-            error = recipe().image_check(image)
+            error = image_check(image)
             if error:
                 return render(request, "create_recipe.html", {
                 "error": error,
                 "post_data": request.POST,
+                "grouped_tags": get_grouped_tags()
         })
     
         # Server-side validation
@@ -604,6 +617,7 @@ def create_recipe(request):
         "grouped_tags": get_grouped_tags()
     })
 
+
 #Edit recipe
 @login_required
 def edit_recipe(request, recipe_id):
@@ -633,16 +647,13 @@ def edit_recipe(request, recipe_id):
                 "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
         if new_image:
-            error = recipe().image_check(new_image)
+            error = image_check(new_image)
             if error:
-                return render(request, "edit_recipe.html", {
-                "error": error,
-                "recipe": recipe,
-        })
-        
-        if recipe.image:
-            recipe.image.delete(save=False)
-        recipe.image = new_image
+                return render(...)
+            if recipe.image:
+                recipe.image.delete(save=False)
+                recipe.image = new_image
+           
 
         recipe.title = title
         recipe.description = description
