@@ -543,25 +543,12 @@ def create_recipe(request):
         # MIME check
 
         if image:
-            if image.content_type not in ["image/jpeg", "image/png"]:
+            error = recipe.image_check(image)
+            if error:
                 return render(request, "create_recipe.html", {
-                    "error": "Only JPEG and PNG images are allowed.",
-                    "post_data": request.POST,
-                })
-            # Pillow check
-            try:
-                img = Image.open(image)
-                if img.format not in ["JPEG", "PNG"]:
-                    return render(request, "create_recipe.html", {
-                    "error": "Only JPEG and PNG formats are allowed.",
-                    "post_data": request.POST,
-                })
-                image.seek(0)
-            except Exception:
-                return render(request, "create_recipe.html", {
-                    "error": "Invalid image file.",
-                    "post_data": request.POST,
-                })
+                "error": error,
+                "post_data": request.POST,
+        })
     
         # Server-side validation
         if not title:
@@ -646,9 +633,16 @@ def edit_recipe(request, recipe_id):
                 "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
         if new_image:
-            if recipe.image:
-                recipe.image.delete(save=False)
-            recipe.image = new_image
+            error = recipe.image_check(new_image)
+            if error:
+                return render(request, "edit_recipe.html", {
+                "error": error,
+                "recipe": recipe,
+        })
+        
+        if recipe.image:
+            recipe.image.delete(save=False)
+        recipe.image = new_image
 
         recipe.title = title
         recipe.description = description

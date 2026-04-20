@@ -1,7 +1,6 @@
 import shutil
 import tempfile
 from io import BytesIO
-from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from django.contrib.auth.models import User
 from django.test import Client, TestCase

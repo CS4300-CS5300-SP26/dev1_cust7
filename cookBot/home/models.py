@@ -67,6 +67,18 @@ class Recipe(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.title}"
     
+    def image_check(self, image):
+        if image.content_type not in ["image/jpeg", "image/png"]:
+            return "Only JPEG and PNG images are allowed."
+        try:
+            img = Image.open(image)
+            if img.format not in ["JPEG", "PNG"]:
+                return "Only JPEG and PNG formats are allowed."
+            image.seek(0)
+        except Exception:
+            return "Invalid image file."
+        return None
+    
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:

@@ -321,7 +321,6 @@ def step_see_password_mismatch_error(context):
 def step_see_username_exists_error(context):
     """Verify username already exists error is displayed"""
     content = context.response.content.decode('utf-8')
-    print(context.response.content.decode('utf-8'))
     assert 'username' in content.lower() and ('already exists' in content.lower() or 'already taken' in content.lower()), \
         "Username already exists error not found"
 
