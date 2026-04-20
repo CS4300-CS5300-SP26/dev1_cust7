@@ -9,7 +9,8 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage
+from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag
+from collections import defaultdict
 import json
 import urllib.request
 import urllib.parse
@@ -504,34 +505,48 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
+    # Check if current user has bookmarked this recipe (efficient single query)
+    is_saved_by_user = False
+    if request.user.is_authenticated:
+        is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
+
     return render(request, "recipe_view.html", {
         "recipe": recipe,
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "tags": recipe.tags.all(),
+        "is_owner": request.user == recipe.user,
+        "is_saved_by_user": is_saved_by_user,
     })
+
+def get_grouped_tags():
+        tags = Tag.objects.all().order_by('tag_type', 'name')
+        grouped = defaultdict(list)
+        for tag in tags:
+            grouped[tag.tag_type].append(tag)
+        return dict(grouped)
  
 @login_required
 def create_recipe(request):
+
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
 
-        # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
                 "error": "Title cannot be empty.",
                 "post_data": request.POST,
+                "grouped_tags": get_grouped_tags()
             })
 
-        # Create recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
             is_public=is_public
         )
 
-        # Get ingredient data
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
         names = request.POST.getlist('ingredient_name[]')
@@ -545,7 +560,6 @@ def create_recipe(request):
                     name=name.strip()
                 )
 
-        # Get step data
         steps = request.POST.getlist('steps[]')
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
@@ -555,9 +569,95 @@ def create_recipe(request):
                     text=step_text.strip()
                 )
 
+        tag_ids = request.POST.getlist('tags[]')
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(
+                recipe=recipe,
+                tag_id=tag_id
+            )
+
         return redirect("recipe_view", recipe_id=recipe.id)
 
-    return render(request, "create_recipe.html")
+    return render(request, "create_recipe.html", {
+        "grouped_tags": get_grouped_tags()
+    })
+
+#Edit recipe
+@login_required
+def edit_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        is_public = request.POST.get("is_public") == "on"
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+        steps = request.POST.getlist('steps[]')
+        tag_ids = request.POST.getlist('tags[]')
+
+        if not title:
+            return render(request, "edit_recipe.html", {
+                "error": "Title cannot be empty.",
+                "recipe": recipe,
+                "post_data": request.POST,  # for title/is_public
+                "ingredients_data": zip(quantities, units, names),
+                "steps_data": list(enumerate(steps, start=1)),
+                "grouped_tags": get_grouped_tags(),
+                "selected_tag_ids": list(map(int, tag_ids)),  # important
+            })
+
+        recipe.title = title
+        recipe.is_public = is_public
+        recipe.save()
+
+        recipe.ingredients.all().delete()
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        recipe.steps.all().delete()
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        RecipeTag.objects.filter(recipe=recipe).delete()
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
+
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "edit_recipe.html", {
+        "recipe": recipe,
+        "grouped_tags": get_grouped_tags(),
+        "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
+    })
+
+
+#Delete a recipe action
+@login_required
+def delete_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        recipe.delete()
+        return redirect("index")
+
+    #If someone tries to GET this URL directly, send them back to the recipe
+    return redirect("recipe_view", recipe_id=recipe_id)
 
 #Social feed view
 @login_required
@@ -700,3 +800,26 @@ def find_kroger_stores(request):
         return JsonResponse({"stores": stores})
     except Exception as e:
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
+
+@login_required
+@require_POST
+def toggle_favorite(request, recipe_id):
+    """Toggle a recipe in user's favorites"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.favorites.filter(id=request.user.id).exists():
+        recipe.favorites.remove(request.user)
+        saved = False
+    else:
+        recipe.favorites.add(request.user)
+        saved = True
+    
+    return JsonResponse({
+        'saved': saved,
+        'recipe_id': recipe.id
+    })
+
+@login_required
+def favorites_list(request):
+    """Display user's favorited recipes"""
+    favorite_recipes = request.user.favorite_recipes.all().select_related('user').prefetch_related('ratings')
+    return render(request, 'home/favorites_list.html', {'favorite_recipes': favorite_recipes})

@@ -1,3 +1,19 @@
+// ── Helper: Get CSRF token from cookies ──
+const getCookie = (name) => {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
 // ── Render ingredients with Find Near Me buttons for missing ones ──
 const ingredientsDataEl = document.getElementById('ingredients-data');
 const pantryDataEl      = document.getElementById('pantry-data');
@@ -89,5 +105,60 @@ const closeBtn = document.getElementById('krogerCloseBtn');
 if (closeBtn) {
   closeBtn.addEventListener('click', () => {
     document.getElementById('krogerPanel').style.display = 'none';
+  });
+}
+
+// ── Bookmark Toggle ──
+const bookmarkBtn = document.getElementById('bookmarkBtn');
+if (bookmarkBtn) {
+  let isLoading = false;
+  
+  bookmarkBtn.addEventListener('click', () => {
+    if (isLoading) return;
+    isLoading = true;
+    
+    const toggleUrl = bookmarkBtn.dataset.toggleUrl;
+    const icon = bookmarkBtn.querySelector('.icon');
+    
+    // Add loading state
+    bookmarkBtn.classList.add('loading');
+    bookmarkBtn.disabled = true;
+
+    fetch(toggleUrl, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 403 || response.redirected) {
+          throw new Error('Session expired. Please sign in again.');
+        }
+        throw new Error(`Server error: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.saved) {
+        bookmarkBtn.classList.add('saved');
+        icon.innerHTML = '&#9733;'; // Filled star
+        bookmarkBtn.setAttribute('aria-label', 'Remove from saved recipes');
+      } else {
+        bookmarkBtn.classList.remove('saved');
+        icon.innerHTML = '&#9734;'; // Empty star
+        bookmarkBtn.setAttribute('aria-label', 'Save this recipe');
+      }
+    })
+    .catch(error => {
+      console.error('Error toggling bookmark:', error);
+      alert(error.message);
+    })
+    .finally(() => {
+      bookmarkBtn.classList.remove('loading');
+      bookmarkBtn.disabled = false;
+      isLoading = false;
+    });
   });
 }

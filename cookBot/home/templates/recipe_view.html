@@ -1,78 +1,168 @@
 {% extends "navbar.html" %}
 {% load static %}
-<!-- Claude helped Roman make this work with the JS -->
- 
+<!-- ───────────── CHATGPT was used to fix a terrible merge conflict that got really messy ───────────── -->
+
 {% block content %}
-<!-- Make json/ensure json is here for Javascript to use -->
 {{ steps_json|json_script:"steps-data" }}
 {{ ingredients_json|json_script:"ingredients-data" }}
 {{ pantry_names_json|json_script:"pantry-data" }}
- 
-<div class="recipe-page">
- 
-  <div class="recipe-header">
-    <h1>{{ recipe.title }}</h1>
+
+<!-- ───────────── Banner (FULL WIDTH) ───────────── -->
+<div class="recipe-banner">
+  <div class="recipe-banner-content">
+
+    <!-- Title + Bookmark -->
+    <div class="title-row">
+      <h1>{{ recipe.title }}</h1>
+
+      {% if user.is_authenticated %}
+      <button type="button"
+              id="bookmarkBtn"
+              class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}"
+              data-recipe-id="{{ recipe.id }}"
+              data-toggle-url="{% url 'toggle_favorite' recipe.id %}"
+              aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}">
+        <span class="icon">
+          {% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}
+        </span>
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- Meta -->
     <div class="recipe-meta">
       <span>By {{ recipe.user.username }}</span>
-      {% if recipe.is_public %}<span class="badge">Public</span>
-      {% else %}<span class="badge">Private</span>{% endif %}
-      {% with avg=recipe.average_rating %}
-        {% if avg %}<span>&#11088; {{ avg|floatformat:1 }} / 5</span>{% endif %}
-      {% endwith %}
+      {% if recipe.is_public %}
+        <span class="badge">Public</span>
+      {% else %}
+        <span class="badge private">Private</span>
+      {% endif %}
+    </div>
+
+    <!-- Owner Actions -->
+    {% if is_owner %}
+    <div class="recipe-actions">
+      <a href="{% url 'edit_recipe' recipe.id %}" class="action-btn edit-btn">✎ Edit Recipe</a>
+      <button class="action-btn delete-btn"
+              onclick="document.getElementById('delete-modal').style.display='flex'">
+        🗑 Delete Recipe
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- Tags -->
+    {% if tags %}
+    <div class="recipe-tags">
+      {% for tag in tags %}
+        <span class="tag tag-{{ tag.tag_type }}">{{ tag.name }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ───────────── Main Page Content ───────────── -->
+<div class="recipe-page">
+
+  <!-- Delete Modal -->
+  {% if is_owner %}
+  <div id="delete-modal" class="delete-modal-overlay">
+    <div class="delete-modal-box">
+      <h2>Delete "{{ recipe.title }}"?</h2>
+      <p>This action is permanent and cannot be undone.</p>
+
+      <label class="delete-modal-checkbox">
+        <input type="checkbox" id="delete-confirm-check">
+        I understand this recipe will be permanently deleted
+      </label>
+
+      <div class="delete-modal-actions">
+        <button class="action-btn edit-btn" onclick="closeDeleteModal()">Cancel</button>
+        <form method="POST" action="{% url 'delete_recipe' recipe.id %}">
+          {% csrf_token %}
+          <button type="submit" id="delete-confirm-btn" class="action-btn delete-btn" disabled>
+            Delete Recipe
+          </button>
+        </form>
+      </div>
     </div>
   </div>
- 
-  <!-- Voice bar -->
+  {% endif %}
+
+  <!-- Voice Bar -->
   <div class="voice-bar">
     <div class="voice-indicator" id="voiceIndicator"></div>
     <div class="voice-info">
-      <div class="voice-status" id="voiceStatus">Loading&#8230;</div>
-      <div class="voice-heard"  id="voiceHeard">Say &#8220;Hey Chef&#8221; to activate</div>
+      <div class="voice-status" id="voiceStatus">Loading…</div>
+      <div class="voice-heard" id="voiceHeard">Say “Hey Chef” to activate</div>
     </div>
-    <button class="voice-btn start" id="btnStart">&#127897; Start</button>
-    <button class="voice-btn stop"  id="btnStop">&#9209; Stop</button>
+    <button class="voice-btn start" id="btnStart">🎙 Start</button>
+    <button class="voice-btn stop" id="btnStop">⏹ Stop</button>
     <div class="voice-hint">
-      Commands: <strong>&#8220;Hey Chef, next&#8221;</strong> &middot;
-      <strong>&#8220;read step 3&#8221;</strong> &middot;
-      <strong>&#8220;go back&#8221;</strong> &middot;
-      <strong>&#8220;list ingredients&#8221;</strong> &middot;
-      <strong>&#8220;repeat&#8221;</strong>
+      Commands: <strong>“Hey Chef, next”</strong> ·
+      <strong>“read step 3”</strong> ·
+      <strong>“go back”</strong> ·
+      <strong>“list ingredients”</strong> ·
+      <strong>“repeat”</strong>
     </div>
   </div>
- 
-  <!-- Ingredients and Steps -->
+
+  <!-- Ingredients + Steps -->
   <div class="recipe-grid">
     <div class="card">
       <div class="card-title">Ingredients</div>
       <ul class="ingredients-list" id="ingredientsList"></ul>
     </div>
+
     <div class="card">
       <div class="card-title">Instructions</div>
       <ol class="steps-list" id="stepsList"></ol>
+
       <div class="step-nav">
-        <button class="nav-btn"         id="prevBtn" disabled>&#8592; Previous</button>
-        <button class="nav-btn primary"  id="nextBtn">Next &#8594;</button>
+        <button class="nav-btn" id="prevBtn" disabled>← Previous</button>
+        <button class="nav-btn primary" id="nextBtn">Next →</button>
       </div>
     </div>
   </div>
- 
-  <!-- Kroger store results panel (hidden until a Find Near Me button is clicked) -->
+
+  <!-- Kroger Panel -->
   <div class="kroger-panel" id="krogerPanel" style="display:none;">
     <div class="kroger-panel-header">
-      <span id="krogerPanelTitle">Nearby stores carrying <strong id="krogerIngredientName"></strong></span>
-      <button class="kroger-close-btn" id="krogerCloseBtn">&#x2715; Close</button>
+      <span>Nearby stores carrying <strong id="krogerIngredientName"></strong></span>
+      <button class="kroger-close-btn" id="krogerCloseBtn">✕ Close</button>
     </div>
     <div id="krogerResults"></div>
   </div>
- 
+
 </div>
- 
+
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'recipe_view.css' %}">
+<link rel="stylesheet" href="{% static 'recipe_view.css' %}">
 {% endblock %}
- 
+
 <script src="{% static 'voice.js' %}"></script>
 <script src="{% static 'recipe_view.js' %}"></script>
- 
+
+<script>
+function closeDeleteModal() {
+  const modal = document.getElementById('delete-modal');
+  const check = document.getElementById('delete-confirm-check');
+  const btn = document.getElementById('delete-confirm-btn');
+
+  modal.style.display = 'none';
+  check.checked = false;
+  btn.disabled = true;
+}
+
+const check = document.getElementById('delete-confirm-check');
+const btn = document.getElementById('delete-confirm-btn');
+
+if (check) {
+  check.addEventListener('change', () => {
+    btn.disabled = !check.checked;
+  });
+}
+</script>
+
 {% endblock %}
- 
