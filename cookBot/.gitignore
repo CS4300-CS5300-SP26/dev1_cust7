@@ -5,6 +5,7 @@ __pycache__/
 db.sqlite3
 staticfiles/
 myenv/
+media/
 
 # Python cache files
 __pycache__/

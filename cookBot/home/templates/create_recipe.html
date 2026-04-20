@@ -18,7 +18,7 @@
     <div class="form-error-banner">{{ error }}</div>
   {% endif %}
  
-  <form method="POST" class="recipe-form">
+<form method="POST" enctype="multipart/form-data" class="recipe-form">
     {% csrf_token %}
  
     <!-- Title & Visibility -->
@@ -37,7 +37,16 @@
           required
         >
       </div>
- 
+      <div class="field-group">
+        <label class="field-label" for="image">Recipe Image</label>
+        <input
+          class="field-input"
+          type="file"
+          id="image"
+          name="image"
+          accept="image/*"
+        >
+      </div>
       <div class="field-group">
         <label class="toggle-label" for="is_public">
           <div class="toggle-text">
