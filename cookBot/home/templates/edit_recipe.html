@@ -1,30 +1,30 @@
 {% extends "navbar.html" %}
 {% load static %}
- 
+
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'create_recipe.css' %}">
 
 <div class="create-banner">
   <div class="create-banner-content">
-    <h1>Create a Recipe</h1>
-    <p>Share your culinary creations with the CookBot community</p>
+    <h1>Edit Recipe</h1>
+    <p>Update your recipe details</p>
   </div>
 </div>
- 
+
 <div class="create-wrap">
- 
+
   {% if error %}
     <div class="form-error-banner">{{ error }}</div>
   {% endif %}
- 
-<form method="POST" enctype="multipart/form-data" class="recipe-form">
+
+  <form method="POST" class="recipe-form">
     {% csrf_token %}
- 
+
     <!-- Title & Visibility -->
     <div class="form-card">
       <div class="form-card-title">Recipe Details</div>
- 
+
       <div class="field-group">
         <label class="field-label" for="title">Recipe Title <span class="required">*</span></label>
         <input
@@ -33,31 +33,11 @@
           id="title"
           name="title"
           placeholder="e.g. Classic Spaghetti Carbonara"
-          value="{{ post_data.title|default:'' }}"
+          value="{{ recipe.title }}"
           required
         >
       </div>
-      <div class="field-group">
-        <label class="field-label" for="description">Description</label>
-        <textarea
-          class="field-input"
-          id="description"
-          name="description"
-          rows="4"
-          placeholder="Briefly describe the recipe..."
-          >{{ post_data.description|default:'' }}
-        </textarea>  
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="image">Recipe Image</label>
-        <input
-          class="field-input"
-          type="file"
-          id="image"
-          name="image"
-          accept="image/*"
-        >
-      </div>
+
       <div class="field-group">
         <label class="toggle-label" for="is_public">
           <div class="toggle-text">
@@ -66,65 +46,66 @@
           </div>
           <div class="toggle-track">
             <input type="checkbox" id="is_public" name="is_public" class="toggle-input"
-              {% if post_data.is_public %}checked{% endif %}>
+              {% if recipe.is_public %}checked{% endif %}>
             <span class="toggle-thumb"></span>
           </div>
         </label>
       </div>
     </div>
- 
+
     <!-- Ingredients -->
     <div class="form-card">
       <div class="form-card-title">Ingredients</div>
       <div id="ingredients-container">
+        {% for ingredient in recipe.ingredients.all %}
         <div class="ingredient-row">
           <input class="field-input qty-input" type="number" name="ingredient_quantity[]"
-            placeholder="Qty" min="0.001" step="0.0001" required>
+            placeholder="Qty" min="0.001" step="0.0001" value="{{ ingredient.quantity }}" required>
           <select class="field-input unit-select" name="ingredient_unit[]">
             <option value="">— unit —</option>
-            <option value="cups">cup</option>
-            <option value="grams">g</option>
-            <option value="lbs">lb</option>
-            <option value="tablespoons">tbsp</option>
-            <option value="teaspoons">tsp</option>
-            <option value="ozs">oz</option>
+            <option value="cups"        {% if ingredient.unit == "cups" %}selected{% endif %}>cup</option>
+            <option value="grams"       {% if ingredient.unit == "grams" %}selected{% endif %}>g</option>
+            <option value="lbs"         {% if ingredient.unit == "lbs" %}selected{% endif %}>lb</option>
+            <option value="tablespoons" {% if ingredient.unit == "tablespoons" %}selected{% endif %}>tbsp</option>
+            <option value="teaspoons"   {% if ingredient.unit == "teaspoons" %}selected{% endif %}>tsp</option>
+            <option value="ozs"         {% if ingredient.unit == "ozs" %}selected{% endif %}>oz</option>
           </select>
           <input class="field-input name-input" type="text" name="ingredient_name[]"
-            placeholder="Ingredient name" required>
+            placeholder="Ingredient name" value="{{ ingredient.name }}" required>
           <button type="button" class="remove-btn" onclick="removeRow(this)" aria-label="Remove">&#x2715;</button>
         </div>
+        {% endfor %}
       </div>
       <button type="button" class="add-btn" onclick="addIngredient()">+ Add Ingredient</button>
     </div>
- 
+
     <!-- Steps -->
     <div class="form-card">
       <div class="form-card-title">Steps</div>
       <div id="steps-container">
+        {% for step in recipe.steps.all %}
         <div class="step-row">
-          <div class="step-number">1</div>
+          <div class="step-number">{{ forloop.counter }}</div>
           <textarea class="field-input step-textarea" name="steps[]"
-            placeholder="Describe this step…" required></textarea>
+            placeholder="Describe this step…" required>{{ step.text }}</textarea>
           <button type="button" class="remove-btn" onclick="removeRow(this)" aria-label="Remove">&#x2715;</button>
         </div>
+        {% endfor %}
       </div>
       <button type="button" class="add-btn" onclick="addStep()">+ Add Step</button>
     </div>
 
-    <!--Tags-->
+    <!-- Tags -->
     <div class="form-card">
       <div class="form-card-title">Tags</div>
-    
+
       {% for type, tags in grouped_tags.items %}
         <div class="tag-group">
-          <div class="tag-group-title">
-            {{ type|title }}
-          </div>
-    
+          <div class="tag-group-title">{{ type|title }}</div>
           <div class="tag-container">
             {% for tag in tags %}
               <button type="button"
-                      class="tag-chip"
+                      class="tag-chip {% if tag.id in selected_tag_ids %}selected{% endif %}"
                       data-id="{{ tag.id }}"
                       onclick="toggleTag(this)">
                 {{ tag.name }}
@@ -133,18 +114,22 @@
           </div>
         </div>
       {% endfor %}
-    
-      <div id="selected-tags"></div>
+
+      <div id="selected-tags">
+        {% for tag_id in selected_tag_ids %}
+          <input type="hidden" name="tags[]" value="{{ tag_id }}">
+        {% endfor %}
+      </div>
     </div>
- 
+
     <div class="form-actions">
-      <a href="/" class="cancel-btn">Cancel</a>
-      <button type="submit" class="submit-btn">Create Recipe</button>
+      <a href="{% url 'recipe_view' recipe.id %}" class="cancel-btn">Cancel</a>
+      <button type="submit" class="submit-btn">Save Changes</button>
     </div>
- 
+
   </form>
 </div>
 
 <script src="{% static 'create_recipe.js' %}"></script>
- 
+
 {% endblock %}

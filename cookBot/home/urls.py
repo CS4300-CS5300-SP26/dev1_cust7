@@ -28,9 +28,10 @@ urlpatterns = [
     path('api/generate-meal-plan/', views.generate_meal_plan, name='generate_meal_plan'),
     path('calendar/', views.calendar_view, name='calendar'),
 
-    # Paths for create recipe and display recipe pages
+    # Paths for create/edit recipe and display recipe pages
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
     path('recipe/create/', views.create_recipe, name='create_recipe'),
+    path('recipe/<int:recipe_id>/edit/', views.edit_recipe, name='edit_recipe'),
     path('my-recipes/', views.my_recipes, name='my_recipes'),
     path("recipes/<int:recipe_id>/delete/", views.delete_recipe, name="delete_recipe"),
 
