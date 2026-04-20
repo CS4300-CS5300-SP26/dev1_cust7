@@ -1,10 +1,12 @@
 {% extends "navbar.html" %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'my-recipes.css' %}">
 <script src="{% static 'my-recipes-page.js' %}" defer></script>
+{% endblock %}
 
+{% block content %}
 <section class="create-banner">
     <div class="create-banner-content">
       <h1>My Recipes</h1>
