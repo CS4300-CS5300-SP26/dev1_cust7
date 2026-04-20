@@ -48,9 +48,19 @@ class EditProfileForm(forms.ModelForm):
 
 
 class CommentForm(forms.ModelForm):
+    parent_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
     class Meta:
         model = Comment
-        fields = ['text']
+        fields = ['text', 'parent_id']
         widgets = {
             'text': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Share your thoughts about this recipe...'})
         }
+    
+    def save(self, commit=True):
+        comment = super().save(commit=False)
+        if self.cleaned_data.get('parent_id'):
+            comment.parent_id = self.cleaned_data['parent_id']
+        if commit:
+            comment.save()
+        return comment

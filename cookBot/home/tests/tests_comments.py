@@ -98,21 +98,26 @@ class CommentTests(TestCase):
         reply_text = "This is a reply to the parent comment"
         response = self.client.post(self.post_comment_url, {
             'text': reply_text,
-            'parent_id': parent_comment.id
+            'parent_id': str(parent_comment.id)  # Explicitly send as string like browser does
         })
         
-        # Verify reply was created
-        self.assertEqual(Comment.objects.count(), 2)
-        reply = Comment.objects.last()
+        # Verify redirect
+        self.assertEqual(response.status_code, 302)
+        
+        # Get the newly created comment FRESH from database
+        fresh_reply = Comment.objects.latest('id')
         
         # Verify reply is linked correctly
-        self.assertEqual(reply.parent, parent_comment)
-        self.assertEqual(reply.recipe, self.recipe)
-        self.assertEqual(reply.text, reply_text)
+        self.assertEqual(fresh_reply.parent_id, parent_comment.id)
+        self.assertEqual(fresh_reply.recipe, self.recipe)
+        self.assertEqual(fresh_reply.text, reply_text)
+        
+        # Refresh parent object from database to see new reply
+        parent_comment.refresh_from_db()
         
         # Verify parent has the reply
         self.assertEqual(parent_comment.replies.count(), 1)
-        self.assertEqual(parent_comment.replies.first(), reply)
+        self.assertEqual(parent_comment.replies.first(), fresh_reply)
 
     def test_cannot_reply_to_comment_from_other_recipe(self):
         """Test that replies cannot be attached to comments from different recipes"""
@@ -136,10 +141,10 @@ class CommentTests(TestCase):
             'parent_id': other_comment.id
         })
         
-        # Should return 404
+        # Should return 404 Not Found for invalid parent comment
         self.assertEqual(response.status_code, 404)
         
-        # No comment should be created
+        # Comment should NOT be created at all (transaction aborted due to exception)
         self.assertEqual(Comment.objects.count(), 1)
 
     def test_cannot_comment_on_private_recipe(self):

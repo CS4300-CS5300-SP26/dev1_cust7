@@ -822,6 +822,7 @@ def post_comment(request, recipe_id):
         if request.user != recipe.user:
             raise PermissionDenied
     
+    
     form = CommentForm(request.POST)
     
     if form.is_valid():
@@ -829,17 +830,15 @@ def post_comment(request, recipe_id):
         comment.user = request.user
         comment.recipe = recipe
         
-        # Handle optional parent comment for replies
+        # Handle parent comment for replies
         parent_id = request.POST.get('parent_id')
         if parent_id:
-            try:
-                parent_id = int(parent_id)
-                comment.parent = get_object_or_404(Comment, id=parent_id, recipe=recipe)
-            except (ValueError, TypeError):
-                # Invalid parent_id format - ignore gracefully
-                pass
+            parent_comment = get_object_or_404(Comment, id=parent_id, recipe=recipe)
+            comment.parent = parent_comment
         
         comment.save()
+        
+        
         messages.success(request, 'Your comment was posted successfully.')
     else:
         # Show validation errors to user
