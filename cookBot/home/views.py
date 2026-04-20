@@ -16,6 +16,7 @@ import urllib.request
 import urllib.parse
 from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai
+from .chefBot import generate_meal_plan_with_ai
 from PIL import Image
 
 
