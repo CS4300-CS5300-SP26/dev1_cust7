@@ -1,0 +1,313 @@
+/* ── Banner ── */
+.create-banner {
+  background: linear-gradient(120deg, #009470, #42a06d);
+  padding: 2.5rem 5%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.create-banner-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.3rem 0;
+}
+
+.create-banner-content p {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* ── My Recipes Page ── */
+.recipes-page {
+  min-height: calc(100vh - 80px);
+  padding: 0 3rem 2rem;
+  background: #ffffff;
+}
+
+.recipes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.recipe-row-card {
+  display: grid;
+  grid-template-columns: 180px 1fr 140px;
+  gap: 1.5rem;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 24px;
+  padding: 1.75rem;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
+
+/* ── Recipe Image ── */
+.recipe-image-box {
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.recipe-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.recipe-image-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: #edf5f0;
+  color: #7aa68d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+/* ── Recipe Main Content ── */
+.recipe-main h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin: 0;
+}
+
+.recipe-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.recipe-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.recipe-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #edf5f0;
+  color: #2d5a44;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.recipe-description {
+  font-size: 1rem;
+  color: #4f6f60;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Recipe Tags ── */
+.recipe-tag {
+  margin-left: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.public-tag {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.private-tag {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* ── Side Actions ── */
+.recipe-side-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.recipe-action-btn {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.recipe-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.view-btn {
+  background: #009470;
+  color: #ffffff;
+}
+
+.view-btn:hover {
+  background: #42a06d;
+}
+
+.edit-btn {
+  background: #edf5f0;
+  color: #1a3d2b;
+  border-color: #d7ebe3;
+}
+
+.edit-btn:hover {
+  background: #d7ebe3;
+}
+
+.delete-btn {
+  background: #fff3f0;
+  color: #a0432b;
+  border-color: #f0c7bb;
+}
+
+.delete-btn:hover {
+  background: #fbe4de;
+}
+
+/* ── Bookmark / Favorite Button ── */
+.bookmark-btn {
+  background: #ffffff;
+  border: 2px solid #d9dde3;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.bookmark-btn .icon {
+  color: #9ca3af;
+  line-height: 1;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bookmark-btn.saved {
+  border-color: #d9dde3;
+  background: #ffffff;
+}
+
+.bookmark-btn:hover {
+  transform: scale(1.05);
+  border-color: #bfc7d1;
+}
+
+.bookmark-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.bookmark-btn.loading .icon {
+  animation: spin 1s linear infinite;
+}
+
+.bookmark-btn:disabled {
+  cursor: not-allowed;
+}
+
+.recipe-bookmark-btn {
+  width: 36px;
+  height: 36px;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.recipe-bookmark-btn .icon {
+  font-size: 1.2rem;
+}
+
+.recipe-bookmark-btn.saved .icon {
+  color: #f4b400;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Empty State ── */
+.empty-recipes {
+  background: #ffffff;
+  border: 1px solid #d7ebe3;
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(26, 61, 43, 0.08);
+}
+
+.empty-recipes h2 {
+  font-size: 1.6rem;
+  color: #1a3d2b;
+  margin-bottom: 0.75rem;
+}
+
+.empty-recipes p {
+  color: #4f6f60;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .recipe-row-card {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .recipe-image-box {
+    justify-content: flex-start;
+  }
+
+  .recipe-image-placeholder {
+    font-size: 2.5rem;
+  }
+
+  .recipe-main h2 {
+    font-size: 1.6rem;
+  }
+
+  .recipe-side-actions {
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .recipes-page {
+    padding: 2rem 1rem;
+  }
+}

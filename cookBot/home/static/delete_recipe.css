@@ -1,0 +1,93 @@
+/* ── Banner ── */
+.create-banner {
+  background: linear-gradient(120deg, #009470, #42a06d);
+  padding: 2.5rem 5%;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.create-banner-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.3rem 0;
+}
+
+.create-banner-content p {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.delete-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.delete-card {
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  background: #fffafa;
+  border: 1px solid #e6b3a8;
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 12px 30px rgba(26, 61, 43, 0.08);
+}
+
+.delete-card h2 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 0.75rem;
+}
+
+.delete-warning {
+  font-size: 1rem;
+  color: #8b2e1f;
+  margin: 1rem 0 1.5rem;
+  line-height: 1.5;
+}
+
+.delete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.recipe-action-btn {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.edit-btn {
+  background: #edf5f0;
+  color: #1a3d2b;
+  border-color: #d7ebe3;
+}
+
+.edit-btn:hover {
+  background: #d7ebe3;
+}
+
+.delete-btn {
+  background: #fff3f0;
+  color: #a0432b;
+  border-color: #f0c7bb;
+}
+
+.delete-btn:hover {
+  background: #fbe4de;
+}
