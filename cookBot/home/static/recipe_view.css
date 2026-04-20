@@ -271,3 +271,69 @@
 }
  
 .kroger-error { color: #c0392b; }
+
+/* Bookmark Button */
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.bookmark-btn {
+  background: none;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.bookmark-btn .icon {
+  font-size: 1.5rem;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.bookmark-btn.saved {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.bookmark-btn.saved .icon {
+  color: #f59e0b;
+}
+
+.bookmark-btn:hover {
+  transform: scale(1.1);
+  border-color: #f59e0b;
+}
+
+.bookmark-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
+.bookmark-btn.loading .icon {
+  animation: spin 1s linear infinite;
+}
+
+.bookmark-btn:disabled {
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.bookmark-btn .icon {
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}

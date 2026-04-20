@@ -60,7 +60,7 @@
                             <li><a href="/account">My Account</a></li>
                             <li><a href="/pantry/">My Pantry</a></li>
                             <li><a href="/my-recipes/">My Recipes</a></li>
-                            <li><a href="#">Favorites</a></li>
+                            <li><a href="{% url 'favorites_list' %}">Favorites</a></li>
                             <li><a href="/logout">Log Out</a></li>
                         {% else %}
                             <li><a href="/signin">Sign In</a></li>
