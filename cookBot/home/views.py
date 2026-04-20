@@ -15,7 +15,7 @@ import json
 import urllib.request
 import urllib.parse
 from .forms import RegisterForm, EditProfileForm
-from .chefBot import call_openai
+from .chefBot import call_openai, generate_meal_plan_with_ai
 
 def index(request):
     return render(request, 'index.html')
@@ -345,11 +345,21 @@ def get_meals_json(request):
             end_of_month = today.replace(month=today.month+1, day=1) - timedelta(days=1)
         end_date = end_of_month.strftime('%Y-%m-%d')
     
+    MEAL_ORDER = {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2}
+    MEAL_TIMES = {
+        'Breakfast': '08:00:00',
+        'Lunch': '12:00:00',
+        'Dinner': '18:00:00',
+    }
+
     # Query only the current user's meal plans within date range
-    meals = MealPlan.objects.filter(
-        user=request.user,
-        date__gte=start_date,
-        date__lte=end_date
+    meals = sorted(
+        MealPlan.objects.filter(
+            user=request.user,
+            date__gte=start_date,
+            date__lte=end_date
+        ),
+        key=lambda m: (m.date, MEAL_ORDER.get(m.meal_type, 3))
     )
     
     # Format for FullCalendar.io
@@ -358,9 +368,13 @@ def get_meals_json(request):
         calendar_events.append({
             'id': meal.id,
             'title': meal.recipe_name,
-            'start': meal.date.isoformat(),
+            'start': f"{meal.date.isoformat()}T{MEAL_TIMES.get(meal.meal_type, '12:00:00')}",
             'meal_type': meal.meal_type,
             'recipe_id': meal.recipe_id,
+            'calories': meal.calories,
+            'protein': meal.protein,
+            'fat': meal.fat,
+            'carbs': meal.carbs,
         })
     
     return JsonResponse({'meals': calendar_events})
@@ -375,73 +389,79 @@ def calendar_view(request):
 @login_required
 @require_POST
 def generate_meal_plan(request):
-    """Generate a 7-day meal plan based on user's pantry ingredients"""
+    """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
-    from datetime import timedelta, date
+    from datetime import timedelta, date, time
     
-    # Get user's pantry ingredients
-    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
-    
-    if not pantry_items:
-        return JsonResponse({
-            'error': 'Your pantry is empty! Add some ingredients to generate a meal plan.'
-        }, status=400)
-    
-    # Join ingredients for Spoonacular API
-    ingredients = ','.join(pantry_items)
-    
-    # Fetch 7 recipes from Spoonacular based on pantry ingredients
-    recipes_data = None
+    #Parse the incoming JSON body
     try:
-        recipes_data = spoonacular_get("recipes/findByIngredients", {
-            "ingredients": ingredients,
-            "number": 7,
-            "ranking": 1,
-            "ignorePantry": False,
-        })
-    except Exception:
-        # If API call fails, use fallback recipes
-        pass
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+
+    #Read user inputs
+    calories = data.get('calories') or None
+    protein = data.get('protein') or None
+    fat = data.get('fat') or None
+    carbs = data.get('carbs') or None
+    cuisine = (data.get('cuisine', '') or '').strip() or None
+    use_pantry = data.get('use_pantry', False)
+
+    #Fetch pantry items if toggle is on
+    pantry_items = None
+    if use_pantry:
+        pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+        if not pantry_items:
+            return JsonResponse({
+                'error': 'Your pantry is empty! Add some ingredients or turn off the pantry toggle.'
+            }, status=400)
     
-    if not recipes_data:
-        # Fallback to suggested recipes
-        recipes_data = get_fallback_recipes(pantry_items)
-    
-    # Get today's date and calculate next 7 days
-    today = date.today()
-    meal_types = ['Breakfast', 'Lunch', 'Dinner']
-    
+    #Call OpenAI to generate the meal plan
+    try:
+        meals = generate_meal_plan_with_ai(
+            calories=calories,
+            protein=protein,
+            fat=fat,
+            carbs=carbs,
+            cuisine=cuisine,
+            pantry_items=pantry_items,
+        )
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to generate meal plan: {str(e)}'}, status=500)
+
+    if not meals:
+        return JsonResponse({'error': 'No meals were generated. Please try again.'}, status=500)
+
     # Delete existing meal plans for the next 7 days to avoid duplicates
+    today = date.today()
     for i in range(7):
-        day_date = today + timedelta(days=i)
         MealPlan.objects.filter(
             user=request.user,
-            date=day_date
+            date=today + timedelta(days=i)
         ).delete()
     
-    # Create MealPlan entries for each day
+    #Save each meal to DB
     created_meals = []
-    for i in range(7):
-        day_date = today + timedelta(days=i)
-        recipe = recipes_data[i % len(recipes_data)]  # Cycle through recipes if less than 7
-        
-        # Create one meal per day (rotate through meal types)
-        meal_type = meal_types[i % 3]  # Rotate: Breakfast, Lunch, Dinner
-        
-        # Get recipe_id - ensure it's an integer or None (fallback recipes have string IDs)
-        rid = recipe.get('id')
-        if rid is not None:
-            try:
-                rid = int(rid)
-            except (ValueError, TypeError):
-                rid = None
-        
+
+    for meal in meals:
+        day_offset = meal.get('day', 1) - 1 
+        meal_date = today + timedelta(days=day_offset)
+        meal_type = meal.get('meal_type', 'Dinner')
+
+        #Validate meal_type
+        valid_types = ['Breakfast', 'Lunch', 'Dinner']
+        if meal_type not in valid_types:
+            meal_type = 'Dinner'
+    
         meal_plan = MealPlan.objects.create(
             user=request.user,
-            recipe_name=recipe.get('title', f'Meal {i+1}'),
-            recipe_id=rid,
-            date=day_date,
-            meal_type=meal_type
+            recipe_name=meal.get('recipe_name', 'Unknown Meal'),
+            date=meal_date,
+            meal_type=meal_type,
+            calories=meal.get('calories'),
+            protein=meal.get('protein'),
+            fat=meal.get('fat'),
+            carbs=meal.get('carbs'),
         )
         created_meals.append(meal_plan)
     

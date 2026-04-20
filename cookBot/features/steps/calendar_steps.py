@@ -1,12 +1,38 @@
 from behave import given, when, then
 import json
 from django.urls import reverse
+from unittest.mock import patch
+from django.contrib.auth.models import User
+from django.test import Client
+from home.models import Pantry, MealPlan
+from django.contrib.auth import login
+from datetime import date, timedelta
+
+#21 meals: 7 days x 3 meal types
+MOCK_AI_MEALS = [
+    {
+        "day": day,
+        "meal_type": meal_type,
+        "recipe_name": f"Mock {meal_type} Day {day}",
+        "calories": 500,
+        "protein": 30,
+        "fat": 15,
+        "carbs": 50,
+    }
+    for day in range(1, 8)
+    for meal_type in ["Breakfast", "Lunch", "Dinner"]
+]
+def post_generate(context, payload):
+    """Helper to POST to generate_meal_plan with mocked OpenAI."""
+    with patch('home.views.generate_meal_plan_with_ai', return_value=MOCK_AI_MEALS):
+        context.response = context.client.post(
+            reverse('generate_meal_plan'),
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
 
 @given('I am a logged-in user')
 def step_logged_in_user(context):
-    from django.contrib.auth.models import User
-    from django.contrib.auth import login
-    from django.test import Client
 
     # Create or get test user
     user, created = User.objects.get_or_create(username='testuser')
@@ -22,7 +48,6 @@ def step_logged_in_user(context):
 
 @given('I have "{ingredient1}" and "{ingredient2}" in my pantry')
 def step_have_ingredients(context, ingredient1, ingredient2):
-    from home.models import Pantry
 
     for ingredient in [ingredient1, ingredient2]:
         Pantry.objects.get_or_create(user=context.user, ingredient_name=ingredient)
@@ -30,7 +55,6 @@ def step_have_ingredients(context, ingredient1, ingredient2):
 
 @given('my pantry is currently empty')
 def step_empty_pantry(context):
-    from home.models import Pantry
 
     # Clear any existing pantry items for this user
     Pantry.objects.filter(user=context.user).delete()
@@ -39,12 +63,8 @@ def step_empty_pantry(context):
 @given('I have generated a weekly meal plan')
 def step_generated_meal_plan(context):
     """Actually generate a meal plan by calling the real endpoint"""
-    from home.models import Pantry, MealPlan
-    from datetime import date, timedelta
-    from django.urls import reverse
 
-    # Call the real generate_meal_plan endpoint to create actual database entries
-    context.client.post(reverse('generate_meal_plan'))
+    post_generate(context, {'use_pantry': False})
 
     # Store the generated meals for later verification
     meals = MealPlan.objects.filter(user=context.user)
@@ -59,36 +79,90 @@ def step_generated_meal_plan(context):
 @when('I click "Generate Weekly Plan"')
 def step_click_generate(context):
     """Simulate clicking the generate button by calling the meal plan generator"""
-    from django.contrib.auth.models import User
-    if not hasattr(context, 'user') or not User.objects.filter(username='testuser').exists():
-        user, created = User.objects.get_or_create(username='testuser')
-        if created:
-            user.set_password('testpass123')
-            user.save()
     
     # Always re-login to ensure session is valid
     context.client.login(username='testuser', password='testpass123')
     context.user = User.objects.get(username='testuser')
-    
-    # POST to the real generate_meal_plan endpoint (with CSRF token)
-    context.response = context.client.post(reverse('generate_meal_plan'))
+    post_generate(context, {'use_pantry': True})
 
 
 @when('I return to the calendar page')
 def step_return_to_calendar(context):
     """Navigate back to the calendar page"""
     # Ensure user is logged in (calendar_view requires login)
-    from django.contrib.auth.models import User
     if not hasattr(context, 'user') or not context.user.is_authenticated:
         user = User.objects.get(username='testuser')
         context.client.login(username='testuser', password='testpass123')
         context.user = user
     context.response = context.client.get('/calendar/')
 
+@when('I generate a meal plan with calories "{calories}" protein "{protein}" fat "{fat}" carbs "{carbs}" cuisine "{cuisine}" and pantry on')
+def step_generate_all_fields_pantry_on(context, calories, protein, fat, carbs, cuisine):
+    post_generate(context, {
+        'calories': int(calories),
+        'protein': int(protein),
+        'fat': int(fat),
+        'carbs': int(carbs),
+        'cuisine': cuisine,
+        'use_pantry': True,
+    })
+ 
+ 
+@when('I generate a meal plan with calories "{calories}" protein "{protein}" fat "{fat}" carbs "{carbs}" cuisine "{cuisine}" and pantry off')
+def step_generate_all_fields_pantry_off(context, calories, protein, fat, carbs, cuisine):
+    post_generate(context, {
+        'calories': int(calories),
+        'protein': int(protein),
+        'fat': int(fat),
+        'carbs': int(carbs),
+        'cuisine': cuisine,
+        'use_pantry': False,
+    })
+ 
+ 
+@when('I generate a meal plan with no inputs and pantry off')
+def step_generate_no_inputs(context):
+    post_generate(context, {
+        'use_pantry': False,
+    })
+ 
+ 
+@when('I generate a meal plan with calories "{calories}" protein "{protein}" fat "{fat}" carbs "{carbs}" and no cuisine')
+def step_generate_only_macros(context, calories, protein, fat, carbs):
+    post_generate(context, {
+        'calories': int(calories),
+        'protein': int(protein),
+        'fat': int(fat),
+        'carbs': int(carbs),
+        'cuisine': None,
+        'use_pantry': False,
+    })
+ 
+ 
+@when('I generate a meal plan with cuisine "{cuisine}" and no macros')
+def step_generate_only_cuisine(context, cuisine):
+    post_generate(context, {
+        'calories': None,
+        'protein': None,
+        'fat': None,
+        'carbs': None,
+        'cuisine': cuisine,
+        'use_pantry': False,
+    })
+ 
+ 
+@when('I generate a meal plan with pantry on and no other inputs')
+def step_generate_pantry_on_no_inputs(context):
+    # Do NOT mock here — we want the real view to reject empty pantry
+    context.response = context.client.post(
+        reverse('generate_meal_plan'),
+        data=json.dumps({'use_pantry': True}),
+        content_type='application/json',
+    )
+ 
 @then('I should see {count:d} meals on the calendar grid')
 def step_see_meals_on_calendar(context, count):
     """Verify the correct number of meals are displayed"""
-    from home.models import MealPlan
     
     # Query the database to verify the correct number of meals were created
     meals = MealPlan.objects.filter(user=context.user)
@@ -115,7 +189,6 @@ def step_see_warning_message(context, message):
 @then('the previously generated meals should still be visible')
 def step_meals_still_visible(context):
     """Verify that previously generated meals persist in the database"""
-    from home.models import MealPlan
     
     # Query the database directly to verify meals exist for this user
     meals = MealPlan.objects.filter(user=context.user)
