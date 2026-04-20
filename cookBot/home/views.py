@@ -809,6 +809,8 @@ def find_kroger_stores(request):
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
 
 
+from django.contrib import messages
+
 @login_required
 @require_POST
 def post_comment(request, recipe_id):
@@ -827,6 +829,12 @@ def post_comment(request, recipe_id):
             comment.parent = get_object_or_404(Comment, id=parent_id, recipe=recipe)
         
         comment.save()
+        messages.success(request, 'Your comment was posted successfully.')
+    else:
+        # Show validation errors to user
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, error)
     
     return redirect('recipe_view', recipe_id=recipe.id)
 @login_required

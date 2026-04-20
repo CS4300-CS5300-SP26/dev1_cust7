@@ -59,12 +59,11 @@ def step_not_logged_in_viewing_recipe(context):
     
     # Create or get test user
     other_user, created = User.objects.get_or_create(
-        username='other_user',
-        defaults={'password': 'test123'}
+        username='other_user'
     )
-    if not created:
-        other_user.set_password('test123')
-        other_user.save()
+    # Always hash password properly for both new and existing users
+    other_user.set_password('test123')
+    other_user.save()
     
     # Create test recipe
     context.recipe, created = Recipe.objects.get_or_create(
