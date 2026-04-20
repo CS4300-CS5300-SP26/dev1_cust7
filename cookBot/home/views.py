@@ -816,6 +816,12 @@ from django.contrib import messages
 def post_comment(request, recipe_id):
     """Post a comment on a recipe"""
     recipe = get_object_or_404(Recipe, id=recipe_id)
+    
+    # Enforce same visibility rules as recipe_view
+    if not recipe.is_public:
+        if request.user != recipe.user:
+            raise PermissionDenied
+    
     form = CommentForm(request.POST)
     
     if form.is_valid():

@@ -82,3 +82,87 @@ class CommentTests(TestCase):
         
         # Verify no comment was created
         self.assertEqual(Comment.objects.count(), 0)
+
+    def test_can_post_reply_to_comment(self):
+        """Test that replies can be posted to existing comments"""
+        self.client.login(username='test_user', password='testpass123')
+        
+        # Create parent comment first
+        parent_comment = Comment.objects.create(
+            user=self.user,
+            recipe=self.recipe,
+            text="This is the parent comment"
+        )
+        
+        # Post reply
+        reply_text = "This is a reply to the parent comment"
+        response = self.client.post(self.post_comment_url, {
+            'text': reply_text,
+            'parent_id': parent_comment.id
+        })
+        
+        # Verify reply was created
+        self.assertEqual(Comment.objects.count(), 2)
+        reply = Comment.objects.last()
+        
+        # Verify reply is linked correctly
+        self.assertEqual(reply.parent, parent_comment)
+        self.assertEqual(reply.recipe, self.recipe)
+        self.assertEqual(reply.text, reply_text)
+        
+        # Verify parent has the reply
+        self.assertEqual(parent_comment.replies.count(), 1)
+        self.assertEqual(parent_comment.replies.first(), reply)
+
+    def test_cannot_reply_to_comment_from_other_recipe(self):
+        """Test that replies cannot be attached to comments from different recipes"""
+        self.client.login(username='test_user', password='testpass123')
+        
+        # Create second recipe and comment
+        other_recipe = Recipe.objects.create(
+            user=self.user,
+            title='Other Recipe',
+            is_public=True
+        )
+        other_comment = Comment.objects.create(
+            user=self.user,
+            recipe=other_recipe,
+            text="Comment from another recipe"
+        )
+        
+        # Attempt to reply to other recipe's comment on this recipe
+        response = self.client.post(self.post_comment_url, {
+            'text': "Malicious cross recipe reply",
+            'parent_id': other_comment.id
+        })
+        
+        # Should return 404
+        self.assertEqual(response.status_code, 404)
+        
+        # No comment should be created
+        self.assertEqual(Comment.objects.count(), 1)
+
+    def test_cannot_comment_on_private_recipe(self):
+        """Test that only the owner can comment on private recipes"""
+        # Create private recipe
+        private_recipe = Recipe.objects.create(
+            user=self.user,
+            title='Private Recipe',
+            is_public=False
+        )
+        private_url = reverse('post_comment', args=[private_recipe.id])
+        
+        # Create another user
+        other_user = User.objects.create_user(username='other_user', password='testpass123')
+        self.client.login(username='other_user', password='testpass123')
+        
+        # Attempt to comment on private recipe
+        response = self.client.post(private_url, {
+            'text': "Trying to comment on private recipe"
+        })
+        
+        # Should get 403 Forbidden
+        self.assertEqual(response.status_code, 403)
+        
+        # No comment created
+        self.assertEqual(Comment.objects.count(), 0)
