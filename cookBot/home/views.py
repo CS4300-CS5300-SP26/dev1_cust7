@@ -498,9 +498,6 @@ def recipe_view(request, recipe_id):
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
         "is_saved_by_user": is_saved_by_user,
-        "tags": recipe.tags.all(),
-        "is_owner": request.user == recipe.user,
-        "is_saved_by_user": is_saved_by_user,
     })
 
 def get_grouped_tags():
