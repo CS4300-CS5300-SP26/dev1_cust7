@@ -243,59 +243,72 @@ class IntegrationTest(TestCase):
     def test_full_user_journey(self):
         """Integration test: Register -> Create Recipe -> Add to Pantry -> Generate Meal Plan -> View Calendar -> Logout"""
         from home.models import MealPlan, Pantry, Recipe
-
+        from unittest.mock import patch
+        import json
+        MOCK_AI_MEALS = [
+            {
+                "day": day,
+                "meal_type": meal_type,
+                "recipe_name": f"Mock {meal_type} Day {day}",
+                "calories": 500,
+                "protein": 30,
+                "fat": 15,
+                "carbs": 50,
+            }
+            for day in range(1, 8)
+            for meal_type in ["Breakfast", "Lunch", "Dinner"]
+        ]
         with self._mock_spoonacular() as mock_spoonacular:
-            # 1. Register a new user
-            response = self.client.post(reverse('register'), {
-                'first_name': 'Integration',
-                'last_name': 'Test',
-                'username': 'integrationuser',
-                'email': 'integration@test.com',
-                'password1': 'StrongPassword123!',
-                'password2': 'StrongPassword123!'
-            })
-            self.assertEqual(response.status_code, 302)
+            with patch('home.views.generate_meal_plan_with_ai', return_value=MOCK_AI_MEALS):
+                # 1. Register a new user
+                response = self.client.post(reverse('register'), {
+                    'first_name': 'Integration',
+                    'last_name': 'Test',
+                    'username': 'integrationuser',
+                    'email': 'integration@test.com',
+                    'password1': 'StrongPassword123!',
+                    'password2': 'StrongPassword123!'
+                })
+                self.assertEqual(response.status_code, 302)
 
-            # 2. Create a recipe
-            response = self.client.post(reverse('create_recipe'), {
-                'title': 'Integration Test Recipe',
-                'is_public': 'on',
-                'ingredient_quantity[]': ['1'],
-                'ingredient_unit[]': ['cup'],
-                'ingredient_name[]': ['Flour'],
-                'steps[]': ['Mix ingredients']
-            })
-            self.assertEqual(response.status_code, 302)
+                # 2. Create a recipe
+                response = self.client.post(reverse('create_recipe'), {
+                    'title': 'Integration Test Recipe',
+                    'is_public': 'on',
+                    'ingredient_quantity[]': ['1'],
+                    'ingredient_unit[]': ['cup'],
+                    'ingredient_name[]': ['Flour'],
+                    'steps[]': ['Mix ingredients']
+                })
+                self.assertEqual(response.status_code, 302)
 
-            # 3. View the recipe
-            recipe = Recipe.objects.get(title='Integration Test Recipe')
-            response = self.client.get(reverse('recipe_view', args=[recipe.id]))
-            self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'Integration Test Recipe')
+                # 3. View the recipe
+                recipe = Recipe.objects.get(title='Integration Test Recipe')
+                response = self.client.get(reverse('recipe_view', args=[recipe.id]))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Integration Test Recipe')
 
-            # 4. Add ingredient to pantry
-            import json
-            response = self.client.post(
-                reverse('add_ingredient'),
-                data=json.dumps({'ingredient_name': 'Sugar'}),
-                content_type='application/json'
-            )
-            self.assertEqual(response.status_code, 200)
-            integration_user = User.objects.get(username='integrationuser')
-            self.assertTrue(Pantry.objects.filter(ingredient_name='Sugar', user=integration_user).exists())
+                # 4. Add ingredient to pantry
+                response = self.client.post(
+                    reverse('add_ingredient'),
+                    data=json.dumps({'ingredient_name': 'Sugar'}),
+                    content_type='application/json'
+                )
+                self.assertEqual(response.status_code, 200)
+                integration_user = User.objects.get(username='integrationuser')
+                self.assertTrue(Pantry.objects.filter(ingredient_name='Sugar', user=integration_user).exists())
 
-            # 5. Generate meal plan
-            mock_spoonacular.return_value = [{'id': i, 'title': f'Recipe {i}'} for i in range(1, 8)]
-            response = self.client.post(reverse('generate_meal_plan'))
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertTrue(data['success'])
-            self.assertEqual(data['meals_count'], 7)
+                # 5. Generate meal plan
+                response = self.client.post(reverse('generate_meal_plan'), data=json.dumps({'use_pantry': False}), content_type='application/json',)
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertTrue(data['success'])
+                self.assertEqual(data['meals_count'], 21)
 
-            # 6. View calendar
-            response = self.client.get(reverse('calendar'))
-            self.assertEqual(response.status_code, 200)
+                # 6. View calendar
+                response = self.client.get(reverse('calendar'))
+                self.assertEqual(response.status_code, 200)
 
-            # 7. Logout
-            response = self.client.get(reverse('logout'))
-            self.assertEqual(response.status_code, 302)
+                # 7. Logout
+                response = self.client.get(reverse('logout'))
+                self.assertEqual(response.status_code, 302)

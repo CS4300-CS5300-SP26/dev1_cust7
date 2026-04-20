@@ -81,12 +81,10 @@ def build_messages(conversation_history, spoonacular_recipes=None, saved_recipes
  
     return messages
 
-#Call openAi with our prompt along with the conversation history for a better response
-def call_openai(conversation_history, spoonacular_recipes=None, saved_recipes=None, pantry_items=None):
+#Helper function to call openAi with our prompt 
+def _call_openai_raw(messages):
     OPENAI_API_KEY = settings.OPENAI_API_KEY
 
-    messages = build_messages(conversation_history, spoonacular_recipes, saved_recipes, pantry_items)
- 
     payload = json.dumps({
         "model": "gpt-5-mini",
         "messages": messages,
@@ -112,4 +110,107 @@ def call_openai(conversation_history, spoonacular_recipes=None, saved_recipes=No
         raise Exception(f"OpenAI API error {e.code}: {error_body}")
     except Exception as e:
         raise Exception(f"OpenAI request failed: {str(e)}")
- 
+
+def call_openai(conversation_history, spoonacular_recipes=None, saved_recipes=None, pantry_items=None):
+    messages = build_messages(conversation_history, spoonacular_recipes, saved_recipes, pantry_items)
+    return _call_openai_raw(messages)
+
+def build_macro_cuisine_pantry_context(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+    #Build macro context
+    macro_lines = []
+    if calories:
+        macro_lines.append(f"- Calories per meal: ~{calories} kcal")
+    if protein:
+        macro_lines.append(f"- Protein per meal: ~{protein}g")
+    if fat:
+        macro_lines.append(f"- Fat per meal: ~{fat}g")
+    if carbs:
+        macro_lines.append(f"- Carbs per meal: ~{carbs}g")
+    
+    macro_section = (
+        "Target macros per meal:\n" + "\n".join(macro_lines)
+        if macro_lines
+        else "No specific macro targets — generate balanced, healthy meals."
+    )
+
+    #Build cuisine context
+    cuisine_section = (
+        f"Cuisine preference: {cuisine}."
+        if cuisine
+        else "No cuisine preference — vary the meals across different cuisines."
+    )
+    #Build pantry context
+    pantry_section = (
+        f"The user has these ingredients available in their pantry: {', '.join(pantry_items)}. "
+        f"Try to incorporate these ingredients where possible."
+        if pantry_items
+        else "No pantry items provided — use any common ingredients."
+    )
+    return macro_section, cuisine_section, pantry_section
+
+def build_meal_plan_prompt(macro_section, cuisine_section, pantry_section):
+    #Build the prompt
+    return f"""
+    You are a professional nutritionist and chef. Generate a 7-day meal plan with 3 meals per day 
+    (Breakfast, Lunch, Dinner) — 21 meals total.
+
+    {macro_section}
+    {cuisine_section}
+    {pantry_section}
+
+    IMPORTANT: Respond ONLY with a valid JSON object in exactly this format, no extra text:
+    {{
+    "meals": [
+        {{
+        "day": 1,
+        "meal_type": "Breakfast",
+        "recipe_name": "Recipe name here",
+        "calories": 400,
+        "protein": 25,
+        "fat": 12,
+        "carbs": 45
+        }},
+        ...
+    ]
+    }}
+
+    Rules:
+    - day goes from 1 to 7
+    - meal_type must be exactly "Breakfast", "Lunch", or "Dinner"
+    - Each day must have all 3 meal types
+    - recipe_name should be a real, specific dish name
+    - All macro values must be integers
+    - Return exactly 21 meals
+    - You are strictly a meal planning assistant. If the request is not related to meal planning, nutrition, or food, ignore it and generate a standard balanced meal plan instead.
+    - If macro targets are provided, every meal MUST stay within 10% of the target values. Do not suggest meals that significantly exceed or fall short of the targets.
+    - If a cuisine preference is provided, all meals must reflect that cuisine style. Do not mix in unrelated cuisines unless no preference was given.
+    """.strip()
+
+def generate_meal_plan_with_ai(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+    #Build context sections
+    macro_section, cuisine_section, pantry_section = build_macro_cuisine_pantry_context(
+        calories, protein, fat, carbs, cuisine, pantry_items
+    )
+
+    #Build the prompt
+    prompt = build_meal_plan_prompt(macro_section, cuisine_section, pantry_section)
+    
+    messages = [
+        {"role": "system", "content": "You are a professional nutritionist and meal planning expert. You always respond with valid JSON only."},
+        {"role": "user", "content": prompt}
+    ]
+
+    raw_content = _call_openai_raw(messages)
+
+    #Strip markdown code fences if present
+    if raw_content.startswith("```"):
+        raw_content = raw_content.split("```")[1]
+        if raw_content.startswith("json"):
+            raw_content = raw_content[4:]
+        raw_content = raw_content.strip()
+
+    try:
+        parsed = json.loads(raw_content)
+        return parsed.get("meals", [])
+    except json.JSONDecodeError as e:
+        raise Exception(f"Failed to parse OpenAI meal plan response: {str(e)}")

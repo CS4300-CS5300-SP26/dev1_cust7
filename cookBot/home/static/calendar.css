@@ -4,16 +4,16 @@
     padding: 2.5rem 5%;
     display: flex;
     align-items: center;
-  }
+}
   
-  .calendar-banner-content h1 {
+.calendar-banner-content h1 {
     font-size: 2rem;
     font-weight: 800;
     color: #ffffff;
     margin: 0 0 0.3rem;
-  }
+}
   
-  .calendar-banner-content p {
+.calendar-banner-content p {
     color: #ffffff;
     font-size: 1rem;
     margin: 0;
@@ -82,5 +82,164 @@
     }
     .fc-toolbar {
         flex-direction: column;
+    }
+}
+/* ── Meal plan controls ───────────────────────────────────────────────────── */
+.meal-plan-controls {
+    max-width: 700px;
+    margin: 1.5rem auto;
+    padding: 1.5rem;
+    background: #f4fbf8;
+    border: 1.5px solid #d7eba3;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+  
+/* Macro inputs row */
+.macro-inputs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+  
+.macro-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 120px;
+}
+  
+.macro-field label,
+.cuisine-input label,
+.pantry-toggle-row label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #009470;
+}
+  
+.macro-field input,
+.cuisine-input input {
+    border: 1.5px solid #d7eba3;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    color: #1a3d2b;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+  
+.macro-field input:focus,
+.cuisine-input input:focus {
+    border-color: #009470;
+}
+  
+/* Cuisine input */
+.cuisine-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+  
+/* Pantry toggle row */
+.pantry-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+  
+.toggle-label {
+    font-size: 0.9rem;
+    color: #1a3d2b;
+    font-weight: 600;
+}
+  
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+}
+  
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+  
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #d7eba3;
+    border-radius: 24px;
+    transition: 0.3s;
+}
+  
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+  
+.toggle-switch input:checked + .toggle-slider {
+    background: #009470;
+}
+  
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+  
+/* Generate button */
+#generate-plan-btn {
+    background: #009470;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    align-self: flex-start;
+}
+  
+#generate-plan-btn:hover:not(:disabled) {
+    background: #42a06d;
+}
+  
+#generate-plan-btn:disabled {
+    background: #9ab8ac;
+    cursor: not-allowed;
+}
+  
+/* Message feedback */
+#generate-message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-height: 1.2rem;
+}
+  
+/* Mobile */
+@media (max-width: 768px) {
+    .macro-inputs {
+      flex-direction: column;
+    }
+  
+    .meal-plan-controls {
+      margin: 1rem;
+      padding: 1rem;
     }
 }
