@@ -503,31 +503,33 @@ def recipe_view(request, recipe_id):
 def create_recipe(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
         is_public = request.POST.get("is_public") == "on"
         image = request.FILES.get("image")
 
         #Image upload checking for proper format 
         # MIME check
 
-        if image.content_type not in ["image/jpeg", "image/png"]:
-            return render(request, "create_recipe.html", {
-                "error": "Only JPEG and PNG images are allowed.",
-                "post_data": request.POST,
-            })
-        # Pillow check
-        try:
-            img = Image.open(image)
-            if img.format not in ["JPEG", "PNG"]:
+        if image:
+            if image.content_type not in ["image/jpeg", "image/png"]:
                 return render(request, "create_recipe.html", {
-                "error": "Only JPEG and PNG formats are allowed.",
-                "post_data": request.POST,
-            })
-            image.seek(0)
-        except Exception:
-            return render(request, "create_recipe.html", {
-                "error": "Invalid image file.",
-                "post_data": request.POST,
-            })
+                    "error": "Only JPEG and PNG images are allowed.",
+                    "post_data": request.POST,
+                })
+            # Pillow check
+            try:
+                img = Image.open(image)
+                if img.format not in ["JPEG", "PNG"]:
+                    return render(request, "create_recipe.html", {
+                    "error": "Only JPEG and PNG formats are allowed.",
+                    "post_data": request.POST,
+                })
+                image.seek(0)
+            except Exception:
+                return render(request, "create_recipe.html", {
+                    "error": "Invalid image file.",
+                    "post_data": request.POST,
+                })
     
         # Server-side validation
         if not title:
@@ -540,6 +542,7 @@ def create_recipe(request):
         # Create recipe
         recipe = Recipe.objects.create(
             user=request.user,
+            description=description,
             title=title,
             is_public=is_public,
         )
@@ -579,7 +582,8 @@ def create_recipe(request):
 def my_recipes(request):
     """Display a list of the current user's recipes"""
     user_recipes = request.user.recipes.order_by('-created_date')
-    return render(request, 'home/my-recipes.html', {'recipes': user_recipes})
+    favorite_ids = set(Recipe.objects.filter(favorites=request.user).values_list('id', flat=True))
+    return render(request, 'home/my-recipes.html', {'recipes': user_recipes, 'favorite_ids': favorite_ids})
 
 @login_required
 def delete_recipe(request, recipe_id):

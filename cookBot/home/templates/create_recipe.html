@@ -38,6 +38,17 @@
         >
       </div>
       <div class="field-group">
+        <label class="field-label" for="description">Description</label>
+        <textarea
+          class="field-input"
+          id="description"
+          name="description"
+          rows="4"
+          placeholder="Briefly describe the recipe..."
+          >{{ post_data.description|default:'' }}
+        </textarea>  
+      </div>
+      <div class="field-group">
         <label class="field-label" for="image">Recipe Image</label>
         <input
           class="field-input"

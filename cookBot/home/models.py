@@ -47,6 +47,7 @@ class Recipe(models.Model):
     """Model to store recipes with ingredients and instructions"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
     title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
     is_public = models.BooleanField(default=False)  # False = private, True = public
     created_date = models.DateTimeField(default=timezone.now)
     tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes', blank=True)
