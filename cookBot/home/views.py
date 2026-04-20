@@ -9,7 +9,7 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag
+from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag, Comment
 from collections import defaultdict
 import json
 import urllib.request
@@ -505,8 +505,8 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
-    # Get comments for this recipe
-    comments = recipe.comments.select_related('user').all()
+    # Get comments for this recipe (only top level comments, replies are nested)
+    comments = recipe.comments.select_related('user').filter(parent=None).prefetch_related('replies__user')
     
     # Create comment form for logged in users
     comment_form = CommentForm() if request.user.is_authenticated else None
@@ -820,6 +820,12 @@ def post_comment(request, recipe_id):
         comment = form.save(commit=False)
         comment.user = request.user
         comment.recipe = recipe
+        
+        # Handle optional parent comment for replies
+        parent_id = request.POST.get('parent_id')
+        if parent_id:
+            comment.parent = get_object_or_404(Comment, id=parent_id, recipe=recipe)
+        
         comment.save()
     
     return redirect('recipe_view', recipe_id=recipe.id)

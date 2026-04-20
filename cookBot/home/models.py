@@ -191,6 +191,7 @@ class Comment(models.Model):
     """User comments on recipes"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='comments')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='replies', null=True, blank=True)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
