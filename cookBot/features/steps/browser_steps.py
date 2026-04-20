@@ -99,10 +99,6 @@ def step_submit_registration(context):
     # Clean up stale users from previous runs, but preserve testuser
     # which is used by other tests and duplicate-check scenarios
     protected_usernames = {'testuser'}
-    if username and username not in protected_usernames:
-        User.objects.filter(username=username).delete()
-    if email:
-        User.objects.filter(email=email).delete()
     context.response = context.client.post(reverse('register'), form_data, follow=True)
 
 @when('I submit the recipe form without a title')
@@ -325,6 +321,7 @@ def step_see_password_mismatch_error(context):
 def step_see_username_exists_error(context):
     """Verify username already exists error is displayed"""
     content = context.response.content.decode('utf-8')
+    print(context.response.content.decode('utf-8'))
     assert 'username' in content.lower() and ('already exists' in content.lower() or 'already taken' in content.lower()), \
         "Username already exists error not found"
 

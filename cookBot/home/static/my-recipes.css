@@ -91,7 +91,6 @@
 .recipe-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -123,22 +122,27 @@
 
 /* ── Recipe Tags ── */
 .recipe-tag {
-  margin-left: 0.75rem;
+  display: inline-block;
+  margin-top: 0.5rem;
+  margin-left: 0.25rem;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.35rem 0.6rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
+  border: 1px solid transparent;
   vertical-align: middle;
 }
 
-.public-tag {
+.recipe-tag.public {
   background: #d1fae5;
   color: #065f46;
+  border-color: #a7f3d0;
 }
 
-.private-tag {
+.recipe-tag.private {
   background: #f3f4f6;
   color: #374151;
+  border-color: #e5e7eb;
 }
 
 /* ── Side Actions ── */

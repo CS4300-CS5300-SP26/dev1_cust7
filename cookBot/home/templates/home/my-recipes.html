@@ -31,7 +31,12 @@
                     <div class="recipe-main">
                         <div class="recipe-title-row">
                             <h2>{{ recipe.title }}</h2>
-
+                            {% if recipe.is_public %}
+                            <span class="recipe-tag public">Public</span>
+                        {% else %}
+                            <span class="recipe-tag private">Private</span>
+                        {% endif %}
+                        
                             <button
                                 type="button"
                                 class="bookmark-btn recipe-bookmark-btn {% if recipe.id in favorite_ids %}saved{% endif %}"
@@ -42,14 +47,10 @@
                                 <span class="icon">
                                     {% if recipe.id in favorite_ids %}&#9733;{% else %}&#9734;{% endif %}
                                 </span>
+                                
                             </button>
                         </div>
 
-                        {% if recipe.is_public %}
-                            <span class="recipe-tag tag">Public</span>
-                        {% else %}
-                            <span class="recipe-tag tag">Private</span>
-                        {% endif %}
 
                         <p class="recipe-description">
                             {% if recipe.description %}
