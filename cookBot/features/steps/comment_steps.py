@@ -8,12 +8,11 @@ from home.models import Recipe, Comment
 def step_logged_in_viewing_recipe(context):
     # Create or get test user
     context.user, created = User.objects.get_or_create(
-        username='comment_user',
-        defaults={'password': 'testpass123'}
+        username='comment_user'
     )
-    if not created:
-        context.user.set_password('testpass123')
-        context.user.save()
+    # Always hash password properly for both new and existing users
+    context.user.set_password('testpass123')
+    context.user.save()
     
     # Create test recipe
     context.recipe, created = Recipe.objects.get_or_create(

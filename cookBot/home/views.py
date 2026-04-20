@@ -15,8 +15,6 @@ import json
 import urllib.request
 import urllib.parse
 from .forms import RegisterForm, EditProfileForm, CommentForm
-from .chefBot import call_openai
-from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai, generate_meal_plan_with_ai
 
 def index(request):

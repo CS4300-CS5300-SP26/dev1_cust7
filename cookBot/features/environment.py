@@ -12,6 +12,10 @@ def before_scenario(context, scenario):
     # Clean database before every test run
     Comment.objects.all().delete()
     Recipe.objects.all().delete()
-    User.objects.all().delete()
+    # Only delete test users (never delete admin accounts or real fixtures)
+    User.objects.filter(username__startswith='test_').delete()
+    User.objects.filter(username__startswith='bookmark_').delete()
+    User.objects.filter(username__startswith='comment_').delete()
+    User.objects.filter(username__startswith='other_user').delete()
     
     context.client = Client()
