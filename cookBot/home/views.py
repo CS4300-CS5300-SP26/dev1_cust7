@@ -605,12 +605,14 @@ def edit_recipe(request, recipe_id):
 
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
         is_public = request.POST.get("is_public") == "on"
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
         names = request.POST.getlist('ingredient_name[]')
         steps = request.POST.getlist('steps[]')
         tag_ids = request.POST.getlist('tags[]')
+        new_image = request.FILES.get("image")
 
         if not title:
             return render(request, "edit_recipe.html", {
@@ -622,8 +624,13 @@ def edit_recipe(request, recipe_id):
                 "grouped_tags": get_grouped_tags(),
                 "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
+        if new_image:
+            if recipe.image:
+                recipe.image.delete(save=False)
+            recipe.image = new_image
 
         recipe.title = title
+        recipe.description = description
         recipe.is_public = is_public
         recipe.save()
 
@@ -649,7 +656,8 @@ def edit_recipe(request, recipe_id):
         RecipeTag.objects.filter(recipe=recipe).delete()
         for tag_id in tag_ids:
             RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
-
+        
+        
         return redirect("recipe_view", recipe_id=recipe.id)
 
     return render(request, "edit_recipe.html", {
@@ -670,8 +678,9 @@ def delete_recipe(request, recipe_id):
         recipe.delete()
         return redirect("index")
 
-    #If someone tries to GET this URL directly, send them back to the recipe
-    return redirect("recipe_view", recipe_id=recipe_id)
+    return render(request, "home/delete_recipe.html", {
+        "recipe": recipe
+    })
 
 @login_required
 def my_recipes(request):
@@ -680,13 +689,6 @@ def my_recipes(request):
     favorite_ids = set(Recipe.objects.filter(favorites=request.user).values_list('id', flat=True))
     return render(request, 'home/my-recipes.html', {'recipes': user_recipes, 'favorite_ids': favorite_ids})
 
-@login_required
-def delete_recipe(request, recipe_id):
-    recipe = get_object_or_404(request.user.recipes, id=recipe_id)
-    if request.method == "POST":
-        recipe.delete()
-        return redirect("/my-recipes/")
-    return render(request, "home/delete_recipe.html", {"recipe": recipe})
 
     #Create a new session
     session = ChatSession.objects.create(
