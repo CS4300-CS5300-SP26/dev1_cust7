@@ -1,9 +1,11 @@
 {% extends "navbar.html" %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'delete_recipe.css' %}">
+{% endblock %}
 
+{% block content %}
 <section class="create-banner">
     <div class="create-banner-content">
         <h1>Delete Recipe</h1>
