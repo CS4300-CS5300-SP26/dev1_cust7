@@ -9,12 +9,15 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage
+from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag
+from collections import defaultdict
 import json
 import urllib.request
 import urllib.parse
 from .forms import RegisterForm, EditProfileForm, CommentForm
 from .chefBot import call_openai
+from .forms import RegisterForm, EditProfileForm
+from .chefBot import call_openai, generate_meal_plan_with_ai
 
 def index(request):
     return render(request, 'index.html')
@@ -344,11 +347,21 @@ def get_meals_json(request):
             end_of_month = today.replace(month=today.month+1, day=1) - timedelta(days=1)
         end_date = end_of_month.strftime('%Y-%m-%d')
     
+    MEAL_ORDER = {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2}
+    MEAL_TIMES = {
+        'Breakfast': '08:00:00',
+        'Lunch': '12:00:00',
+        'Dinner': '18:00:00',
+    }
+
     # Query only the current user's meal plans within date range
-    meals = MealPlan.objects.filter(
-        user=request.user,
-        date__gte=start_date,
-        date__lte=end_date
+    meals = sorted(
+        MealPlan.objects.filter(
+            user=request.user,
+            date__gte=start_date,
+            date__lte=end_date
+        ),
+        key=lambda m: (m.date, MEAL_ORDER.get(m.meal_type, 3))
     )
     
     # Format for FullCalendar.io
@@ -357,9 +370,13 @@ def get_meals_json(request):
         calendar_events.append({
             'id': meal.id,
             'title': meal.recipe_name,
-            'start': meal.date.isoformat(),
+            'start': f"{meal.date.isoformat()}T{MEAL_TIMES.get(meal.meal_type, '12:00:00')}",
             'meal_type': meal.meal_type,
             'recipe_id': meal.recipe_id,
+            'calories': meal.calories,
+            'protein': meal.protein,
+            'fat': meal.fat,
+            'carbs': meal.carbs,
         })
     
     return JsonResponse({'meals': calendar_events})
@@ -374,73 +391,79 @@ def calendar_view(request):
 @login_required
 @require_POST
 def generate_meal_plan(request):
-    """Generate a 7-day meal plan based on user's pantry ingredients"""
+    """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
-    from datetime import timedelta, date
+    from datetime import timedelta, date, time
     
-    # Get user's pantry ingredients
-    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
-    
-    if not pantry_items:
-        return JsonResponse({
-            'error': 'Your pantry is empty! Add some ingredients to generate a meal plan.'
-        }, status=400)
-    
-    # Join ingredients for Spoonacular API
-    ingredients = ','.join(pantry_items)
-    
-    # Fetch 7 recipes from Spoonacular based on pantry ingredients
-    recipes_data = None
+    #Parse the incoming JSON body
     try:
-        recipes_data = spoonacular_get("recipes/findByIngredients", {
-            "ingredients": ingredients,
-            "number": 7,
-            "ranking": 1,
-            "ignorePantry": False,
-        })
-    except Exception:
-        # If API call fails, use fallback recipes
-        pass
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+
+    #Read user inputs
+    calories = data.get('calories') or None
+    protein = data.get('protein') or None
+    fat = data.get('fat') or None
+    carbs = data.get('carbs') or None
+    cuisine = (data.get('cuisine', '') or '').strip() or None
+    use_pantry = data.get('use_pantry', False)
+
+    #Fetch pantry items if toggle is on
+    pantry_items = None
+    if use_pantry:
+        pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+        if not pantry_items:
+            return JsonResponse({
+                'error': 'Your pantry is empty! Add some ingredients or turn off the pantry toggle.'
+            }, status=400)
     
-    if not recipes_data:
-        # Fallback to suggested recipes
-        recipes_data = get_fallback_recipes(pantry_items)
-    
-    # Get today's date and calculate next 7 days
-    today = date.today()
-    meal_types = ['Breakfast', 'Lunch', 'Dinner']
-    
+    #Call OpenAI to generate the meal plan
+    try:
+        meals = generate_meal_plan_with_ai(
+            calories=calories,
+            protein=protein,
+            fat=fat,
+            carbs=carbs,
+            cuisine=cuisine,
+            pantry_items=pantry_items,
+        )
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to generate meal plan: {str(e)}'}, status=500)
+
+    if not meals:
+        return JsonResponse({'error': 'No meals were generated. Please try again.'}, status=500)
+
     # Delete existing meal plans for the next 7 days to avoid duplicates
+    today = date.today()
     for i in range(7):
-        day_date = today + timedelta(days=i)
         MealPlan.objects.filter(
             user=request.user,
-            date=day_date
+            date=today + timedelta(days=i)
         ).delete()
     
-    # Create MealPlan entries for each day
+    #Save each meal to DB
     created_meals = []
-    for i in range(7):
-        day_date = today + timedelta(days=i)
-        recipe = recipes_data[i % len(recipes_data)]  # Cycle through recipes if less than 7
-        
-        # Create one meal per day (rotate through meal types)
-        meal_type = meal_types[i % 3]  # Rotate: Breakfast, Lunch, Dinner
-        
-        # Get recipe_id - ensure it's an integer or None (fallback recipes have string IDs)
-        rid = recipe.get('id')
-        if rid is not None:
-            try:
-                rid = int(rid)
-            except (ValueError, TypeError):
-                rid = None
-        
+
+    for meal in meals:
+        day_offset = meal.get('day', 1) - 1 
+        meal_date = today + timedelta(days=day_offset)
+        meal_type = meal.get('meal_type', 'Dinner')
+
+        #Validate meal_type
+        valid_types = ['Breakfast', 'Lunch', 'Dinner']
+        if meal_type not in valid_types:
+            meal_type = 'Dinner'
+    
         meal_plan = MealPlan.objects.create(
             user=request.user,
-            recipe_name=recipe.get('title', f'Meal {i+1}'),
-            recipe_id=rid,
-            date=day_date,
-            meal_type=meal_type
+            recipe_name=meal.get('recipe_name', 'Unknown Meal'),
+            date=meal_date,
+            meal_type=meal_type,
+            calories=meal.get('calories'),
+            protein=meal.get('protein'),
+            fat=meal.get('fat'),
+            carbs=meal.get('carbs'),
         )
         created_meals.append(meal_plan)
     
@@ -489,6 +512,10 @@ def recipe_view(request, recipe_id):
     
     # Create comment form for logged in users
     comment_form = CommentForm() if request.user.is_authenticated else None
+    # Check if current user has bookmarked this recipe (efficient single query)
+    is_saved_by_user = False
+    if request.user.is_authenticated:
+        is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
 
     return render(request, "recipe_view.html", {
         "recipe": recipe,
@@ -497,29 +524,38 @@ def recipe_view(request, recipe_id):
         "pantry_names_json": list(pantry_names),
         "comments": comments,
         "comment_form": comment_form,
+        "tags": recipe.tags.all(),
+        "is_owner": request.user == recipe.user,
+        "is_saved_by_user": is_saved_by_user,
     })
+
+def get_grouped_tags():
+        tags = Tag.objects.all().order_by('tag_type', 'name')
+        grouped = defaultdict(list)
+        for tag in tags:
+            grouped[tag.tag_type].append(tag)
+        return dict(grouped)
  
 @login_required
 def create_recipe(request):
+
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         is_public = request.POST.get("is_public") == "on"
 
-        # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
                 "error": "Title cannot be empty.",
                 "post_data": request.POST,
+                "grouped_tags": get_grouped_tags()
             })
 
-        # Create recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
             is_public=is_public
         )
 
-        # Get ingredient data
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
         names = request.POST.getlist('ingredient_name[]')
@@ -533,7 +569,6 @@ def create_recipe(request):
                     name=name.strip()
                 )
 
-        # Get step data
         steps = request.POST.getlist('steps[]')
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
@@ -543,9 +578,95 @@ def create_recipe(request):
                     text=step_text.strip()
                 )
 
+        tag_ids = request.POST.getlist('tags[]')
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(
+                recipe=recipe,
+                tag_id=tag_id
+            )
+
         return redirect("recipe_view", recipe_id=recipe.id)
 
-    return render(request, "create_recipe.html")
+    return render(request, "create_recipe.html", {
+        "grouped_tags": get_grouped_tags()
+    })
+
+#Edit recipe
+@login_required
+def edit_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        is_public = request.POST.get("is_public") == "on"
+        quantities = request.POST.getlist('ingredient_quantity[]')
+        units = request.POST.getlist('ingredient_unit[]')
+        names = request.POST.getlist('ingredient_name[]')
+        steps = request.POST.getlist('steps[]')
+        tag_ids = request.POST.getlist('tags[]')
+
+        if not title:
+            return render(request, "edit_recipe.html", {
+                "error": "Title cannot be empty.",
+                "recipe": recipe,
+                "post_data": request.POST,  # for title/is_public
+                "ingredients_data": zip(quantities, units, names),
+                "steps_data": list(enumerate(steps, start=1)),
+                "grouped_tags": get_grouped_tags(),
+                "selected_tag_ids": list(map(int, tag_ids)),  # important
+            })
+
+        recipe.title = title
+        recipe.is_public = is_public
+        recipe.save()
+
+        recipe.ingredients.all().delete()
+        for qty, unit, name in zip(quantities, units, names):
+            if name.strip():
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    quantity=qty,
+                    unit=unit,
+                    name=name.strip()
+                )
+
+        recipe.steps.all().delete()
+        for i, step_text in enumerate(steps, start=1):
+            if step_text.strip():
+                RecipeStep.objects.create(
+                    recipe=recipe,
+                    order=i,
+                    text=step_text.strip()
+                )
+
+        RecipeTag.objects.filter(recipe=recipe).delete()
+        for tag_id in tag_ids:
+            RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
+
+        return redirect("recipe_view", recipe_id=recipe.id)
+
+    return render(request, "edit_recipe.html", {
+        "recipe": recipe,
+        "grouped_tags": get_grouped_tags(),
+        "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
+    })
+
+
+#Delete a recipe action
+@login_required
+def delete_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if request.user != recipe.user:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        recipe.delete()
+        return redirect("index")
+
+    #If someone tries to GET this URL directly, send them back to the recipe
+    return redirect("recipe_view", recipe_id=recipe_id)
 
 #Social feed view
 @login_required
@@ -704,3 +825,25 @@ def post_comment(request, recipe_id):
         comment.save()
     
     return redirect('recipe_view', recipe_id=recipe.id)
+@login_required
+@require_POST
+def toggle_favorite(request, recipe_id):
+    """Toggle a recipe in user's favorites"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.favorites.filter(id=request.user.id).exists():
+        recipe.favorites.remove(request.user)
+        saved = False
+    else:
+        recipe.favorites.add(request.user)
+        saved = True
+    
+    return JsonResponse({
+        'saved': saved,
+        'recipe_id': recipe.id
+    })
+
+@login_required
+def favorites_list(request):
+    """Display user's favorited recipes"""
+    favorite_recipes = request.user.favorite_recipes.all().select_related('user').prefetch_related('ratings')
+    return render(request, 'home/favorites_list.html', {'favorite_recipes': favorite_recipes})

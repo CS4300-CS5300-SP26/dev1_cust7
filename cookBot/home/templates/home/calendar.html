@@ -13,12 +13,49 @@
   </div>
 </section>
 
-<!-- Generate Button -->
-<div style="text-align: center; margin-bottom: 20px;">
-    <button id="generate-plan-btn" class="auth-btn" style="padding: 12px 24px; font-size: 16px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        Generate Weekly Plan
-    </button>
-    <div id="generate-message" style="margin-top: 10px; font-weight: 500;"></div>
+<!-- Meal Plan Generator -->
+<div class="meal-plan-controls">
+
+  <!-- Macro inputs -->
+  <div class="macro-inputs">
+    <div class="macro-field">
+      <label for="calories">Calories</label>
+      <input type="number" id="calories" placeholder="e.g. 500" min="0">
+    </div>
+    <div class="macro-field">
+      <label for="protein">Protein (g)</label>
+      <input type="number" id="protein" placeholder="e.g. 30" min="0">
+    </div>
+    <div class="macro-field">
+      <label for="fat">Fat (g)</label>
+      <input type="number" id="fat" placeholder="e.g. 15" min="0">
+    </div>
+    <div class="macro-field">
+      <label for="carbs">Carbs (g)</label>
+      <input type="number" id="carbs" placeholder="e.g. 50" min="0">
+    </div>
+  </div>
+  <!-- Cuisine input -->
+  <div class="cuisine-input">
+    <label for="cuisine">Cuisine Preference</label>
+    <input type="text" id="cuisine" placeholder="e.g. Mexican, Italian, Japanese...">
+  </div>
+
+  <!-- Pantry toggle -->
+  <div class="pantry-toggle-row">
+    <label class="toggle-label" for="use-pantry">Use Pantry Items</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="use-pantry">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <!-- Generate button -->
+  <button id="generate-plan-btn">
+    Generate Weekly Plan
+  </button>
+  <div id="generate-message"></div>
+
 </div>
 
 <!-- API endpoints (used by JavaScript) -->

@@ -1,0 +1,47 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'social_feed.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="social-banner">
+  <div class="social-banner-content">
+    <h1>My Saved Recipes</h1>
+    <p>Recipes you've bookmarked for later</p>
+  </div>
+</div>
+
+<div class="social-wrap">
+  <div class="social-feed">
+    {% for recipe in favorite_recipes %}
+      <div class="recipe-card">
+        <div class="recipe-card-header">
+          <span class="recipe-card-author">By {{ recipe.user.username }}</span>
+          <span class="recipe-card-date">{{ recipe.created_date|date:"M d, Y" }}</span>
+        </div>
+        <h2 class="recipe-card-title">{{ recipe.title }}</h2>
+        <div class="recipe-card-meta">
+          {% with avg=recipe.average_rating %}
+            {% if avg %}
+              <span class="rating-badge">&#11088; {{ avg|floatformat:1 }} / 5</span>
+            {% else %}
+              <span class="no-rating">No ratings yet</span>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <a class="recipe-card-link" href="{% url 'recipe_view' recipe.id %}">View Recipe &rarr;</a>
+      </div>
+    {% empty %}
+      <div class="feed-empty">
+        <div class="feed-empty-icon">&#128140;</div>
+        <p>You haven't saved any recipes yet.</p>
+        <a href="{% url 'social_feed' %}">Browse recipes to get started &rarr;</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
