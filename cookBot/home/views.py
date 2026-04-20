@@ -832,7 +832,12 @@ def post_comment(request, recipe_id):
         # Handle optional parent comment for replies
         parent_id = request.POST.get('parent_id')
         if parent_id:
-            comment.parent = get_object_or_404(Comment, id=parent_id, recipe=recipe)
+            try:
+                parent_id = int(parent_id)
+                comment.parent = get_object_or_404(Comment, id=parent_id, recipe=recipe)
+            except (ValueError, TypeError):
+                # Invalid parent_id format - ignore gracefully
+                pass
         
         comment.save()
         messages.success(request, 'Your comment was posted successfully.')
