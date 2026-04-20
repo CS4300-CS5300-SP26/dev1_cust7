@@ -42,7 +42,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             classNames: classNames,
                             extendedProps: {
                                 mealType: meal.meal_type,
-                                recipeId: meal.recipe_id
+                                recipeId: meal.recipe_id,
+                                calories: meal.calories,
+                                protein: meal.protein,
+                                fat: meal.fat,
+                                carbs: meal.carbs,
                             }
                         };
                     });
@@ -56,8 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Click on event to see details
         eventClick: function(info) {
-            var mealType = info.event.extendedProps.mealType;
-            alert('Meal: ' + info.event.title + '\nType: ' + mealType);
+            var props = info.event.extendedProps;
+            var macros = '';
+
+            if (props.calories || props.protein || props.fat || props.carbs) {
+                macros = '\n\n── Macros ──'
+                if (props.calories) macros += '\nCalories: ' + props.calories + ' kcal';
+                if (props.protein)  macros += '\nProtein:  ' + props.protein + 'g';
+                if (props.fat)      macros += '\nFat:      ' + props.fat + 'g';
+                if (props.carbs)    macros += '\nCarbs:    ' + props.carbs + 'g';
+            }
+            alert('Meal: ' + info.event.title + '\nType: ' + props.mealType + macros);
         }
     });
     
@@ -68,6 +81,14 @@ document.addEventListener('DOMContentLoaded', function() {
         var btn = this;
         var msgDiv = document.getElementById('generate-message');
         
+        //Read user inputs
+        var calories = document.getElementById('calories').value || null;
+        var protein = document.getElementById('protein').value || null;
+        var fat = document.getElementById('fat').value || null;
+        var carbs = document.getElementById('carbs').value || null;
+        var cuisine = document.getElementById('cuisine').value.trim() || null;
+        var usePantry = document.getElementById('use-pantry').checked;
+
         // Disable button and show loading
         btn.disabled = true;
         btn.textContent = 'Generating...';
@@ -76,8 +97,17 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(generateMealPlanUrl, {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
-            }
+            },
+            body: JSON.stringify({
+                calories: calories ? parseInt(calories) : null,
+                protein: protein ? parseInt(protein) : null,
+                fat: fat ? parseInt(fat) : null,
+                carbs: carbs ? parseInt(carbs) : null,
+                cuisine: cuisine,
+                use_pantry: usePantry,
+            })
         })
         .then(response => response.json())
         .then(data => {

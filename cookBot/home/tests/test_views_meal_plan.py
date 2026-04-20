@@ -5,11 +5,26 @@ from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 
 from home.models import MealPlan, Pantry
+from home.chefBot import build_macro_cuisine_pantry_context, build_meal_plan_prompt
 
+#21 mock meals — 7 days x 3 meal types
+MOCK_AI_MEALS = [
+    {
+        "day": day,
+        "meal_type": meal_type,
+        "recipe_name": f"Mock {meal_type} Day {day}",
+        "calories": 500,
+        "protein": 30,
+        "fat": 15,
+        "carbs": 50,
+    }
+    for day in range(1, 8)
+    for meal_type in ["Breakfast", "Lunch", "Dinner"]
+]
 
 class MealPlanAPITests(TestCase):
 
@@ -275,58 +290,51 @@ class MealPlanViewTests(TestCase):
         self.assertIn('meals', data)
         self.assertEqual(len(data['meals']), 0)
 
-    @patch('home.views.spoonacular_get')
-    def test_generate_meal_plan_empty_pantry(self, mock_spoonacular):
+    @patch('home.views.generate_meal_plan_with_ai', return_value=MOCK_AI_MEALS)
+    def test_generate_meal_plan_empty_pantry(self, mock_ai):
         """Test views.py lines 383-386: generate_meal_plan returns 400 when pantry is empty"""
         self.client.login(username='testuser', password='password123')
         Pantry.objects.filter(user=self.user).delete()
-        response = self.client.post(reverse('generate_meal_plan'))
+        response = self.client.post(reverse('generate_meal_plan'), data=json.dumps({'use_pantry': True}), content_type='application/json',)
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn('error', data)
         self.assertIn('empty', data['error'].lower())
 
-    @patch('home.views.spoonacular_get')
-    def test_generate_meal_plan_success(self, mock_spoonacular):
-        """Test views.py lines 391-438: generate_meal_plan creates 7 meals"""
+    @patch('home.views.generate_meal_plan_with_ai', return_value=MOCK_AI_MEALS)
+    def test_generate_meal_plan_success(self, mock_ai):
+        """Test views.py lines 391-438: generate_meal_plan creates 21 meals"""
         self.client.login(username='testuser', password='password123')
         Pantry.objects.create(user=self.user, ingredient_name='Chicken')
         Pantry.objects.create(user=self.user, ingredient_name='Rice')
-        mock_recipes = [{'id': i, 'title': f'Recipe {i}'} for i in range(1, 8)]
-        mock_spoonacular.return_value = mock_recipes
-        response = self.client.post(reverse('generate_meal_plan'))
+        
+        response = self.client.post(reverse('generate_meal_plan'), data=json.dumps({'use_pantry': False}), content_type='application/json',)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
-        self.assertEqual(data['meals_count'], 7)
-        meals_count = MealPlan.objects.filter(user=self.user).count()
-        self.assertEqual(meals_count, 7)
+        self.assertEqual(data['meals_count'], 21)
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
 
-    @patch('home.views.spoonacular_get')
-    def test_generate_meal_plan_api_failure(self, mock_spoonacular):
+
+    @patch('home.views.generate_meal_plan_with_ai', side_effect=Exception('OpenAI is down'))
+    def test_generate_meal_plan_api_failure(self, mock_ai):
         """Test views.py: generate_meal_plan falls back to suggested recipes on API failure"""
         self.client.login(username='testuser', password='password123')
         Pantry.objects.create(user=self.user, ingredient_name='Chicken')
-        mock_spoonacular.side_effect = urllib.error.HTTPError(
-            url="test", code=500, msg="Internal Server Error", hdrs={}, fp=None
-        )
-        response = self.client.post(reverse('generate_meal_plan'))
-        self.assertEqual(response.status_code, 200)
+        response = self.client.post(reverse('generate_meal_plan'), data=json.dumps({'use_pantry': False}), content_type='application/json',)
+        self.assertEqual(response.status_code, 500)
         data = response.json()
-        self.assertTrue(data.get('success'))
-        self.assertIn('meals_count', data)
-        self.assertEqual(data['meals_count'], 7)
-        meals_count = MealPlan.objects.filter(user=self.user).count()
-        self.assertEqual(meals_count, 7)
+        self.assertIn('error', data)
 
-    @patch('home.views.spoonacular_get')
-    def test_generate_meal_plan_empty_api_response(self, mock_spoonacular):
+    @patch('home.views.generate_meal_plan_with_ai', return_value=[])
+    def test_generate_meal_plan_empty_api_response(self, mock_ai):
         """Test generate_meal_plan handles empty API response with fallback"""
         self.client.login(username='testuser', password='password123')
         Pantry.objects.create(user=self.user, ingredient_name='Rice')
-        mock_spoonacular.return_value = []
-        response = self.client.post(reverse('generate_meal_plan'))
-        self.assertIn(response.status_code, [200, 502])
+        response = self.client.post(reverse('generate_meal_plan'), data=json.dumps({'use_pantry': False}), content_type='application/json',)
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
 
     def test_calendar_view_requires_login(self):
         """Test that calendar_view redirects when not logged in"""
@@ -338,3 +346,266 @@ class MealPlanViewTests(TestCase):
         self.client.login(username='testuser', password='password123')
         response = self.client.get(reverse('calendar'))
         self.assertEqual(response.status_code, 200)
+
+class AIMealPlanGenerationTests(TestCase):
+    """Tests for the new AI-powered meal plan generation endpoint."""
+ 
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', password='password123')
+        self.client.login(username='testuser', password='password123')
+ 
+    def post_generate(self, payload):
+        """Helper to POST to generate_meal_plan with mocked OpenAI."""
+        with patch('home.views.generate_meal_plan_with_ai', return_value=MOCK_AI_MEALS):
+            return self.client.post(
+                reverse('generate_meal_plan'),
+                data=json.dumps(payload),
+                content_type='application/json',
+            )
+ 
+    def test_generate_with_all_fields_and_pantry_on(self):
+        """All macros, cuisine, and pantry on — should generate 21 meals."""
+        Pantry.objects.create(user=self.user, ingredient_name='Chicken')
+        Pantry.objects.create(user=self.user, ingredient_name='Rice')
+        response = self.post_generate({
+            'calories': 500,
+            'protein': 30,
+            'fat': 15,
+            'carbs': 50,
+            'cuisine': 'Italian',
+            'use_pantry': True,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
+ 
+    def test_generate_with_all_fields_and_pantry_off(self):
+        """All macros, cuisine, pantry off — should generate 21 meals without pantry."""
+        response = self.post_generate({
+            'calories': 500,
+            'protein': 30,
+            'fat': 15,
+            'carbs': 50,
+            'cuisine': 'Mexican',
+            'use_pantry': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
+ 
+    def test_generate_with_all_fields_empty(self):
+        """No inputs at all — should still generate 21 balanced meals."""
+        response = self.post_generate({'use_pantry': False})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
+ 
+    def test_generate_with_only_macros(self):
+        """Only macros filled, no cuisine, pantry off — should generate 21 meals."""
+        response = self.post_generate({
+            'calories': 600,
+            'protein': 40,
+            'fat': 20,
+            'carbs': 60,
+            'cuisine': None,
+            'use_pantry': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
+ 
+    def test_generate_with_only_cuisine(self):
+        """Only cuisine filled, no macros, pantry off — should generate 21 meals."""
+        response = self.post_generate({
+            'calories': None,
+            'protein': None,
+            'fat': None,
+            'carbs': None,
+            'cuisine': 'Japanese',
+            'use_pantry': False,
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(MealPlan.objects.filter(user=self.user).count(), 21)
+ 
+    def test_generate_with_pantry_on_but_empty_pantry(self):
+        """Pantry toggle on but pantry is empty — should return 400 error."""
+        Pantry.objects.filter(user=self.user).delete()
+        response = self.client.post(
+            reverse('generate_meal_plan'),
+            data=json.dumps({'use_pantry': True}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+        self.assertIn('empty', data['error'].lower())
+ 
+    def test_generate_replaces_existing_meals(self):
+        """Generating twice should replace the first week not duplicate it."""
+        self.post_generate({'use_pantry': False})
+        first_count = MealPlan.objects.filter(user=self.user).count()
+        self.post_generate({'use_pantry': False})
+        second_count = MealPlan.objects.filter(user=self.user).count()
+        self.assertEqual(first_count, second_count, "Duplicate meals were created on second generation")
+ 
+    def test_generate_saves_macros_to_db(self):
+        """Generated meals should have macro values saved to the database."""
+        self.post_generate({
+            'calories': 500,
+            'protein': 30,
+            'fat': 15,
+            'carbs': 50,
+            'use_pantry': False,
+        })
+        meal = MealPlan.objects.filter(user=self.user).first()
+        self.assertEqual(meal.calories, 500)
+        self.assertEqual(meal.protein, 30)
+        self.assertEqual(meal.fat, 15)
+        self.assertEqual(meal.carbs, 50)
+ 
+    def test_generate_creates_all_three_meal_types(self):
+        """Generated plan should contain Breakfast, Lunch, and Dinner."""
+        self.post_generate({'use_pantry': False})
+        meal_types = set(
+            MealPlan.objects.filter(user=self.user).values_list('meal_type', flat=True)
+        )
+        self.assertIn('Breakfast', meal_types)
+        self.assertIn('Lunch', meal_types)
+        self.assertIn('Dinner', meal_types)
+ 
+    def test_generate_covers_seven_days(self):
+        """Generated plan should span exactly 7 different dates."""
+        self.post_generate({'use_pantry': False})
+        dates = set(
+            MealPlan.objects.filter(user=self.user).values_list('date', flat=True)
+        )
+        self.assertEqual(len(dates), 7)
+ 
+    def test_openai_failure_returns_500(self):
+        """If OpenAI fails, the endpoint should return 500."""
+        with patch('home.views.generate_meal_plan_with_ai', side_effect=Exception('OpenAI is down')):
+            response = self.client.post(
+                reverse('generate_meal_plan'),
+                data=json.dumps({'use_pantry': False}),
+                content_type='application/json',
+            )
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+ 
+    def test_get_meals_includes_macros_in_response(self):
+        """get_meals_json should include macro fields in the calendar event response."""
+        MealPlan.objects.create(
+            user=self.user,
+            recipe_name='Grilled Chicken',
+            date=date.today(),
+            meal_type='Dinner',
+            calories=500,
+            protein=40,
+            fat=15,
+            carbs=30,
+        )
+        response = self.client.get(reverse('get_meals'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        meal = data['meals'][0]
+        self.assertIn('calories', meal)
+        self.assertIn('protein', meal)
+        self.assertIn('fat', meal)
+        self.assertIn('carbs', meal)
+        self.assertEqual(meal['calories'], 500)
+        self.assertEqual(meal['protein'], 40)
+ 
+    def test_unauthenticated_user_cannot_generate(self):
+        """Unauthenticated users should be redirected from generate endpoint."""
+        unauthenticated_client = Client()
+        response = unauthenticated_client.post(
+            reverse('generate_meal_plan'),
+            data=json.dumps({'use_pantry': False}),
+            content_type='application/json',
+        )
+        self.assertIn(response.status_code, [302, 403])
+ 
+    def test_invalid_json_body_returns_400(self):
+        """Sending invalid JSON should return 400."""
+        response = self.client.post(
+            reverse('generate_meal_plan'),
+            data='not valid json',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+ 
+class ChefBotMealPlanUnitTests(TestCase):
+    """Unit tests for chefBot.py meal plan helper functions."""
+ 
+    def test_build_context_with_all_inputs(self):
+        """All macro, cuisine, and pantry inputs should appear in context sections."""
+        macro, cuisine, pantry = build_macro_cuisine_pantry_context(
+            calories=500, protein=30, fat=15, carbs=50,
+            cuisine='Italian',
+            pantry_items=['chicken', 'rice']
+        )
+        self.assertIn('500', macro)
+        self.assertIn('30', macro)
+        self.assertIn('Italian', cuisine)
+        self.assertIn('chicken', pantry)
+        self.assertIn('rice', pantry)
+ 
+    def test_build_context_with_no_inputs(self):
+        """Empty inputs should return default fallback strings."""
+        macro, cuisine, pantry = build_macro_cuisine_pantry_context()
+        self.assertIn('No specific macro targets', macro)
+        self.assertIn('No cuisine preference', cuisine)
+        self.assertIn('No pantry items provided', pantry)
+ 
+    def test_build_context_with_only_macros(self):
+        """Only macros filled — cuisine and pantry should be defaults."""
+        macro, cuisine, pantry = build_macro_cuisine_pantry_context(
+            calories=600, protein=40, fat=20, carbs=60
+        )
+        self.assertIn('600', macro)
+        self.assertIn('No cuisine preference', cuisine)
+        self.assertIn('No pantry items provided', pantry)
+ 
+    def test_build_context_with_only_cuisine(self):
+        """Only cuisine filled — macros and pantry should be defaults."""
+        macro, cuisine, pantry = build_macro_cuisine_pantry_context(cuisine='Japanese')
+        self.assertIn('No specific macro targets', macro)
+        self.assertIn('Japanese', cuisine)
+        self.assertIn('No pantry items provided', pantry)
+ 
+    def test_build_meal_plan_prompt_contains_context(self):
+        """Built prompt should contain all three context sections."""
+        macro = "Target macros per meal:\n- Calories per meal: ~500 kcal"
+        cuisine = "Cuisine preference: Mexican."
+        pantry = "The user has these ingredients: chicken, rice."
+        prompt = build_meal_plan_prompt(macro, cuisine, pantry)
+        self.assertIn('500', prompt)
+        self.assertIn('Mexican', prompt)
+        self.assertIn('chicken', prompt)
+        self.assertIn('21 meals', prompt)
+        self.assertIn('Breakfast', prompt)
+        self.assertIn('Lunch', prompt)
+        self.assertIn('Dinner', prompt)
+ 
+    def test_build_meal_plan_prompt_contains_json_format(self):
+        """Prompt should instruct OpenAI to return JSON."""
+        prompt = build_meal_plan_prompt('macros', 'cuisine', 'pantry')
+        self.assertIn('JSON', prompt)
+        self.assertIn('recipe_name', prompt)
+        self.assertIn('meal_type', prompt)
+        self.assertIn('day', prompt)
+ 
+    def test_build_meal_plan_prompt_contains_rules(self):
+        """Prompt should contain the meal planning rules."""
+        prompt = build_meal_plan_prompt('macros', 'cuisine', 'pantry')
+        self.assertIn('meal planning assistant', prompt)
+        self.assertIn('10%', prompt)
+ 
