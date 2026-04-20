@@ -543,7 +543,7 @@ def create_recipe(request):
         # MIME check
 
         if image:
-            error = recipe.image_check(image)
+            error = recipe().image_check(image)
             if error:
                 return render(request, "create_recipe.html", {
                 "error": error,
@@ -633,7 +633,7 @@ def edit_recipe(request, recipe_id):
                 "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
         if new_image:
-            error = recipe.image_check(new_image)
+            error = recipe().image_check(new_image)
             if error:
                 return render(request, "edit_recipe.html", {
                 "error": error,
