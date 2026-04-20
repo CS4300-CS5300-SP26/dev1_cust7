@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -30,7 +32,8 @@ urlpatterns = [
     path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
     path('recipe/create/', views.create_recipe, name='create_recipe'),
     path('recipe/<int:recipe_id>/edit/', views.edit_recipe, name='edit_recipe'),
-    path('recipe/<int:recipe_id>/delete/', views.delete_recipe, name='delete_recipe'),
+    path('my-recipes/', views.my_recipes, name='my_recipes'),
+    path("recipes/<int:recipe_id>/delete/", views.delete_recipe, name="delete_recipe"),
 
     #ChefBot openai
     path('aiChefBot/', views.aiChefBot_view, name='aiChefBot'),
@@ -45,4 +48,6 @@ urlpatterns = [
     # Favorites functionality
     path('toggle-favorite/<int:recipe_id>/', views.toggle_favorite, name='toggle_favorite'),
     path('favorites/', views.favorites_list, name='favorites_list'),
+    
 ]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
