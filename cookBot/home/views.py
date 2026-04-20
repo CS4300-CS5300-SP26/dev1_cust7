@@ -615,7 +615,7 @@ def aiChefBot_view(request):
     #Getting the spoonacular recipes
     spoonacular_recipes = []
     pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
-    session = ChatSession.objects.filter(user=request.user).first()
+    session = ChatSession.objects.create(user=request.user)
     if pantry_items:
         try:
             from .spoonacular import spoonacular_get
