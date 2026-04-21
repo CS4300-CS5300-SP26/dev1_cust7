@@ -31,6 +31,7 @@ jobs:
           black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1
           cat black_results.txt
           echo $? > black_exit_code.txt
+          cat black_exit_code.txt
           exit 0
       - name: Run codebase through flake8
         continue-on-error: true
