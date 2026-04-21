@@ -51,7 +51,9 @@ jobs:
               cat black_results.txt
               echo "```"
             else
+              echo "```"
               echo "✅ Code is properly formatted"
+              echo "```"
             fi
             echo ""
             echo "### Flake8 (Linting)"
