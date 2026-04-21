@@ -28,7 +28,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1
+          black --check --diff --extend-exclude '/migrations/' . > black_results.txt 2>&1
           echo $? > black_exit_code.txt
           exit 0
       - name: Run codebase through flake8
