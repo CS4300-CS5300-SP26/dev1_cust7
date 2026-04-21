@@ -649,7 +649,15 @@ def edit_recipe(request, recipe_id):
         if new_image:
             error = image_check(new_image)
             if error:
-                return render(...)
+                return render(request, "edit_recipe.html", {
+                    "error": error,
+                    "recipe": recipe,
+                    "post_data": request.POST,
+                    "ingredients_data": zip(quantities, units, names),
+                    "steps_data": list(enumerate(steps, start=1)),
+                    "grouped_tags": get_grouped_tags(),
+                    "selected_tag_ids": list(map(int, tag_ids)),
+                })
             if recipe.image:
                 recipe.image.delete(save=False)
                 recipe.image = new_image
