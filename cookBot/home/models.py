@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from PIL import Image
+from PIL import UnidentifiedImageError
+import os
 
 
 class Pantry(models.Model):
@@ -70,12 +72,18 @@ class Recipe(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if self.image:
-            img_path = self.image.path
-            img = Image.open(img_path)
-            max_size = (800, 800)
-            img.thumbnail(max_size)
-            img.save(img_path)
+        if self.image and os.path.exists(self.image.path):
+            try:
+                img = Image.open(self.image.path)
+                # Fix RGBA / P mode for JPEGs
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                img.thumbnail((800, 800))
+                img.save(self.image.path)
+            except UnidentifiedImageError:
+                pass
+            except Exception:
+                pass
     
 
 class RecipeStep(models.Model):

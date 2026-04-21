@@ -17,6 +17,8 @@ import urllib.parse
 from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai
 from .chefBot import generate_meal_plan_with_ai
+from PIL import UnidentifiedImageError
+from django.db import transaction
 from PIL import Image
 
 
@@ -531,17 +533,28 @@ def get_grouped_tags():
         return dict(grouped)
  
 def image_check(image):
-        if image.content_type not in ["image/jpeg", "image/png"]:
-            return "Only JPEG and PNG images are allowed."
-        try:
-            img = Image.open(image)
-            if img.format not in ["JPEG", "PNG"]:
-                return "Only JPEG and PNG formats are allowed."
-            image.seek(0)
-        except Exception:
-            return "Invalid image file."
+    if not image:
         return None
+    allowed_content_types = ["image/jpeg", "image/png"]
+    allowed_formats = ["JPEG", "PNG"]
+    max_size_bytes = 5 * 1024 * 1024  # 5 MB
+    if image.content_type not in allowed_content_types:
+        return "Only JPEG and PNG images are allowed."
+    if image.size > max_size_bytes:
+        return "Image must be smaller than 5MB."
+    try:
+        img = Image.open(image)
+        if img.format not in allowed_formats:
+            return "Only JPEG and PNG formats are allowed."
+        img.verify()
+        image.seek(0)
+    except UnidentifiedImageError:
+        return "Invalid image file."
+    except Exception:
+        return "There was a problem reading that image. Please try another file."
+    return None
 
+@transaction.atomic
 @login_required
 def create_recipe(request):
 
@@ -554,15 +567,7 @@ def create_recipe(request):
         #Image upload checking for proper format 
         # MIME check
 
-        if image:
-            error = image_check(image)
-            if error:
-                return render(request, "create_recipe.html", {
-                "error": error,
-                "post_data": request.POST,
-                "grouped_tags": get_grouped_tags()
-        })
-    
+        
         # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
@@ -571,6 +576,21 @@ def create_recipe(request):
                 "grouped_tags": get_grouped_tags()
             })
         
+        if image:
+            error = image_check(image)
+            if error:
+                return render(request, "create_recipe.html", {
+                    "error": error,
+                    "post_data": request.POST,
+                    "grouped_tags": get_grouped_tags(),
+                    "selected_tag_ids": list(map(int, request.POST.getlist("tags[]"))),
+                    "ingredients_data": zip(
+                        request.POST.getlist('ingredient_quantity[]'),
+                        request.POST.getlist('ingredient_unit[]'),
+                        request.POST.getlist('ingredient_name[]')
+                    ),
+                    "steps_data": list(enumerate(request.POST.getlist('steps[]'), start=1)),
+                })
 
         recipe = Recipe.objects.create(
             user=request.user,
@@ -619,6 +639,7 @@ def create_recipe(request):
 
 
 #Edit recipe
+@transaction.atomic
 @login_required
 def edit_recipe(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
@@ -658,9 +679,10 @@ def edit_recipe(request, recipe_id):
                     "grouped_tags": get_grouped_tags(),
                     "selected_tag_ids": list(map(int, tag_ids)),
                 })
+
             if recipe.image:
                 recipe.image.delete(save=False)
-                recipe.image = new_image
+            recipe.image = new_image
            
 
         recipe.title = title
