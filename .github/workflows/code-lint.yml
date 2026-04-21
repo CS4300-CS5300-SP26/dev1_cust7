@@ -51,7 +51,7 @@ jobs:
             echo "### Flake8 (Linting)"
             if [ "$(cat flake8_exit_code.txt)" -ne 0 ]; then
               echo '```'
-              echo "❌ flake8 issues detected, please review the following"
+              echo "❌ flake8 issues detected, please review the following:"
               cat flake8_results.txt
               echo '```'
             else
