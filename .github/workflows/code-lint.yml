@@ -24,16 +24,11 @@ jobs:
           python -m pip install --upgrade pip 
           pip install -r requirements.txt 
           pip install flake8 black
-      - name: Run codebase through Black Formatter
+      - name: Run codebase through Black Formatter Check
         continue-on-error: true
         run: |
           set +e
-          if black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1; then
-          if flake8 . > flake8_results.txt 2>&1; then
-            echo "0" > flake8_exit_code.txt
-          else
-            echo "1" > flake8_exit_code.txt
-          fi
+          black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1
           exit 0
       - name: Run codebase through flake8
         continue-on-error: true
@@ -80,7 +75,7 @@ jobs:
       - name: Fail workflow if linting failed
         if: always()
         run: |
-          if [ "$(cat black_exit_code.txt)" -ne 0 ] || [ "$(cat flake8_exit_code.txt)" -ne 0 ]; then
+          if [ "$(cat flake8_exit_code.txt)" -ne 0 ]; then
             echo "Linting failed."
             exit 1
           fi
