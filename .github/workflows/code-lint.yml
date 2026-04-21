@@ -28,11 +28,12 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1
-          cat black_results.txt
-          black_exit=$?
-          echo "$black_exit" > black_exit_code.txt
-          cat black_exit_code.txt
+          if black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1; then
+          if flake8 . > flake8_results.txt 2>&1; then
+            echo "0" > flake8_exit_code.txt
+          else
+            echo "1" > flake8_exit_code.txt
+          fi
           exit 0
       - name: Run codebase through flake8
         continue-on-error: true
