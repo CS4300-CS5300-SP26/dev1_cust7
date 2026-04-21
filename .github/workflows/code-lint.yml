@@ -44,16 +44,9 @@ jobs:
             echo "## Linting Results"
             echo ""
             echo "### Black (Formatting)"
-            if [ "$(cat black_exit_code.txt)" -ne 0 ]; then
-              echo '```'
-              echo "❌ Black formatter issues detected (run \`black .\` locally)"
-              cat black_results.txt
-              echo '```'
-            else
-              echo '```'
-              echo "✅ Code is properly formatted"
-              echo '```'
-            fi
+            echo '```'
+            cat black_results.txt
+            echo '```'
             echo ""
             echo "### Flake8 (Linting)"
             if [ "$(cat flake8_exit_code.txt)" -ne 0 ]; then
