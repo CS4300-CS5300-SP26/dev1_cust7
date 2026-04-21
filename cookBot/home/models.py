@@ -219,3 +219,18 @@ class ChatMessage(models.Model):
 def delete_recipe_image(sender, instance, **kwargs):
     if instance.image:
         instance.image.delete(save=False)
+
+
+class Comment(models.Model):
+    """User comments on recipes"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='comments')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name='replies', null=True, blank=True, db_column='parent_id')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} on {self.recipe.title}"

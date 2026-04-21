@@ -9,18 +9,18 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag
+from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag, Comment
 from collections import defaultdict
 import json
 import urllib.request
 import urllib.parse
-from .forms import RegisterForm, EditProfileForm
 from .chefBot import call_openai
 from .chefBot import generate_meal_plan_with_ai
 from PIL import UnidentifiedImageError
 from django.db import transaction
 from PIL import Image
-
+from .forms import RegisterForm, EditProfileForm, CommentForm
+from .chefBot import call_openai, generate_meal_plan_with_ai
 
 def index(request):
     return render(request, 'index.html')
@@ -510,6 +510,11 @@ def recipe_view(request, recipe_id):
     else:
         pantry_names = set()
  
+    # Get comments for this recipe (only top level comments, replies are nested)
+    comments = recipe.comments.select_related('user').filter(parent=None).prefetch_related('replies__user')
+    
+    # Create comment form for logged in users
+    comment_form = CommentForm() if request.user.is_authenticated else None
     # Check if current user has bookmarked this recipe (efficient single query)
     is_saved_by_user = False
     if request.user.is_authenticated:
@@ -520,6 +525,8 @@ def recipe_view(request, recipe_id):
         "steps_json": steps,
         "ingredients_json": ingredients,
         "pantry_names_json": list(pantry_names),
+        "comments": comments,
+        "comment_form": comment_form,
         "tags": recipe.tags.all(),
         "is_owner": request.user == recipe.user,
         "is_saved_by_user": is_saved_by_user,
@@ -889,6 +896,45 @@ def find_kroger_stores(request):
     except Exception as e:
         return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
 
+
+from django.contrib import messages
+
+@login_required
+@require_POST
+def post_comment(request, recipe_id):
+    """Post a comment on a recipe"""
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    
+    # Enforce same visibility rules as recipe_view
+    if not recipe.is_public:
+        if request.user != recipe.user:
+            raise PermissionDenied
+    
+    
+    form = CommentForm(request.POST)
+    
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.user = request.user
+        comment.recipe = recipe
+        
+        # Handle parent comment for replies
+        parent_id = request.POST.get('parent_id')
+        if parent_id:
+            parent_comment = get_object_or_404(Comment, id=parent_id, recipe=recipe)
+            comment.parent = parent_comment
+        
+        comment.save()
+        
+        
+        messages.success(request, 'Your comment was posted successfully.')
+    else:
+        # Show validation errors to user
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, error)
+    
+    return redirect('recipe_view', recipe_id=recipe.id)
 @login_required
 @require_POST
 def toggle_favorite(request, recipe_id):

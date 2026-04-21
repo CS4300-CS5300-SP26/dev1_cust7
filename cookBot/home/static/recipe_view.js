@@ -162,3 +162,28 @@ if (bookmarkBtn) {
     });
   });
 }
+
+// Reply form toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle Reply button clicks
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('reply-btn')) {
+      const commentId = e.target.dataset.commentId;
+      const replyForm = document.getElementById(`reply-form-${commentId}`);
+      
+      // Toggle visibility
+      if (replyForm.style.display === 'none') {
+        replyForm.style.display = 'block';
+        replyForm.querySelector('textarea').focus();
+      } else {
+        replyForm.style.display = 'none';
+      }
+    }
+
+    // Handle Cancel button clicks
+    if (e.target.classList.contains('reply-cancel-btn')) {
+      const formContainer = e.target.closest('.reply-form-container');
+      formContainer.style.display = 'none';
+    }
+  });
+});

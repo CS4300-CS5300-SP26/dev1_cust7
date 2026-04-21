@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from .models import Comment
 
 class RegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True)
@@ -44,3 +45,22 @@ class EditProfileForm(forms.ModelForm):
         if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("That email is already in use.")
         return email
+
+
+class CommentForm(forms.ModelForm):
+    parent_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
+
+    class Meta:
+        model = Comment
+        fields = ['text', 'parent_id']
+        widgets = {
+            'text': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Share your thoughts about this recipe...'})
+        }
+    
+    def save(self, commit=True):
+        comment = super().save(commit=False)
+        if self.cleaned_data.get('parent_id'):
+            comment.parent_id = self.cleaned_data['parent_id']
+        if commit:
+            comment.save()
+        return comment
