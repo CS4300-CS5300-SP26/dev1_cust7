@@ -28,7 +28,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          black --check --diff --extend-exclude '/migrations/' . > black_results.txt 2>&1
+          black --check --extend-exclude '/migrations/' . > black_results.txt 2>&1
           cat black_results.txt
           echo $? > black_exit_code.txt
           exit 0
@@ -47,14 +47,14 @@ jobs:
             echo ""
             echo "### Black (Formatting)"
             if [ "$(cat black_exit_code.txt)" -ne 0 ]; then
-              echo "```diff"
+              echo '```'
               echo "❌ Black formatter issues detected (run \`black .\` locally)"
               cat black_results.txt
-              echo "```"
+              echo '```'
             else
-              echo "```"
+              echo '```'
               echo "✅ Code is properly formatted"
-              echo "```"
+              echo '```'
             fi
             echo ""
             echo "### Flake8 (Linting)"
@@ -64,6 +64,7 @@ jobs:
               cat flake8_results.txt
               echo '```'
             else
+              echo '```'
               echo "✅ No flake8 issues found"
             fi 
           } > pr-comment.txt
