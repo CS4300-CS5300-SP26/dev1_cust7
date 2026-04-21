@@ -4,7 +4,6 @@ from django.urls import reverse
 
 from home.forms import RegisterForm, EditProfileForm
 
-
 class RegisterFormTests(TestCase):
 
     def test_register_form_rejects_duplicate_email(self):

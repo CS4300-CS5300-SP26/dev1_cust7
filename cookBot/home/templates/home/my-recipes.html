@@ -1,0 +1,77 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'my-recipes.css' %}">
+<script src="{% static 'my-recipes-page.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<section class="create-banner">
+    <div class="create-banner-content">
+      <h1>My Recipes</h1>
+      <p>View and manage your saved recipes.</p>
+    </div>
+</section>
+
+<div class="recipes-page">
+    {% if recipes %}
+        <div class="recipes-list">
+            {% for recipe in recipes %}
+                <div class="recipe-row-card">
+
+                    <div class="recipe-image-box">
+                        {% if recipe.image %}
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" class="recipe-image">
+                        {% else %}
+                            <div class="recipe-image-placeholder">
+                                🍳
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="recipe-main">
+                        <div class="recipe-title-row">
+                            <h2>{{ recipe.title }}</h2>
+                            {% if recipe.is_public %}
+                            <span class="recipe-tag public">Public</span>
+                        {% else %}
+                            <span class="recipe-tag private">Private</span>
+                        {% endif %}
+                        
+                            <button
+                                type="button"
+                                class="bookmark-btn recipe-bookmark-btn {% if recipe.id in favorite_ids %}saved{% endif %}"
+                                data-recipe-id="{{ recipe.id }}"
+                                data-toggle-url="{% url 'toggle_favorite' recipe.id %}"
+                                aria-label="{% if recipe.id in favorite_ids %}Remove from saved recipes{% else %}Save this recipe{% endif %}"
+                            >
+                                <span class="icon">
+                                    {% if recipe.id in favorite_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </span>
+                                
+                            </button>
+                        </div>
+
+
+                        <p class="recipe-description">
+                            {% if recipe.description %}
+                                {{ recipe.description|truncatewords:20 }}
+                            {% else %}
+                                No description provided.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="recipe-side-actions">
+                        <a href="/recipe/{{ recipe.id }}/" class="recipe-action-btn view-btn">View</a>
+                        <a href="/recipe/{{ recipe.id }}/edit/" class="recipe-action-btn edit-btn">Edit</a>
+                        <a href="/recipes/{{ recipe.id }}/delete/" class="recipe-action-btn delete-btn">Delete</a>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

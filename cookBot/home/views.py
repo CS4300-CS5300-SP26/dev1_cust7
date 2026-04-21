@@ -14,6 +14,11 @@ from collections import defaultdict
 import json
 import urllib.request
 import urllib.parse
+from .chefBot import call_openai
+from .chefBot import generate_meal_plan_with_ai
+from PIL import UnidentifiedImageError
+from django.db import transaction
+from PIL import Image
 from .forms import RegisterForm, EditProfileForm, CommentForm
 from .chefBot import call_openai, generate_meal_plan_with_ai
 
@@ -534,25 +539,75 @@ def get_grouped_tags():
             grouped[tag.tag_type].append(tag)
         return dict(grouped)
  
+def image_check(image):
+    if not image:
+        return None
+    allowed_content_types = ["image/jpeg", "image/png"]
+    allowed_formats = ["JPEG", "PNG"]
+    max_size_bytes = 5 * 1024 * 1024  # 5 MB
+    if image.content_type not in allowed_content_types:
+        return "Only JPEG and PNG images are allowed."
+    if image.size > max_size_bytes:
+        return "Image must be smaller than 5MB."
+    try:
+        img = Image.open(image)
+        if img.format not in allowed_formats:
+            return "Only JPEG and PNG formats are allowed."
+        img.verify()
+        image.seek(0)
+    except UnidentifiedImageError:
+        return "Invalid image file."
+    except Exception:
+        return "There was a problem reading that image. Please try another file."
+    return None
+
+@transaction.atomic
 @login_required
 def create_recipe(request):
 
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
         is_public = request.POST.get("is_public") == "on"
+        image = request.FILES.get("image")
 
+        #Image upload checking for proper format 
+        # MIME check
+
+        
+        # Server-side validation
         if not title:
             return render(request, "create_recipe.html", {
                 "error": "Title cannot be empty.",
                 "post_data": request.POST,
                 "grouped_tags": get_grouped_tags()
             })
+        
+        if image:
+            error = image_check(image)
+            if error:
+                return render(request, "create_recipe.html", {
+                    "error": error,
+                    "post_data": request.POST,
+                    "grouped_tags": get_grouped_tags(),
+                    "selected_tag_ids": list(map(int, request.POST.getlist("tags[]"))),
+                    "ingredients_data": zip(
+                        request.POST.getlist('ingredient_quantity[]'),
+                        request.POST.getlist('ingredient_unit[]'),
+                        request.POST.getlist('ingredient_name[]')
+                    ),
+                    "steps_data": list(enumerate(request.POST.getlist('steps[]'), start=1)),
+                })
 
         recipe = Recipe.objects.create(
             user=request.user,
+            description=description,
             title=title,
-            is_public=is_public
+            is_public=is_public,
         )
+        if image:
+            recipe.image = image
+            recipe.save()
 
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
@@ -589,7 +644,9 @@ def create_recipe(request):
         "grouped_tags": get_grouped_tags()
     })
 
+
 #Edit recipe
+@transaction.atomic
 @login_required
 def edit_recipe(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
@@ -598,12 +655,14 @@ def edit_recipe(request, recipe_id):
 
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
         is_public = request.POST.get("is_public") == "on"
         quantities = request.POST.getlist('ingredient_quantity[]')
         units = request.POST.getlist('ingredient_unit[]')
         names = request.POST.getlist('ingredient_name[]')
         steps = request.POST.getlist('steps[]')
         tag_ids = request.POST.getlist('tags[]')
+        new_image = request.FILES.get("image")
 
         if not title:
             return render(request, "edit_recipe.html", {
@@ -615,8 +674,26 @@ def edit_recipe(request, recipe_id):
                 "grouped_tags": get_grouped_tags(),
                 "selected_tag_ids": list(map(int, tag_ids)),  # important
             })
+        if new_image:
+            error = image_check(new_image)
+            if error:
+                return render(request, "edit_recipe.html", {
+                    "error": error,
+                    "recipe": recipe,
+                    "post_data": request.POST,
+                    "ingredients_data": zip(quantities, units, names),
+                    "steps_data": list(enumerate(steps, start=1)),
+                    "grouped_tags": get_grouped_tags(),
+                    "selected_tag_ids": list(map(int, tag_ids)),
+                })
+
+            if recipe.image:
+                recipe.image.delete(save=False)
+            recipe.image = new_image
+           
 
         recipe.title = title
+        recipe.description = description
         recipe.is_public = is_public
         recipe.save()
 
@@ -642,7 +719,8 @@ def edit_recipe(request, recipe_id):
         RecipeTag.objects.filter(recipe=recipe).delete()
         for tag_id in tag_ids:
             RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
-
+        
+        
         return redirect("recipe_view", recipe_id=recipe.id)
 
     return render(request, "edit_recipe.html", {
@@ -663,8 +741,24 @@ def delete_recipe(request, recipe_id):
         recipe.delete()
         return redirect("index")
 
-    #If someone tries to GET this URL directly, send them back to the recipe
-    return redirect("recipe_view", recipe_id=recipe_id)
+    return render(request, "home/delete_recipe.html", {
+        "recipe": recipe
+    })
+
+@login_required
+def my_recipes(request):
+    """Display a list of the current user's recipes"""
+    user_recipes = request.user.recipes.order_by('-created_date')
+    favorite_ids = set(Recipe.objects.filter(favorites=request.user).values_list('id', flat=True))
+    return render(request, 'home/my-recipes.html', {'recipes': user_recipes, 'favorite_ids': favorite_ids})
+
+
+    #Create a new session
+    session = ChatSession.objects.create(
+        user=request.user,
+        spoonacular_context=spoonacular_recipes,
+        pantry_context=pantry_items,
+    )
 
 #Social feed view
 @login_required
@@ -681,7 +775,7 @@ def aiChefBot_view(request):
     #Getting the spoonacular recipes
     spoonacular_recipes = []
     pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
-
+    session = ChatSession.objects.create(user=request.user)
     if pantry_items:
         try:
             from .spoonacular import spoonacular_get
@@ -709,12 +803,6 @@ def aiChefBot_view(request):
             'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
         })
 
-    #Create a new session
-    session = ChatSession.objects.create(
-        user=request.user,
-        spoonacular_context=spoonacular_recipes,
-        pantry_context=pantry_items,
-    )
 
     return render(request, 'home/aiChefBot.html', {
         'session_id': session.id,
