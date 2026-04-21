@@ -38,6 +38,19 @@ jobs:
           flake8 --output-file=flake8_results.txt .
           echo $? > flake8_exit_code.txt
           exit 0
+      - name: Debug lint artifacts
+        if: always()
+        run: |
+            echo "=== black exit code ==="
+            cat black_exit_code.txt || true
+            echo "=== black results ==="
+            cat black_results.txt || true
+            echo "=== flake8 exit code ==="
+            cat flake8_exit_code.txt || true
+            echo "=== flake8 results ==="
+            cat flake8_results.txt || true
+            echo "=== pr comment ==="
+            cat pr-comment.txt || true
       - name: Create Comment Formatting
         if: github.event_name == 'pull_request' && always()
         run: |
@@ -45,7 +58,6 @@ jobs:
             echo "## Linting Results"
             echo ""
             echo "### Black (Formatting)"
-            cat black_exit_code.txt
             if [ "$(cat black_exit_code.txt)" -ne 0 ]; then
               echo "❌ Black formatter issues detected (run \`black .\` locally)"
               cat black_results.txt
@@ -54,7 +66,6 @@ jobs:
             fi
             echo ""
             echo "### Flake8 (Linting)"
-            
             if [ "$(cat flake8_exit_code.txt)" -ne 0 ]; then
               echo '```'
               echo "❌ flake8 issues detected, please review the following"
