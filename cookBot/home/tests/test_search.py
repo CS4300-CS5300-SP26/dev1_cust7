@@ -162,4 +162,4 @@ class IndexPageTagTests(TestCase):
 
     def test_index_page_tag_links_point_to_search(self):
         response = self.client.get(reverse('index'))
-        self.assertContains(response, 'search_recipes')
+        self.assertContains(response, '/search/')
