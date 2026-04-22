@@ -4,7 +4,6 @@
 // STATE variables to help track where we are at
 // ─────────────────────────────────────────────────
 var steps       = [];
-var ingredients = [];
 var current     = 0; // Keep track of current step
 var stopped     = false; // Keeps track if user manually stops the listener
 var cmdMode     = false; // Tells us if we activated command mode by saying "hey chef"
@@ -17,10 +16,8 @@ var recog       = null; // Holds the speech recognition object (aka what user sa
 // ─────────────────────────────────────────────────
 (function loadData() {
   var s = document.getElementById('steps-data');
-  var i = document.getElementById('ingredients-data');
-  if (s) { try { steps       = JSON.parse(s.textContent); } catch(e) { console.error('[Chef] steps parse error:', e); } }
-  if (i) { try { ingredients = JSON.parse(i.textContent); } catch(e) { console.error('[Chef] ing parse error:',   e); } }
-  console.log('[Chef] Loaded', steps.length, 'steps,', ingredients.length, 'ingredients');
+  if (s) { try { steps = JSON.parse(s.textContent); } catch(e) { console.error('[Chef] steps parse error:', e); } }
+  console.log('[Chef] Loaded', steps.length, 'steps');
 })();
 
 // ─────────────────────────────────────────────────
@@ -33,14 +30,12 @@ function setStatus(text, mode) {
   if (s) s.innerText = text;
   if (d) { d.className = 'voice-indicator'; if (mode) d.classList.add(mode); }
 }
-
-// logic to display the text heard if wanted
+ 
 function setHeard(text) {
   var el = document.getElementById('voiceHeard');
   if (el) el.innerText = text;
 }
-
-// logic to disable next/prev if at beginning or end of list
+ 
 function updateNav() {
   var p = document.getElementById('prevBtn');
   var n = document.getElementById('nextBtn');
@@ -59,21 +54,21 @@ function renderSteps() {
     var li = document.createElement('li');
     li.className = 'step-item';
     li.id = 'step-' + idx;
-
+ 
     var num = document.createElement('div');
     num.className = 'step-num';
     num.innerText = idx + 1;
-
+ 
     var body = document.createElement('div');
     body.className = 'step-body';
-
+ 
     var text = document.createElement('div');
     text.className = 'step-text';
     text.innerText = step;
-
+ 
     var acts = document.createElement('div');
     acts.className = 'step-actions';
-
+ 
     var readBtn = document.createElement('button');
     readBtn.className = 'step-btn read-btn';
     readBtn.innerText = '\uD83D\uDD0A Read aloud';
@@ -82,7 +77,7 @@ function renderSteps() {
       goTo(idx);
       speak(step);
     });
-
+ 
     var doneBtn = document.createElement('button');
     doneBtn.className = 'step-btn';
     doneBtn.innerText = '\u2713 Done';
@@ -90,7 +85,7 @@ function renderSteps() {
       e.stopPropagation();
       li.classList.toggle('done');
     });
-
+ 
     acts.appendChild(readBtn);
     acts.appendChild(doneBtn);
     body.appendChild(text);
@@ -162,7 +157,7 @@ function beep() {
 // COMMAND PARSING made by Roman and Claude
 // ─────────────────────────────────────────────────
 var wordNums = { one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12 };
-
+ 
 function extractNum(t) {
   var d = t.match(/\b(\d+)\b/);
   if (d) return parseInt(d[1], 10);
@@ -170,16 +165,10 @@ function extractNum(t) {
   for (var i = 0; i < ws.length; i++) { if (wordNums[ws[i]]) return wordNums[ws[i]]; }
   return null;
 }
-
+ 
 function handleCmd(t) {
   console.log('[Chef] command:', t);
-
-  if (/\b(start|beginning|restart|first)\b/.test(t)) {
-    if (steps.length === 0) { speak("This recipe has no steps."); return; }
-    goTo(0); speak('Starting from the beginning. Step 1. ' + steps[0]);
-    return;
-  }
-
+ 
   if (/\b(next|forward|continue)\b/.test(t)) {
     if (current < steps.length - 1) { goTo(current + 1); speak('Step ' + (current + 1) + '. ' + steps[current]); }
     else speak("That's the last step \u2014 you're done!");
@@ -201,14 +190,6 @@ function handleCmd(t) {
     else speak('Step ' + (current + 1) + '. ' + steps[current]);
     return;
   }
-  if (/\b(ingredient|ingredients|what do i need)\b/.test(t)) {
-    speak(ingredients.length ? 'Ingredients: ' + ingredients.join('. ') : 'No ingredients listed.');
-    return;
-  }
-  if (/\b(start|beginning|restart|first)\b/.test(t)) {
-    goTo(0); speak('Starting from the beginning. Step 1. ' + steps[0]);
-    return;
-  }
   speak("Sorry, I didn't catch that.");
 }
 
@@ -219,32 +200,32 @@ function safeStart() {
   if (!recog || recognizing || speechSynthesis.speaking) return;
   try { recog.start(); } catch(e) { console.warn('[Chef] start():', e.message); }
 }
-
+ 
 function safeStop() {
   if (!recog) return;
   try { recog.stop(); } catch(e) {}
 }
-
+ 
 function setupRecog() {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     setStatus('Voice not supported \u2014 try Chrome or Edge', '');
     return;
   }
-
+ 
   recog = new SR();
   recog.continuous      = true;
   recog.interimResults  = false;
   recog.lang            = 'en-US';
   recog.maxAlternatives = 1;
-
+ 
   recog.onstart = function() { recognizing = true; };
-
+ 
   recog.onend = function() {
     recognizing = false;
     if (!stopped && !speechSynthesis.speaking) setTimeout(safeStart, 250);
   };
-
+ 
   recog.onerror = function(e) {
     recognizing = false;
     console.warn('[Chef] error:', e.error);
@@ -255,13 +236,13 @@ function setupRecog() {
     }
     if (!stopped && !speechSynthesis.speaking) setTimeout(safeStart, 300);
   };
-
+ 
   recog.onresult = function(event) {
     var r = event.results[event.results.length - 1];
     var t = r[0].transcript.toLowerCase().trim();
     console.log('[Chef] heard:', t);
     setHeard('\u201C' + t + '\u201D');
-
+ 
     if (/hey\s*chef/.test(t)) {
       cmdMode = true;
       beep();
@@ -291,13 +272,13 @@ function wireButtons() {
   var btnStop  = document.getElementById('btnStop');
   var prevBtn  = document.getElementById('prevBtn');
   var nextBtn  = document.getElementById('nextBtn');
-
+ 
   if (btnStart) btnStart.addEventListener('click', function() {
     stopped = false;
     setStatus('Listening\u2026 say \u201CHey Chef\u201D', 'listening');
     safeStart();
   });
-
+ 
   if (btnStop) btnStop.addEventListener('click', function() {
     stopped = true;
     cmdMode = false;
@@ -306,11 +287,11 @@ function wireButtons() {
     speechSynthesis.cancel();
     setStatus('Stopped', '');
   });
-
+ 
   if (prevBtn) prevBtn.addEventListener('click', function() {
     if (current > 0) { goTo(current - 1); speak('Step ' + (current + 1) + '. ' + steps[current]); }
   });
-
+ 
   if (nextBtn) nextBtn.addEventListener('click', function() {
     if (current < steps.length - 1) { goTo(current + 1); speak('Step ' + (current + 1) + '. ' + steps[current]); }
   });
@@ -323,19 +304,14 @@ function wireButtons() {
 // Made by Claude
 // ─────────────────────────────────────────────────
 
-if (steps.length === 0) {
-  setStatus('No steps found for this recipe.', '');
-  document.getElementById('prevBtn').disabled = true;
-  document.getElementById('nextBtn').disabled = true;
+renderSteps();
+goTo(0);
+wireButtons();
+setupRecog();
+ 
+if (recog) {
+  setStatus('Listening\u2026 say \u201CHey Chef\u201D', 'listening');
+  safeStart();
 } else {
-  renderSteps();
-  goTo(0);
-  wireButtons();
-  setupRecog();
-
-  if (recog) {
-    setStatus('Ready \u2014 click Start to enable voice control', '');
-  } else {
-    setStatus('Voice unavailable', '');
-  }
+  setStatus('Voice unavailable', '');
 }
