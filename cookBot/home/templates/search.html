@@ -1,0 +1,122 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'search.css' %}">
+{% endblock %}
+{% block content %}
+
+<div class="search-banner">
+  <div class="search-banner-content">
+    <h1>Search Recipes</h1>
+    <p>Find recipes by name or chef</p>
+  </div>
+</div>
+
+<div class="search-wrap">
+
+  <form method="GET" action="{% url 'search_recipes' %}" class="search-form">
+
+    <!-- Search bar -->
+    <div class="search-bar-row">
+      <input
+        class="search-input"
+        type="text"
+        name="q"
+        placeholder="Search by recipe name or username..."
+        value="{{ query }}"
+      >
+      <button type="submit" class="search-btn" aria-label="Search">↑</button>
+    </div>
+
+    <!-- Tag filters (collapsible) -->
+    <div class="filter-card">
+
+      <!-- Clickable header -->
+      <div class="filter-card-header" id="filterToggle">
+        <span class="filter-card-title">Filter by Tags</span>
+        <span class="filter-toggle-icon" id="filterIcon">▼</span>
+      </div>
+
+      <!-- Collapsible content -->
+      <div class="filter-content"
+           id="filterContent"
+           data-has-filters="{{ selected_tag_ids|length }}">
+
+        {% for type, tags in grouped_tags.items %}
+          <div class="tag-group">
+            <div class="tag-group-title">{{ type|title }}</div>
+            <div class="tag-container">
+              {% for tag in tags %}
+                <label class="tag-chip {% if tag.id in selected_tag_ids %}selected{% endif %}">
+                  <input
+                    type="checkbox"
+                    name="tags"
+                    value="{{ tag.id }}"
+                    {% if tag.id in selected_tag_ids %}checked{% endif %}
+                  >
+                  {{ tag.name }}
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </form>
+
+  <!-- Results -->
+  <div class="results-header">
+    {% if query or selected_tag_ids %}
+      <span>{{ result_count }} recipe{{ result_count|pluralize }} found
+        {% if query %}for "<strong>{{ query }}</strong>"{% endif %}
+        {% if selected_tags %}
+          filtered by:
+          {% for tag in selected_tags %}
+            <span class="active-tag">{{ tag.name }}</span>
+          {% endfor %}
+        {% endif %}
+      </span>
+    {% else %}
+      <span>{{ result_count }} public recipe{{ result_count|pluralize }}</span>
+    {% endif %}
+  </div>
+
+  {% if recipes %}
+    <div class="results-grid">
+      {% for recipe in recipes %}
+        <a href="{% url 'recipe_view' recipe.id %}" class="recipe-card">
+          <div class="recipe-card-title">{{ recipe.title }}</div>
+          <div class="recipe-card-meta">By {{ recipe.user.username }}</div>
+
+          {% with avg=recipe.average_rating %}
+            {% if avg %}
+              <div class="recipe-card-rating">&#11088; {{ avg|floatformat:1 }} / 5</div>
+            {% endif %}
+          {% endwith %}
+
+          {% with tags=recipe.tags.all %}
+            {% if tags %}
+              <div class="recipe-card-tags">
+                {% for tag in tags %}
+                  <span class="tag tag-{{ tag.tag_type }}">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="no-results">
+      <p>No recipes found. Try a different search or remove some filters.</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- External JS -->
+<script src="{% static 'search.js' %}"></script>
+
+{% endblock %}

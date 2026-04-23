@@ -426,4 +426,72 @@ section.banner {
 }
 /* end of account info page styles */
 
+/* ── Browse Tags (Index Page) ── */
+.browse-tags {
+  margin-top: 2rem;
+  background: #ffffff;
+  border: 1.5px solid #d7ebe3;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+}
 
+/* Title */
+.browse-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #1a3d2b;
+  margin-bottom: 1rem;
+}
+
+/* Tag groups */
+.tag-group {
+  margin-bottom: 1rem;
+}
+
+.tag-group:last-child {
+  margin-bottom: 0;
+}
+
+.tag-group-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #9ab8ac;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.4rem;
+}
+
+/* Container for chips */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Tag chips (links here, not labels) */
+.tag-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #d7ebe3;
+  background: #f9fcfa;
+  color: #1a3d2b;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+/* Hover effect */
+.tag-chip:hover {
+  border-color: #009470;
+  background: #f0faf7;
+  color: #009470;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 148, 112, 0.15);
+}
+
+/* Active click feel */
+.tag-chip:active {
+  transform: scale(0.97);
+}
