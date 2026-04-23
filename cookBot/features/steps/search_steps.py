@@ -1,5 +1,4 @@
 from behave import given, when, then
-from django.contrib.auth.models import User
 from home.models import Recipe, Tag, RecipeTag
 
 # ── Search given steps ──

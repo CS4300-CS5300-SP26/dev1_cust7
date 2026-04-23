@@ -18,12 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   
-    // ── Auto-collapse if no filters selected ──
-    if (content) {
-      const hasFilters = false;
-  
-      if (!hasFilters) {
-        content.classList.add('collapsed');
-      }
-    }
+    // ── Auto-collapse ──
+    content.classList.add('collapsed');
+    
   });

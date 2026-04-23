@@ -310,8 +310,7 @@ wireButtons();
 setupRecog();
  
 if (recog) {
-  setStatus('Listening\u2026 say \u201CHey Chef\u201D', 'listening');
-  safeStart();
+  setStatus('Ready to listen \u2014 press Start and say \u201CHey Chef\u201D', '');
 } else {
   setStatus('Voice unavailable', '');
 }
