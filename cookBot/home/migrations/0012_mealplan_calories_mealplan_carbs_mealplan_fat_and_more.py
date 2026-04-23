@@ -6,28 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0011_seed_tags'),
+        ("home", "0011_seed_tags"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mealplan',
-            name='calories',
+            model_name="mealplan",
+            name="calories",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='mealplan',
-            name='carbs',
+            model_name="mealplan",
+            name="carbs",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='mealplan',
-            name='fat',
+            model_name="mealplan",
+            name="fat",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='mealplan',
-            name='protein',
+            model_name="mealplan",
+            name="protein",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

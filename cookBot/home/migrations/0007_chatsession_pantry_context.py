@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0006_chatsession_chatmessage'),
+        ("home", "0006_chatsession_chatmessage"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chatsession',
-            name='pantry_context',
+            model_name="chatsession",
+            name="pantry_context",
             field=models.JSONField(blank=True, default=list),
         ),
     ]

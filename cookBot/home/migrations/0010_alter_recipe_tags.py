@@ -6,13 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0009_tag_recipetag_recipe_tags'),
+        ("home", "0009_tag_recipetag_recipe_tags"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='recipe',
-            name='tags',
-            field=models.ManyToManyField(blank=True, related_name='recipes', through='home.RecipeTag', to='home.tag'),
+            model_name="recipe",
+            name="tags",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="recipes",
+                through="home.RecipeTag",
+                to="home.tag",
+            ),
         ),
     ]

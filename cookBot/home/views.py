@@ -1,16 +1,24 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.conf import settings
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied
-from .models import Recipe, RecipeStep, RecipeIngredient, ChatSession, ChatMessage, Tag, RecipeTag, Comment
+from .models import (
+    Recipe,
+    RecipeStep,
+    RecipeIngredient,
+    ChatSession,
+    ChatMessage,
+    Tag,
+    RecipeTag,
+    Comment,
+)
 from collections import defaultdict
 import json
 import urllib.request
@@ -21,7 +29,7 @@ from PIL import UnidentifiedImageError
 from django.db import transaction
 from PIL import Image
 from .forms import RegisterForm, EditProfileForm, CommentForm
-from .chefBot import call_openai, generate_meal_plan_with_ai
+
 
 def index(request):
     tags = Tag.objects.all().order_by('tag_type', 'name')
@@ -33,14 +41,17 @@ def index(request):
         'grouped_tags': grouped_tags,
     })
 
-####Help from Claude and Spoonacular documents on fetching data from spoonacular####
+# Help from Claude and Spoonacular documents on fetching data from spoonacular #
 def get_nutrition(request, ingredient_name):
     try:
         # Step 1: find ingredient ID
-        search_data = spoonacular_get("food/ingredients/search", {
-            "query": ingredient_name,
-            "number": 1,
-        })
+        search_data = spoonacular_get(
+            "food/ingredients/search",
+            {
+                "query": ingredient_name,
+                "number": 1,
+            },
+        )
     except Exception as e:
         return JsonResponse({"error": f"Search request failed: {str(e)}"}, status=502)
 
@@ -55,86 +66,100 @@ def get_nutrition(request, ingredient_name):
 
     try:
         # Step 2: fetch nutrition by ID
-        nutrition_data = spoonacular_get(f"food/ingredients/{ingredient_id}/information", {
-            "amount": 1,
-        })
+        nutrition_data = spoonacular_get(
+            f"food/ingredients/{ingredient_id}/information",
+            {
+                "amount": 1,
+            },
+        )
     except Exception as e:
-        return JsonResponse({"error": f"Nutrition request failed: {str(e)}"}, status=502)
+        return JsonResponse(
+            {"error": f"Nutrition request failed: {str(e)}"}, status=502
+        )
 
     return JsonResponse(nutrition_data)
-####End spoonacular API call function####
+
+
+# End spoonacular API call function #
+
 
 def nutrition_test(request):
-    return render(request, 'home/nutrition_test.html')
+    return render(request, "home/nutrition_test.html")
 
 
 def register(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('index')
+            return redirect("index")
         # Form is invalid - render with errors
-        return render(request, 'home/register.html', {'form': form})
+        return render(request, "home/register.html", {"form": form})
     else:
         form = RegisterForm()
 
-    return render(request, 'home/register.html', {'form': form})
+    return render(request, "home/register.html", {"form": form})
 
 
 def signin(request):
     """Simple login view"""
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+    if request.method == "POST":
+        username = request.POST["username"]
+        password = request.POST["password"]
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('index')
+            return redirect("index")
         else:
             error_message = "Invalid username or password"
-            return render(request, 'home/signin.html', {'error_message': error_message})
-    return render(request, 'home/signin.html')
+            return render(request, "home/signin.html", {"error_message": error_message})
+    return render(request, "home/signin.html")
+
+
 def signout(request):
     logout(request)
-    return redirect('index')
+    return redirect("index")
+
 
 @login_required
 def account(request):
-    return render(request, 'home/account_info.html', {'user': request.user})
+    return render(request, "home/account_info.html", {"user": request.user})
+
 
 @login_required
 def edit_account(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = EditProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            return redirect('account')
+            return redirect("account")
     else:
         form = EditProfileForm(instance=request.user)
 
-    return render(request, 'home/edit_account.html', {'form': form})
+    return render(request, "home/edit_account.html", {"form": form})
+
 
 @login_required
 def change_password(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
-            return redirect('account')
+            return redirect("account")
 
     else:
         form = PasswordChangeForm(user=request.user)
 
-    return render(request, 'home/change_password.html', {'form': form})
+    return render(request, "home/change_password.html", {"form": form})
+
 
 @login_required
 def pantry_view(request):
     """Display the user's pantry page"""
     pantry_items = request.user.pantry_items.all()
-    return render(request, 'home/pantry.html', {'pantry_items': pantry_items})
+    return render(request, "home/pantry.html", {"pantry_items": pantry_items})
 
 
 @login_required
@@ -143,28 +168,32 @@ def add_ingredient(request):
     """Add a new ingredient to the user's pantry"""
     try:
         data = json.loads(request.body)
-        ingredient_name = data.get('ingredient_name', '').strip()
-        
+        ingredient_name = data.get("ingredient_name", "").strip()
+
         if not ingredient_name:
-            return JsonResponse({'error': 'Ingredient name is required'}, status=400)
-        
+            return JsonResponse({"error": "Ingredient name is required"}, status=400)
+
         # Check if ingredient already exists for this user
-        if request.user.pantry_items.filter(ingredient_name__iexact=ingredient_name).exists():
-            return JsonResponse({'error': 'Ingredient already in pantry'}, status=400)
-        
+        if request.user.pantry_items.filter(
+            ingredient_name__iexact=ingredient_name
+        ).exists():
+            return JsonResponse({"error": "Ingredient already in pantry"}, status=400)
+
         # Create new pantry item
         pantry_item = request.user.pantry_items.create(ingredient_name=ingredient_name)
-        
-        return JsonResponse({
-            'success': True,
-            'ingredient': {
-                'id': pantry_item.id,
-                'name': pantry_item.ingredient_name,
-                'added_date': pantry_item.added_date.strftime('%Y-%m-%d')
+
+        return JsonResponse(
+            {
+                "success": True,
+                "ingredient": {
+                    "id": pantry_item.id,
+                    "name": pantry_item.ingredient_name,
+                    "added_date": pantry_item.added_date.strftime("%Y-%m-%d"),
+                },
             }
-        })
+        )
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @login_required
@@ -174,167 +203,202 @@ def delete_ingredient(request, ingredient_id):
     try:
         pantry_item = get_object_or_404(request.user.pantry_items, id=ingredient_id)
         pantry_item.delete()
-        return JsonResponse({'success': True})
+        return JsonResponse({"success": True})
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @login_required
 @require_GET
 def get_pantry_ingredients(request):
     """API endpoint to get user's pantry ingredients"""
-    pantry_items = request.user.pantry_items.values('id', 'ingredient_name', 'added_date')
-    return JsonResponse({
-        'ingredients': list(pantry_items)
-    })
+    pantry_items = request.user.pantry_items.values(
+        "id", "ingredient_name", "added_date"
+    )
+    return JsonResponse({"ingredients": list(pantry_items)})
 
 
 @login_required
 @require_GET
 def search_recipes_by_pantry(request):
     """Search for recipes based on pantry ingredients using Spoonacular API"""
-    pantry_items = request.user.pantry_items.values_list('ingredient_name', flat=True)
-    
+    pantry_items = request.user.pantry_items.values_list("ingredient_name", flat=True)
+
     if not pantry_items:
-        return JsonResponse({'recipes': [], 'message': 'No ingredients in pantry'})
-    
+        return JsonResponse({"recipes": [], "message": "No ingredients in pantry"})
+
     # Join ingredients with commas for Spoonacular API
-    ingredients = ','.join(pantry_items)
-    
+    ingredients = ",".join(pantry_items)
+
     # Search for recipes using ingredients
     try:
-        recipes_data = spoonacular_get("recipes/findByIngredients", {
-            "ingredients": ingredients,
-            "number": 10,
-            "ranking": 1,
-            "ignorePantry": False,
-        })
-        
+        recipes_data = spoonacular_get(
+            "recipes/findByIngredients",
+            {
+                "ingredients": ingredients,
+                "number": 10,
+                "ranking": 1,
+                "ignorePantry": False,
+            },
+        )
+
         # Process recipes to add match counts
         processed_recipes = []
         for recipe in recipes_data:
-            used_ingredients = recipe.get('usedIngredients', [])
-            missed_ingredients = recipe.get('missedIngredients', [])
-            
-            processed_recipes.append({
-                'id': recipe.get('id'),
-                'title': recipe.get('title'),
-                'image': recipe.get('image'),
-                'used_ingredient_count': len(used_ingredients),
-                'missed_ingredient_count': len(missed_ingredients),
-                'used_ingredients': [ing['name'] for ing in used_ingredients],
-                'missed_ingredients': [ing['name'] for ing in missed_ingredients],
-                'missed_ingredients_string': ', '.join([ing['name'] for ing in missed_ingredients])
-            })
-        
+            used_ingredients = recipe.get("usedIngredients", [])
+            missed_ingredients = recipe.get("missedIngredients", [])
+
+            processed_recipes.append(
+                {
+                    "id": recipe.get("id"),
+                    "title": recipe.get("title"),
+                    "image": recipe.get("image"),
+                    "used_ingredient_count": len(used_ingredients),
+                    "missed_ingredient_count": len(missed_ingredients),
+                    "used_ingredients": [ing["name"] for ing in used_ingredients],
+                    "missed_ingredients": [ing["name"] for ing in missed_ingredients],
+                    "missed_ingredients_string": ", ".join(
+                        [ing["name"] for ing in missed_ingredients]
+                    ),
+                }
+            )
+
         # Sort by most used ingredients (best matches first)
-        processed_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
-        
-        return JsonResponse({
-            'recipes': processed_recipes,
-            'pantry_ingredients': list(pantry_items),
-            'api_status': 'success'
-        })
-        
+        processed_recipes.sort(key=lambda x: x["used_ingredient_count"], reverse=True)
+
+        return JsonResponse(
+            {
+                "recipes": processed_recipes,
+                "pantry_ingredients": list(pantry_items),
+                "api_status": "success",
+            }
+        )
+
     except urllib.error.HTTPError as e:
         if e.code == 402:
             # Handle payment required error gracefully
-            return JsonResponse({
-                'recipes': get_fallback_recipes(pantry_items),
-                'pantry_ingredients': list(pantry_items),
-                'api_status': 'payment_required',
-                'message': 'Recipe API temporarily unavailable. Showing suggested recipes based on your ingredients.',
-                'note': 'This feature requires API credits. Please check back later or try adding more ingredients.'
-            })
+            return JsonResponse(
+                {
+                    "recipes": get_fallback_recipes(pantry_items),
+                    "pantry_ingredients": list(pantry_items),
+                    "api_status": "payment_required",
+                    "message": "Recipe API temporarily unavailable. Showing suggested recipes based on your ingredients.",
+                    "note": "This feature requires API credits. Please check back later or try adding more ingredients.",
+                }
+            )
         else:
-            return JsonResponse({'error': f"Recipe search failed with HTTP {e.code}: {str(e)}"}, status=502)
+            return JsonResponse(
+                {"error": f"Recipe search failed with HTTP {e.code}: {str(e)}"},
+                status=502,
+            )
     except Exception as e:
-        return JsonResponse({'error': f"Recipe search failed: {str(e)}"}, status=502)
+        return JsonResponse({"error": f"Recipe search failed: {str(e)}"}, status=502)
 
 
 def get_fallback_recipes(pantry_items):
     """Generate fallback recipes when API is unavailable"""
     pantry_list = list(pantry_items)
     fallback_recipes = []
-    
+
     # Common recipe templates based on common ingredients
     recipe_templates = [
         {
-            'title': 'Simple Stir Fry',
-            'base_ingredients': ['chicken', 'beef', 'tofu'],
-            'common_ingredients': ['rice', 'vegetables', 'soy sauce'],
-            'image': 'https://via.placeholder.com/150x100?text=Stir+Fry'
+            "title": "Simple Stir Fry",
+            "base_ingredients": ["chicken", "beef", "tofu"],
+            "common_ingredients": ["rice", "vegetables", "soy sauce"],
+            "image": "https://via.placeholder.com/150x100?text=Stir+Fry",
         },
         {
-            'title': 'Pasta with Sauce',
-            'base_ingredients': ['pasta', 'spaghetti'],
-            'common_ingredients': ['tomato', 'cheese', 'meat'],
-            'image': 'https://via.placeholder.com/150x100?text=Pasta'
+            "title": "Pasta with Sauce",
+            "base_ingredients": ["pasta", "spaghetti"],
+            "common_ingredients": ["tomato", "cheese", "meat"],
+            "image": "https://via.placeholder.com/150x100?text=Pasta",
         },
         {
-            'title': 'Omelette',
-            'base_ingredients': ['eggs'],
-            'common_ingredients': ['cheese', 'vegetables', 'meat'],
-            'image': 'https://via.placeholder.com/150x100?text=Omelette'
+            "title": "Omelette",
+            "base_ingredients": ["eggs"],
+            "common_ingredients": ["cheese", "vegetables", "meat"],
+            "image": "https://via.placeholder.com/150x100?text=Omelette",
         },
         {
-            'title': 'Soup',
-            'base_ingredients': ['chicken', 'beef', 'vegetables'],
-            'common_ingredients': ['broth', 'potatoes', 'carrots'],
-            'image': 'https://via.placeholder.com/150x100?text=Soup'
+            "title": "Soup",
+            "base_ingredients": ["chicken", "beef", "vegetables"],
+            "common_ingredients": ["broth", "potatoes", "carrots"],
+            "image": "https://via.placeholder.com/150x100?text=Soup",
         },
         {
-            'title': 'Salad',
-            'base_ingredients': ['lettuce', 'vegetables'],
-            'common_ingredients': ['tomato', 'cheese', 'dressing'],
-            'image': 'https://via.placeholder.com/150x100?text=Salad'
-        }
+            "title": "Salad",
+            "base_ingredients": ["lettuce", "vegetables"],
+            "common_ingredients": ["tomato", "cheese", "dressing"],
+            "image": "https://via.placeholder.com/150x100?text=Salad",
+        },
     ]
-    
+
     # Match recipes to available ingredients
     for template in recipe_templates:
         # Check if we have at least one base ingredient
-        has_base = any(ing.lower() in [p.lower() for p in pantry_list] for ing in template['base_ingredients'])
+        has_base = any(
+            ing.lower() in [p.lower() for p in pantry_list]
+            for ing in template["base_ingredients"]
+        )
         # Check if we have at least one common ingredient
-        has_common = any(ing.lower() in [p.lower() for p in pantry_list] for ing in template['common_ingredients'])
-        
+        has_common = any(
+            ing.lower() in [p.lower() for p in pantry_list]
+            for ing in template["common_ingredients"]
+        )
+
         if has_base or has_common:
             # Count matching ingredients
             matching_ingredients = []
-            for ing in template['base_ingredients'] + template['common_ingredients']:
+            for ing in template["base_ingredients"] + template["common_ingredients"]:
                 if ing.lower() in [p.lower() for p in pantry_list]:
                     matching_ingredients.append(ing)
-            
-            fallback_recipes.append({
-                'id': f"fallback_{len(fallback_recipes) + 1}",
-                'title': template['title'],
-                'image': template['image'],
-                'used_ingredient_count': len(matching_ingredients),
-                'missed_ingredient_count': max(0, 3 - len(matching_ingredients)),  # Assume 3 total needed
-                'used_ingredients': matching_ingredients,
-                'missed_ingredients': ['Additional ingredients needed'] if len(matching_ingredients) < 3 else [],
-                'missed_ingredients_string': 'Additional ingredients needed' if len(matching_ingredients) < 3 else 'All ingredients available!'
-            })
-    
+
+            fallback_recipes.append(
+                {
+                    "id": f"fallback_{len(fallback_recipes) + 1}",
+                    "title": template["title"],
+                    "image": template["image"],
+                    "used_ingredient_count": len(matching_ingredients),
+                    "missed_ingredient_count": max(
+                        0, 3 - len(matching_ingredients)
+                    ),  # Assume 3 total needed
+                    "used_ingredients": matching_ingredients,
+                    "missed_ingredients": (
+                        ["Additional ingredients needed"]
+                        if len(matching_ingredients) < 3
+                        else []
+                    ),
+                    "missed_ingredients_string": (
+                        "Additional ingredients needed"
+                        if len(matching_ingredients) < 3
+                        else "All ingredients available!"
+                    ),
+                }
+            )
+
     # If no matches, provide generic suggestions
     if not fallback_recipes:
         fallback_recipes = [
             {
-                'id': 'fallback_generic_1',
-                'title': 'Basic Recipe Suggestions',
-                'image': 'https://via.placeholder.com/150x100?text=Recipe',
-                'used_ingredient_count': 0,
-                'missed_ingredient_count': 3,
-                'used_ingredients': [],
-                'missed_ingredients': ['Try adding common ingredients like chicken, rice, or vegetables'],
-                'missed_ingredients_string': 'Add more ingredients for better recipe matches'
+                "id": "fallback_generic_1",
+                "title": "Basic Recipe Suggestions",
+                "image": "https://via.placeholder.com/150x100?text=Recipe",
+                "used_ingredient_count": 0,
+                "missed_ingredient_count": 3,
+                "used_ingredients": [],
+                "missed_ingredients": [
+                    "Try adding common ingredients like chicken, rice, or vegetables"
+                ],
+                "missed_ingredients_string": "Add more ingredients for better recipe matches",
             }
         ]
-    
+
     # Sort by ingredient matches
-    fallback_recipes.sort(key=lambda x: x['used_ingredient_count'], reverse=True)
-    
+    fallback_recipes.sort(key=lambda x: x["used_ingredient_count"], reverse=True)
+
     return fallback_recipes[:5]  # Return top 5 suggestions
+
 
 @login_required
 @require_GET
@@ -342,61 +406,65 @@ def get_meals_json(request):
     """API endpoint to get user's meal plans for FullCalendar.io"""
     from .models import MealPlan
     from datetime import datetime, timedelta
-    
+
     # Get optional date range parameters from query string
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
     # Default to current month if not provided
     if not start_date or not end_date:
         today = datetime.now()
-        start_date = today.replace(day=1).strftime('%Y-%m-%d')
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
         # End of current month
         if today.month == 12:
-            end_of_month = today.replace(year=today.year+1, month=1, day=1) - timedelta(days=1)
+            end_of_month = today.replace(
+                year=today.year + 1, month=1, day=1
+            ) - timedelta(days=1)
         else:
-            end_of_month = today.replace(month=today.month+1, day=1) - timedelta(days=1)
-        end_date = end_of_month.strftime('%Y-%m-%d')
-    
-    MEAL_ORDER = {'Breakfast': 0, 'Lunch': 1, 'Dinner': 2}
+            end_of_month = today.replace(month=today.month + 1, day=1) - timedelta(
+                days=1
+            )
+        end_date = end_of_month.strftime("%Y-%m-%d")
+
+    MEAL_ORDER = {"Breakfast": 0, "Lunch": 1, "Dinner": 2}
     MEAL_TIMES = {
-        'Breakfast': '08:00:00',
-        'Lunch': '12:00:00',
-        'Dinner': '18:00:00',
+        "Breakfast": "08:00:00",
+        "Lunch": "12:00:00",
+        "Dinner": "18:00:00",
     }
 
     # Query only the current user's meal plans within date range
     meals = sorted(
         MealPlan.objects.filter(
-            user=request.user,
-            date__gte=start_date,
-            date__lte=end_date
+            user=request.user, date__gte=start_date, date__lte=end_date
         ),
-        key=lambda m: (m.date, MEAL_ORDER.get(m.meal_type, 3))
+        key=lambda m: (m.date, MEAL_ORDER.get(m.meal_type, 3)),
     )
-    
+
     # Format for FullCalendar.io
     calendar_events = []
     for meal in meals:
-        calendar_events.append({
-            'id': meal.id,
-            'title': meal.recipe_name,
-            'start': f"{meal.date.isoformat()}T{MEAL_TIMES.get(meal.meal_type, '12:00:00')}",
-            'meal_type': meal.meal_type,
-            'recipe_id': meal.recipe_id,
-            'calories': meal.calories,
-            'protein': meal.protein,
-            'fat': meal.fat,
-            'carbs': meal.carbs,
-        })
-    
-    return JsonResponse({'meals': calendar_events})
+        calendar_events.append(
+            {
+                "id": meal.id,
+                "title": meal.recipe_name,
+                "start": f"{meal.date.isoformat()}T{MEAL_TIMES.get(meal.meal_type, '12:00:00')}",
+                "meal_type": meal.meal_type,
+                "recipe_id": meal.recipe_id,
+                "calories": meal.calories,
+                "protein": meal.protein,
+                "fat": meal.fat,
+                "carbs": meal.carbs,
+            }
+        )
+
+    return JsonResponse({"meals": calendar_events})
 
 
 @login_required
 def calendar_view(request):
     """Render the meal calendar page"""
-    return render(request, 'home/calendar.html')
+    return render(request, "home/calendar.html")
 
 
 @login_required
@@ -404,32 +472,37 @@ def calendar_view(request):
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
-    from datetime import timedelta, date, time
-    
-    #Parse the incoming JSON body
+    from datetime import timedelta, date
+
+    # Parse the incoming JSON body
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+        return JsonResponse({"error": "Invalid request body."}, status=400)
 
-    #Read user inputs
-    calories = data.get('calories') or None
-    protein = data.get('protein') or None
-    fat = data.get('fat') or None
-    carbs = data.get('carbs') or None
-    cuisine = (data.get('cuisine', '') or '').strip() or None
-    use_pantry = data.get('use_pantry', False)
+    # Read user inputs
+    calories = data.get("calories") or None
+    protein = data.get("protein") or None
+    fat = data.get("fat") or None
+    carbs = data.get("carbs") or None
+    cuisine = (data.get("cuisine", "") or "").strip() or None
+    use_pantry = data.get("use_pantry", False)
 
-    #Fetch pantry items if toggle is on
+    # Fetch pantry items if toggle is on
     pantry_items = None
     if use_pantry:
-        pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+        pantry_items = list(
+            request.user.pantry_items.values_list("ingredient_name", flat=True)
+        )
         if not pantry_items:
-            return JsonResponse({
-                'error': 'Your pantry is empty! Add some ingredients or turn off the pantry toggle.'
-            }, status=400)
-    
-    #Call OpenAI to generate the meal plan
+            return JsonResponse(
+                {
+                    "error": "Your pantry is empty! Add some ingredients or turn off the pantry toggle."
+                },
+                status=400,
+            )
+
+    # Call OpenAI to generate the meal plan
     try:
         meals = generate_meal_plan_with_ai(
             calories=calories,
@@ -440,87 +513,99 @@ def generate_meal_plan(request):
             pantry_items=pantry_items,
         )
     except Exception as e:
-        return JsonResponse({'error': f'Failed to generate meal plan: {str(e)}'}, status=500)
+        return JsonResponse(
+            {"error": f"Failed to generate meal plan: {str(e)}"}, status=500
+        )
 
     if not meals:
-        return JsonResponse({'error': 'No meals were generated. Please try again.'}, status=500)
+        return JsonResponse(
+            {"error": "No meals were generated. Please try again."}, status=500
+        )
 
     # Delete existing meal plans for the next 7 days to avoid duplicates
     today = date.today()
     for i in range(7):
         MealPlan.objects.filter(
-            user=request.user,
-            date=today + timedelta(days=i)
+            user=request.user, date=today + timedelta(days=i)
         ).delete()
-    
-    #Save each meal to DB
+
+    # Save each meal to DB
     created_meals = []
 
     for meal in meals:
-        day_offset = meal.get('day', 1) - 1 
+        day_offset = meal.get("day", 1) - 1
         meal_date = today + timedelta(days=day_offset)
-        meal_type = meal.get('meal_type', 'Dinner')
+        meal_type = meal.get("meal_type", "Dinner")
 
-        #Validate meal_type
-        valid_types = ['Breakfast', 'Lunch', 'Dinner']
+        # Validate meal_type
+        valid_types = ["Breakfast", "Lunch", "Dinner"]
         if meal_type not in valid_types:
-            meal_type = 'Dinner'
-    
+            meal_type = "Dinner"
+
         meal_plan = MealPlan.objects.create(
             user=request.user,
-            recipe_name=meal.get('recipe_name', 'Unknown Meal'),
+            recipe_name=meal.get("recipe_name", "Unknown Meal"),
             date=meal_date,
             meal_type=meal_type,
-            calories=meal.get('calories'),
-            protein=meal.get('protein'),
-            fat=meal.get('fat'),
-            carbs=meal.get('carbs'),
+            calories=meal.get("calories"),
+            protein=meal.get("protein"),
+            fat=meal.get("fat"),
+            carbs=meal.get("carbs"),
         )
         created_meals.append(meal_plan)
-    
-    return JsonResponse({
-        'success': True,
-        'message': f'Generated {len(created_meals)} meals for the next 7 days!',
-        'meals_count': len(created_meals)
-    })
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"Generated {len(created_meals)} meals for the next 7 days!",
+            "meals_count": len(created_meals),
+        }
+    )
+
 
 # This is for the Recipe viewing page and Recipe Input page
 def recipe_view(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
- 
+
     # If the recipe is not public, only the owner can view it
     if not recipe.is_public:
         if not request.user.is_authenticated or request.user != recipe.user:
             raise PermissionDenied
- 
-    steps = list(recipe.steps.order_by('order').values_list('text', flat=True))
- 
+
+    steps = list(recipe.steps.order_by("order").values_list("text", flat=True))
+
     ingredients = [
         {
             "display": " ".join(
-                part for part in (
+                part
+                for part in (
                     (i.quantity or "").strip(),
                     (i.unit or "").strip(),
                     (i.name or "").strip(),
-                ) if part
+                )
+                if part
             ),
             "name": i.name.strip().lower(),
         }
         for i in recipe.ingredients.all()
     ]
- 
+
     # Build a set of pantry ingredient names (lowercase) for the current user
     if request.user.is_authenticated:
         pantry_names = set(
-            request.user.pantry_items.values_list('ingredient_name', flat=True)
+            request.user.pantry_items.values_list("ingredient_name", flat=True)
         )
         pantry_names = {name.lower() for name in pantry_names}
     else:
         pantry_names = set()
- 
+
     # Get comments for this recipe (only top level comments, replies are nested)
-    comments = recipe.comments.select_related('user').filter(parent=None).prefetch_related('replies__user')
-    
+    comments = (
+        recipe.comments.select_related("user")
+        .filter(parent=None)
+        .prefetch_related("replies__user")
+    )
+
     # Create comment form for logged in users
     comment_form = CommentForm() if request.user.is_authenticated else None
     # Check if current user has bookmarked this recipe (efficient single query)
@@ -528,25 +613,31 @@ def recipe_view(request, recipe_id):
     if request.user.is_authenticated:
         is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
 
-    return render(request, "recipe_view.html", {
-        "recipe": recipe,
-        "steps_json": steps,
-        "ingredients_json": ingredients,
-        "pantry_names_json": list(pantry_names),
-        "comments": comments,
-        "comment_form": comment_form,
-        "tags": recipe.tags.all(),
-        "is_owner": request.user == recipe.user,
-        "is_saved_by_user": is_saved_by_user,
-    })
+    return render(
+        request,
+        "recipe_view.html",
+        {
+            "recipe": recipe,
+            "steps_json": steps,
+            "ingredients_json": ingredients,
+            "pantry_names_json": list(pantry_names),
+            "comments": comments,
+            "comment_form": comment_form,
+            "tags": recipe.tags.all(),
+            "is_owner": request.user == recipe.user,
+            "is_saved_by_user": is_saved_by_user,
+        },
+    )
+
 
 def get_grouped_tags():
-        tags = Tag.objects.all().order_by('tag_type', 'name')
-        grouped = defaultdict(list)
-        for tag in tags:
-            grouped[tag.tag_type].append(tag)
-        return dict(grouped)
- 
+    tags = Tag.objects.all().order_by("tag_type", "name")
+    grouped = defaultdict(list)
+    for tag in tags:
+        grouped[tag.tag_type].append(tag)
+    return dict(grouped)
+
+
 def image_check(image):
     if not image:
         return None
@@ -569,6 +660,7 @@ def image_check(image):
         return "There was a problem reading that image. Please try another file."
     return None
 
+
 @transaction.atomic
 @login_required
 def create_recipe(request):
@@ -579,33 +671,44 @@ def create_recipe(request):
         is_public = request.POST.get("is_public") == "on"
         image = request.FILES.get("image")
 
-        #Image upload checking for proper format 
+        # Image upload checking for proper format
         # MIME check
 
-        
         # Server-side validation
         if not title:
-            return render(request, "create_recipe.html", {
-                "error": "Title cannot be empty.",
-                "post_data": request.POST,
-                "grouped_tags": get_grouped_tags()
-            })
-        
+            return render(
+                request,
+                "create_recipe.html",
+                {
+                    "error": "Title cannot be empty.",
+                    "post_data": request.POST,
+                    "grouped_tags": get_grouped_tags(),
+                },
+            )
+
         if image:
             error = image_check(image)
             if error:
-                return render(request, "create_recipe.html", {
-                    "error": error,
-                    "post_data": request.POST,
-                    "grouped_tags": get_grouped_tags(),
-                    "selected_tag_ids": list(map(int, request.POST.getlist("tags[]"))),
-                    "ingredients_data": zip(
-                        request.POST.getlist('ingredient_quantity[]'),
-                        request.POST.getlist('ingredient_unit[]'),
-                        request.POST.getlist('ingredient_name[]')
-                    ),
-                    "steps_data": list(enumerate(request.POST.getlist('steps[]'), start=1)),
-                })
+                return render(
+                    request,
+                    "create_recipe.html",
+                    {
+                        "error": error,
+                        "post_data": request.POST,
+                        "grouped_tags": get_grouped_tags(),
+                        "selected_tag_ids": list(
+                            map(int, request.POST.getlist("tags[]"))
+                        ),
+                        "ingredients_data": zip(
+                            request.POST.getlist("ingredient_quantity[]"),
+                            request.POST.getlist("ingredient_unit[]"),
+                            request.POST.getlist("ingredient_name[]"),
+                        ),
+                        "steps_data": list(
+                            enumerate(request.POST.getlist("steps[]"), start=1)
+                        ),
+                    },
+                )
 
         recipe = Recipe.objects.create(
             user=request.user,
@@ -617,43 +720,33 @@ def create_recipe(request):
             recipe.image = image
             recipe.save()
 
-        quantities = request.POST.getlist('ingredient_quantity[]')
-        units = request.POST.getlist('ingredient_unit[]')
-        names = request.POST.getlist('ingredient_name[]')
+        quantities = request.POST.getlist("ingredient_quantity[]")
+        units = request.POST.getlist("ingredient_unit[]")
+        names = request.POST.getlist("ingredient_name[]")
 
         for qty, unit, name in zip(quantities, units, names):
             if name.strip():
                 RecipeIngredient.objects.create(
-                    recipe=recipe,
-                    quantity=qty,
-                    unit=unit,
-                    name=name.strip()
+                    recipe=recipe, quantity=qty, unit=unit, name=name.strip()
                 )
 
-        steps = request.POST.getlist('steps[]')
+        steps = request.POST.getlist("steps[]")
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
                 RecipeStep.objects.create(
-                    recipe=recipe,
-                    order=i,
-                    text=step_text.strip()
+                    recipe=recipe, order=i, text=step_text.strip()
                 )
 
-        tag_ids = request.POST.getlist('tags[]')
+        tag_ids = request.POST.getlist("tags[]")
         for tag_id in tag_ids:
-            RecipeTag.objects.get_or_create(
-                recipe=recipe,
-                tag_id=tag_id
-            )
+            RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
 
         return redirect("recipe_view", recipe_id=recipe.id)
 
-    return render(request, "create_recipe.html", {
-        "grouped_tags": get_grouped_tags()
-    })
+    return render(request, "create_recipe.html", {"grouped_tags": get_grouped_tags()})
 
 
-#Edit recipe
+# Edit recipe
 @transaction.atomic
 @login_required
 def edit_recipe(request, recipe_id):
@@ -665,40 +758,47 @@ def edit_recipe(request, recipe_id):
         title = request.POST.get("title", "").strip()
         description = request.POST.get("description", "").strip()
         is_public = request.POST.get("is_public") == "on"
-        quantities = request.POST.getlist('ingredient_quantity[]')
-        units = request.POST.getlist('ingredient_unit[]')
-        names = request.POST.getlist('ingredient_name[]')
-        steps = request.POST.getlist('steps[]')
-        tag_ids = request.POST.getlist('tags[]')
+        quantities = request.POST.getlist("ingredient_quantity[]")
+        units = request.POST.getlist("ingredient_unit[]")
+        names = request.POST.getlist("ingredient_name[]")
+        steps = request.POST.getlist("steps[]")
+        tag_ids = request.POST.getlist("tags[]")
         new_image = request.FILES.get("image")
 
         if not title:
-            return render(request, "edit_recipe.html", {
-                "error": "Title cannot be empty.",
-                "recipe": recipe,
-                "post_data": request.POST,  # for title/is_public
-                "ingredients_data": zip(quantities, units, names),
-                "steps_data": list(enumerate(steps, start=1)),
-                "grouped_tags": get_grouped_tags(),
-                "selected_tag_ids": list(map(int, tag_ids)),  # important
-            })
-        if new_image:
-            error = image_check(new_image)
-            if error:
-                return render(request, "edit_recipe.html", {
-                    "error": error,
+            return render(
+                request,
+                "edit_recipe.html",
+                {
+                    "error": "Title cannot be empty.",
                     "recipe": recipe,
-                    "post_data": request.POST,
+                    "post_data": request.POST,  # for title/is_public
                     "ingredients_data": zip(quantities, units, names),
                     "steps_data": list(enumerate(steps, start=1)),
                     "grouped_tags": get_grouped_tags(),
-                    "selected_tag_ids": list(map(int, tag_ids)),
-                })
+                    "selected_tag_ids": list(map(int, tag_ids)),  # important
+                },
+            )
+        if new_image:
+            error = image_check(new_image)
+            if error:
+                return render(
+                    request,
+                    "edit_recipe.html",
+                    {
+                        "error": error,
+                        "recipe": recipe,
+                        "post_data": request.POST,
+                        "ingredients_data": zip(quantities, units, names),
+                        "steps_data": list(enumerate(steps, start=1)),
+                        "grouped_tags": get_grouped_tags(),
+                        "selected_tag_ids": list(map(int, tag_ids)),
+                    },
+                )
 
             if recipe.image:
                 recipe.image.delete(save=False)
             recipe.image = new_image
-           
 
         recipe.title = title
         recipe.description = description
@@ -709,36 +809,34 @@ def edit_recipe(request, recipe_id):
         for qty, unit, name in zip(quantities, units, names):
             if name.strip():
                 RecipeIngredient.objects.create(
-                    recipe=recipe,
-                    quantity=qty,
-                    unit=unit,
-                    name=name.strip()
+                    recipe=recipe, quantity=qty, unit=unit, name=name.strip()
                 )
 
         recipe.steps.all().delete()
         for i, step_text in enumerate(steps, start=1):
             if step_text.strip():
                 RecipeStep.objects.create(
-                    recipe=recipe,
-                    order=i,
-                    text=step_text.strip()
+                    recipe=recipe, order=i, text=step_text.strip()
                 )
 
         RecipeTag.objects.filter(recipe=recipe).delete()
         for tag_id in tag_ids:
             RecipeTag.objects.get_or_create(recipe=recipe, tag_id=tag_id)
-        
-        
+
         return redirect("recipe_view", recipe_id=recipe.id)
 
-    return render(request, "edit_recipe.html", {
-        "recipe": recipe,
-        "grouped_tags": get_grouped_tags(),
-        "selected_tag_ids": list(recipe.tags.values_list('id', flat=True)),
-    })
+    return render(
+        request,
+        "edit_recipe.html",
+        {
+            "recipe": recipe,
+            "grouped_tags": get_grouped_tags(),
+            "selected_tag_ids": list(recipe.tags.values_list("id", flat=True)),
+        },
+    )
 
 
-#Delete a recipe action
+# Delete a recipe action
 @login_required
 def delete_recipe(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
@@ -749,147 +847,175 @@ def delete_recipe(request, recipe_id):
         recipe.delete()
         return redirect("index")
 
-    return render(request, "home/delete_recipe.html", {
-        "recipe": recipe
-    })
+    return render(request, "home/delete_recipe.html", {"recipe": recipe})
+
 
 @login_required
 def my_recipes(request):
     """Display a list of the current user's recipes"""
-    user_recipes = request.user.recipes.order_by('-created_date')
-    favorite_ids = set(Recipe.objects.filter(favorites=request.user).values_list('id', flat=True))
-    return render(request, 'home/my-recipes.html', {'recipes': user_recipes, 'favorite_ids': favorite_ids})
-
-
-    #Create a new session
-    session = ChatSession.objects.create(
-        user=request.user,
-        spoonacular_context=spoonacular_recipes,
-        pantry_context=pantry_items,
+    user_recipes = request.user.recipes.order_by("-created_date")
+    favorite_ids = set(
+        Recipe.objects.filter(favorites=request.user).values_list("id", flat=True)
+    )
+    return render(
+        request,
+        "home/my-recipes.html",
+        {"recipes": user_recipes, "favorite_ids": favorite_ids},
     )
 
-#Social feed view
+
+# Social feed view
 @login_required
 def social_feed(request):
     """Display a feed of all public recipes from all users, newest first"""
-    public_recipes = Recipe.objects.filter(is_public=True).order_by('-created_date')
-    return render(request, 'home/social_feed.html', {'public_recipes': public_recipes})
+    public_recipes = Recipe.objects.filter(is_public=True).order_by("-created_date")
+    return render(request, "home/social_feed.html", {"public_recipes": public_recipes})
 
-#Render the ChefBot chat page and starts new session and then prompts it
-#with the newly pulled spoonacular recipes and saved recipes
+
+# Render the ChefBot chat page and starts new session and then prompts it
+# with the newly pulled spoonacular recipes and saved recipes
 @login_required
 def aiChefBot_view(request):
 
-    #Getting the spoonacular recipes
+    # Getting the spoonacular recipes
     spoonacular_recipes = []
-    pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+    pantry_items = list(
+        request.user.pantry_items.values_list("ingredient_name", flat=True)
+    )
     session = ChatSession.objects.create(user=request.user)
     if pantry_items:
         try:
             from .spoonacular import spoonacular_get
-            raw = spoonacular_get("recipes/findByIngredients", {
-                "ingredients": ','.join(pantry_items),
-                "number": 5,
-                "ranking": 1,
-                "ignorePantry": False,
-            })
+
+            raw = spoonacular_get(
+                "recipes/findByIngredients",
+                {
+                    "ingredients": ",".join(pantry_items),
+                    "number": 5,
+                    "ranking": 1,
+                    "ignorePantry": False,
+                },
+            )
             for r in raw:
-                spoonacular_recipes.append({
-                    'title': r.get('title'),
-                    'used_ingredients': [i['name'] for i in r.get('usedIngredients', [])],
-                    'missed_ingredients': [i['name'] for i in r.get('missedIngredients', [])],
-                })
-        #If Spoonacular is unavailable, continue without it
+                spoonacular_recipes.append(
+                    {
+                        "title": r.get("title"),
+                        "used_ingredients": [
+                            i["name"] for i in r.get("usedIngredients", [])
+                        ],
+                        "missed_ingredients": [
+                            i["name"] for i in r.get("missedIngredients", [])
+                        ],
+                    }
+                )
+        # If Spoonacular is unavailable, continue without it
         except Exception:
             spoonacular_recipes = []
 
-    #Get saved recipes
+    # Get saved recipes
     saved_recipes = []
-    for recipe in request.user.recipes.prefetch_related('ingredients').all():
-        saved_recipes.append({
-            'title': recipe.title,
-            'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
-        })
+    for recipe in request.user.recipes.prefetch_related("ingredients").all():
+        saved_recipes.append(
+            {
+                "title": recipe.title,
+                "ingredients": list(
+                    recipe.ingredients.values("quantity", "unit", "name")
+                ),
+            }
+        )
+
+    return render(
+        request,
+        "home/aiChefBot.html",
+        {
+            "session_id": session.id,
+            "spoonacular_recipes": spoonacular_recipes,
+            "saved_recipes": saved_recipes,
+        },
+    )
 
 
-    return render(request, 'home/aiChefBot.html', {
-        'session_id': session.id,
-        'spoonacular_recipes': spoonacular_recipes,
-        'saved_recipes': saved_recipes,
-    })
-
-#Take in the user message and append it to the search history
+# Take in the user message and append it to the search history
 @login_required
 @require_POST
 def aiChefBot_chat(request):
 
     try:
         data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        session_id = data.get('session_id')
+        user_message = data.get("message", "").strip()
+        session_id = data.get("session_id")
 
         if not user_message:
-            return JsonResponse({'error': 'Message cannot be empty.'}, status=400)
+            return JsonResponse({"error": "Message cannot be empty."}, status=400)
 
         if not session_id:
-            return JsonResponse({'error': 'Session ID is required.'}, status=400)
+            return JsonResponse({"error": "Session ID is required."}, status=400)
 
-        #Load chat session
+        # Load chat session
         try:
             session = ChatSession.objects.get(id=session_id, user=request.user)
         except ChatSession.DoesNotExist:
-            return JsonResponse({'error': 'Chat session not found.'}, status=404)
+            return JsonResponse({"error": "Chat session not found."}, status=404)
 
-        #Save the user's message
+        # Save the user's message
         ChatMessage.objects.create(
             session=session,
-            role='user',
+            role="user",
             content=user_message,
         )
 
-        #Build full conversation history
+        # Build full conversation history
         conversation_history = session.get_history()
 
-        #Build saved recipes context
+        # Build saved recipes context
         saved_recipes = []
-        for recipe in request.user.recipes.prefetch_related('ingredients').all():
-            saved_recipes.append({
-                'title': recipe.title,
-                'ingredients': list(recipe.ingredients.values('quantity', 'unit', 'name')),
-            })
-        #Get pantry items
-        pantry_items = list(request.user.pantry_items.values_list('ingredient_name', flat=True))
+        for recipe in request.user.recipes.prefetch_related("ingredients").all():
+            saved_recipes.append(
+                {
+                    "title": recipe.title,
+                    "ingredients": list(
+                        recipe.ingredients.values("quantity", "unit", "name")
+                    ),
+                }
+            )
+        # Get pantry items
+        pantry_items = list(
+            request.user.pantry_items.values_list("ingredient_name", flat=True)
+        )
 
-        #Call OpenAI
+        # Call OpenAI
         reply = call_openai(
             conversation_history=conversation_history,
             spoonacular_recipes=session.spoonacular_context,
             saved_recipes=saved_recipes,
-            pantry_items=pantry_items, 
+            pantry_items=pantry_items,
         )
 
-        #Save ChefBot's response
+        # Save ChefBot's response
         ChatMessage.objects.create(
             session=session,
-            role='assistant',
+            role="assistant",
             content=reply,
         )
 
-        return JsonResponse({'reply': reply})
+        return JsonResponse({"reply": reply})
 
     except Exception as e:
-        return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
- 
+        return JsonResponse({"error": f"Something went wrong: {str(e)}"}, status=500)
+
+
 @login_required
 @require_GET
 def find_kroger_stores(request):
     """Returns a JSON list of nearby Kroger stores given a lat/lon from the browser"""
     lat = request.GET.get("lat")
     lon = request.GET.get("lon")
-    ingredient = request.GET.get('ingredient')
+    ingredient = request.GET.get("ingredient")
 
     if not lat or not lon or not ingredient:
-        return JsonResponse({"error": "lat, lon, and ingredient are required"}, status=400)
+        return JsonResponse(
+            {"error": "lat, lon, and ingredient are required"}, status=400
+        )
 
     try:
         lat = float(lat)
@@ -899,50 +1025,51 @@ def find_kroger_stores(request):
 
     try:
         from .kroger import get_nearby_stores
+
         stores = get_nearby_stores(lat, lon)
         return JsonResponse({"stores": stores})
     except Exception as e:
-        return JsonResponse({"error": f"Kroger API request failed: {str(e)}"}, status=502)
+        return JsonResponse(
+            {"error": f"Kroger API request failed: {str(e)}"}, status=502
+        )
 
-
-from django.contrib import messages
 
 @login_required
 @require_POST
 def post_comment(request, recipe_id):
     """Post a comment on a recipe"""
     recipe = get_object_or_404(Recipe, id=recipe_id)
-    
+
     # Enforce same visibility rules as recipe_view
     if not recipe.is_public:
         if request.user != recipe.user:
             raise PermissionDenied
-    
-    
+
     form = CommentForm(request.POST)
-    
+
     if form.is_valid():
         comment = form.save(commit=False)
         comment.user = request.user
         comment.recipe = recipe
-        
+
         # Handle parent comment for replies
-        parent_id = request.POST.get('parent_id')
+        parent_id = request.POST.get("parent_id")
         if parent_id:
             parent_comment = get_object_or_404(Comment, id=parent_id, recipe=recipe)
             comment.parent = parent_comment
-        
+
         comment.save()
-        
-        
-        messages.success(request, 'Your comment was posted successfully.')
+
+        messages.success(request, "Your comment was posted successfully.")
     else:
         # Show validation errors to user
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(request, error)
-    
-    return redirect('recipe_view', recipe_id=recipe.id)
+
+    return redirect("recipe_view", recipe_id=recipe.id)
+
+
 @login_required
 @require_POST
 def toggle_favorite(request, recipe_id):
@@ -954,11 +1081,9 @@ def toggle_favorite(request, recipe_id):
     else:
         recipe.favorites.add(request.user)
         saved = True
-    
-    return JsonResponse({
-        'saved': saved,
-        'recipe_id': recipe.id
-    })
+
+    return JsonResponse({"saved": saved, "recipe_id": recipe.id})
+
 
 @login_required
 def favorites_list(request):

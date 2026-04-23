@@ -8,13 +8,15 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('home', '0011_seed_tags'),
+        ("home", "0011_seed_tags"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='recipe',
-            name='favorites',
-            field=models.ManyToManyField(blank=True, related_name='favorite_recipes', to=settings.AUTH_USER_MODEL),
+            model_name="recipe",
+            name="favorites",
+            field=models.ManyToManyField(
+                blank=True, related_name="favorite_recipes", to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]
