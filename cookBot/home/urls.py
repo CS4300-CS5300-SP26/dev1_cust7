@@ -29,20 +29,22 @@ urlpatterns = [
         name="search_recipes_by_pantry",
     ),
     # Meal Calendar API
-    path("api/get-meals/", views.get_meals_json, name="get_meals"),
-    path(
-        "api/generate-meal-plan/", views.generate_meal_plan, name="generate_meal_plan"
-    ),
-    path("calendar/", views.calendar_view, name="calendar"),
-    # Paths for create/edit recipe and display recipe pages
-    path("recipe/<int:recipe_id>/", views.recipe_view, name="recipe_view"),
-    path("recipe/create/", views.create_recipe, name="create_recipe"),
-    path("recipe/<int:recipe_id>/edit/", views.edit_recipe, name="edit_recipe"),
-    path("my-recipes/", views.my_recipes, name="my_recipes"),
+    path('api/get-meals/', views.get_meals_json, name='get_meals'),
+    path('api/generate-meal-plan/', views.generate_meal_plan, name='generate_meal_plan'),
+    path('calendar/', views.calendar_view, name='calendar'),
+
+    # Paths for create/edit recipe, search for recipes, and display recipe pages
+    path('recipe/<int:recipe_id>/', views.recipe_view, name='recipe_view'),
+    path('recipe/create/', views.create_recipe, name='create_recipe'),
+    path('recipe/<int:recipe_id>/edit/', views.edit_recipe, name='edit_recipe'),
+    path('my-recipes/', views.my_recipes, name='my_recipes'),
     path("recipes/<int:recipe_id>/delete/", views.delete_recipe, name="delete_recipe"),
-    # ChefBot openai
-    path("aiChefBot/", views.aiChefBot_view, name="aiChefBot"),
-    path("aiChefBot/chat/", views.aiChefBot_chat, name="aiChefBot_chat"),
+    path('search/', views.search_recipes, name='search_recipes'),
+
+    #ChefBot openai
+    path('aiChefBot/', views.aiChefBot_view, name='aiChefBot'),
+    path('aiChefBot/chat/', views.aiChefBot_chat, name='aiChefBot_chat'),
+
     # Social feed
     path("social/", views.social_feed, name="social_feed"),
     # Kroger store finder

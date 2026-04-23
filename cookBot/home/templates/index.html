@@ -17,27 +17,39 @@
       </div>
     </section>
 
-    <section class="search-area" aria-label="Search links">
+    <section class="search-area" aria-label="Search recipes">
       <div class="search-wrap">
-        <form class="search-bar" id="searchForm" autocomplete="off">
+    
+        <!-- Text search bar -->
+        <form class="search-bar" method="GET" action="{% url 'search_recipes' %}">
           <input
-            id="searchInput"
             type="text"
-            placeholder="Type here…"
-            aria-label="Search for links"
+            name="q"
+            placeholder="Search by recipe name or chef..."
+            aria-label="Search recipes"
           />
-          <button class="search-btn" type="submit" aria-label="Search">
-            ↑
-          </button>
+          <button class="search-btn" type="submit" aria-label="Search">↑</button>
         </form>
-
-        <div class="hint">Try: “chicken”, “meal plan”, “French”, “pasta”.</div>
-
-        <div class="results" id="resultsBox">
-          <h3 id="resultsTitle">Results</h3>
-          <ul id="resultsList"></ul>
-          <div class="empty" id="emptyState" style="display:none;">No matches found.</div>
+    
+        <div class="hint">Try: "chicken", "meal plan", "French", "pasta".</div>
+    
+        <!-- Browse by tags -->
+        <div class="browse-tags">
+          <h3 class="browse-title">Or browse by tag</h3>
+          {% for type, tags in grouped_tags.items %}
+            <div class="tag-group">
+              <div class="tag-group-title">{{ type|title }}</div>
+              <div class="tag-container">
+                {% for tag in tags %}
+                  <a href="{% url 'search_recipes' %}?tags={{ tag.id }}" class="tag-chip">
+                    {{ tag.name }}
+                  </a>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
         </div>
+    
       </div>
     </section>
   </main>

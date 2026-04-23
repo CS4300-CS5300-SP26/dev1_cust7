@@ -6,6 +6,8 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
+from django.utils import timezone
+from django.db.models import Q
 from django.core.exceptions import PermissionDenied
 from .models import (
     Recipe,
@@ -30,8 +32,14 @@ from .forms import RegisterForm, EditProfileForm, CommentForm
 
 
 def index(request):
-    return render(request, "index.html")
+    tags = Tag.objects.all().order_by('tag_type', 'name')
+    grouped_tags = {}
+    for tag in tags:
+        grouped_tags.setdefault(tag.tag_type, []).append(tag)
 
+    return render(request, 'index.html', {
+        'grouped_tags': grouped_tags,
+    })
 
 # Help from Claude and Spoonacular documents on fetching data from spoonacular #
 def get_nutrition(request, ingredient_name):
@@ -1080,11 +1088,37 @@ def toggle_favorite(request, recipe_id):
 @login_required
 def favorites_list(request):
     """Display user's favorited recipes"""
-    favorite_recipes = (
-        request.user.favorite_recipes.all()
-        .select_related("user")
-        .prefetch_related("ratings")
-    )
-    return render(
-        request, "home/favorites_list.html", {"favorite_recipes": favorite_recipes}
-    )
+    favorite_recipes = request.user.favorite_recipes.all().select_related('user').prefetch_related('ratings')
+    return render(request, 'home/favorites_list.html', {'favorite_recipes': favorite_recipes})
+
+# Here is the search logic
+def search_recipes(request):
+    query = request.GET.get('q', '').strip()
+    selected_tag_ids = request.GET.getlist('tags')
+
+    recipes = Recipe.objects.filter(is_public=True)
+
+    if query:
+        recipes = recipes.filter(
+            Q(title__icontains=query) | Q(user__username__icontains=query)
+        )
+
+    if selected_tag_ids:
+        for tag_id in selected_tag_ids:
+            recipes = recipes.filter(tags__id=tag_id)
+        recipes = recipes.distinct()
+
+    grouped_tags = {}
+    for tag in Tag.objects.all().order_by('tag_type', 'name'):
+        grouped_tags.setdefault(tag.tag_type, []).append(tag)
+
+    selected_tags = Tag.objects.filter(id__in=selected_tag_ids)
+
+    return render(request, 'search.html', {
+        'recipes': recipes,
+        'query': query,
+        'grouped_tags': grouped_tags,
+        'selected_tag_ids': [int(i) for i in selected_tag_ids if i.isdigit()],
+        'selected_tags': selected_tags,
+        'result_count': recipes.count(),
+    })
