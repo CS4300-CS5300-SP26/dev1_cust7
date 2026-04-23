@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0002_recipe_recipeingredient'),
+        ("home", "0002_recipe_recipeingredient"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='recipe',
-            name='is_public',
+            model_name="recipe",
+            name="is_public",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='recipe',
-            name='rating',
-            field=models.IntegerField(blank=True, choices=[(1, '1 Star'), (2, '2 Stars'), (3, '3 Stars'), (4, '4 Stars'), (5, '5 Stars')], null=True),
+            model_name="recipe",
+            name="rating",
+            field=models.IntegerField(
+                blank=True,
+                choices=[
+                    (1, "1 Star"),
+                    (2, "2 Stars"),
+                    (3, "3 Stars"),
+                    (4, "4 Stars"),
+                    (5, "5 Stars"),
+                ],
+                null=True,
+            ),
         ),
     ]
