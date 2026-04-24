@@ -39,6 +39,35 @@
       {% endif %}
     </div>
 
+    <!-- Star Rating -->
+    <div class="star-rating-widget" id="starRatingWidget" data-recipe-id="{{ recipe.id }}">
+      <div class="star-row" id="starRow">
+        {% for i in "12345" %}
+          <button
+            type="button"
+            class="star-btn {% if user_rating and user_rating >= forloop.counter %}filled{% endif %}"
+            data-value="{{ forloop.counter }}"
+            aria-label="{{ forloop.counter }} star"
+          >★</button>
+        {% endfor %}
+      </div>
+      <div class="star-meta" id="starMeta">
+        {% if average_rating %}
+          <span id="avgDisplay">{{ average_rating|floatformat:1 }} / 5</span>
+          <span class="star-count">({{ rating_count }} rating{{ rating_count|pluralize }})</span>
+        {% else %}
+          <span id="avgDisplay">No ratings yet</span>
+        {% endif %}
+      </div>
+      {% if not user.is_authenticated %}
+        <p class="star-login-prompt"><a href="{% url 'signin' %}">Sign in</a> to rate this recipe</p>
+      {% elif user_rating %}
+        <p class="star-prompt" id="starPrompt">Your rating: {{ user_rating }} star{{ user_rating|pluralize }} — click to change</p>
+      {% else %}
+        <p class="star-prompt" id="starPrompt">Click to rate this recipe</p>
+      {% endif %}
+    </div>
+
     <!-- Owner Actions -->
     {% if is_owner %}
     <div class="recipe-actions">
@@ -234,5 +263,64 @@ if (check) {
   });
 }
 </script>
+
+<script>
+  (function () {
+    const widget  = document.getElementById('starRatingWidget');
+    if (!widget) return;
+  
+    const buttons = widget.querySelectorAll('.star-btn');
+    const avgEl   = document.getElementById('avgDisplay');
+    const starPrompt  = document.getElementById('starPrompt');
+    const recipeId = parseInt(widget.dataset.recipeId);
+    const rateUrl  = "{% url 'rate_recipe' recipe.id %}";
+    const csrfToken = "{{ csrf_token }}";
+  
+    // Hover preview
+    buttons.forEach(btn => {
+      btn.addEventListener('mouseenter', () => {
+        const val = parseInt(btn.dataset.value);
+        buttons.forEach(b => {
+          b.classList.toggle('hover', parseInt(b.dataset.value) <= val);
+        });
+      });
+      btn.addEventListener('mouseleave', () => {
+        buttons.forEach(b => b.classList.remove('hover'));
+      });
+    });
+  
+    // Submit rating
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const stars = parseInt(btn.dataset.value);
+  
+        fetch(rateUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+          body: JSON.stringify({ stars }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            // Update filled stars
+            buttons.forEach(b => {
+              b.classList.toggle('filled', parseInt(b.dataset.value) <= data.stars);
+            });
+            avgEl.textContent = data.average + ' / 5';
+            if (starPrompt) {
+              starPrompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
+            }
+          }
+        })
+        .catch(() => {
+          if (starPrompt) starPrompt.textContent = 'Something went wrong, please try again.';
+        });
+      });
+    });
+  })();
+  </script>
 
 {% endblock %}
