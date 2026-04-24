@@ -27,6 +27,10 @@
             src="{{ recipe.image.url }}"
             alt="{{ recipe.title }}"
           >
+        {% else %}
+          <div class="recipe-card-image-placeholder">
+            🍳
+          </div>
         {% endif %}
         <h2 class="recipe-card-title">{{ recipe.title }}</h2>
         <div class="recipe-card-meta">
