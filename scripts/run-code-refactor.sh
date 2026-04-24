@@ -27,7 +27,7 @@ if [ -z "$PROJECT_DIR" ] || [ -z "$VENV_DIR" ]; then
 fi
 
 cd $VENV_DIR && source bin/activate
-cd $PROJECT_DIR/cookBot/
+cd $PROJECT_DIR
 
 echo "================ BLACK (formatting) ================"
 black .

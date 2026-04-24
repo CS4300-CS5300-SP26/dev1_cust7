@@ -10,24 +10,52 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('home', '0005_remove_recipe_instructions_recipestep'),
+        ("home", "0005_remove_recipe_instructions_recipestep"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MealPlan',
+            name="MealPlan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('recipe_name', models.CharField(max_length=200)),
-                ('recipe_id', models.IntegerField(blank=True, null=True)),
-                ('date', models.DateField()),
-                ('meal_type', models.CharField(choices=[('Breakfast', 'Breakfast'), ('Lunch', 'Lunch'), ('Dinner', 'Dinner')], max_length=20)),
-                ('created_date', models.DateTimeField(default=django.utils.timezone.now)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='meal_plans', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("recipe_name", models.CharField(max_length=200)),
+                ("recipe_id", models.IntegerField(blank=True, null=True)),
+                ("date", models.DateField()),
+                (
+                    "meal_type",
+                    models.CharField(
+                        choices=[
+                            ("Breakfast", "Breakfast"),
+                            ("Lunch", "Lunch"),
+                            ("Dinner", "Dinner"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "created_date",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="meal_plans",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['date', 'meal_type'],
-                'unique_together': {('user', 'date', 'meal_type')},
+                "ordering": ["date", "meal_type"],
+                "unique_together": {("user", "date", "meal_type")},
             },
         ),
     ]
