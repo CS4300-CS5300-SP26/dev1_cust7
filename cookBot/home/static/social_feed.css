@@ -103,6 +103,14 @@
     transition: background 0.15s, transform 0.1s;
   }
  
+  .recipe-card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+  }
+  
   .recipe-card-link:hover  { background: #42a06d; }
   .recipe-card-link:active { transform: scale(0.97); }
  
