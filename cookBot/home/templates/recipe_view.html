@@ -305,13 +305,18 @@ if (check) {
         .then(res => res.json())
         .then(data => {
           if (data.success) {
-            // Update filled stars
             buttons.forEach(b => {
               b.classList.toggle('filled', parseInt(b.dataset.value) <= data.stars);
             });
             avgEl.textContent = data.average + ' / 5';
-            if (starPrompt) {
-              starPrompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
+
+            const countEl = widget.querySelector('.star-count');
+            if (countEl) {
+              countEl.textContent = `(${data.count} rating${data.count !== 1 ? 's' : ''})`;
+            }
+
+            if (prompt) {
+              prompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
             }
           }
         })
@@ -319,6 +324,13 @@ if (check) {
           if (starPrompt) starPrompt.textContent = 'Something went wrong, please try again.';
         });
       });
+    });
+    // Force a fresh page load when navigating back to this page
+    // so the star widget always reflects the saved rating from the DB
+    window.addEventListener('pageshow', function(event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
     });
   })();
   </script>
