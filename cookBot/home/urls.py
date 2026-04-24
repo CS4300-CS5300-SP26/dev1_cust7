@@ -57,5 +57,7 @@ urlpatterns = [
         name="toggle_favorite",
     ),
     path("favorites/", views.favorites_list, name="favorites_list"),
+    # Ratings functionality
+    path("recipe/<int:recipe_id>/rate/", views.rate_recipe, name="rate_recipe"),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
