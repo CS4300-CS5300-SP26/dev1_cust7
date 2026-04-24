@@ -315,8 +315,8 @@ if (check) {
               countEl.textContent = `(${data.count} rating${data.count !== 1 ? 's' : ''})`;
             }
 
-            if (prompt) {
-              prompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
+            if (starPrompt) {
+              starPrompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
             }
           }
         })
