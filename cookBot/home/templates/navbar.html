@@ -132,12 +132,14 @@
         // Reset streak button handler
         if (resetBtn) {
           resetBtn.addEventListener('click', function() {
-            const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
-            
+            const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            if (!csrftoken) return; // Gracefully exit if cookie not present
+            const tokenValue = csrftoken.split('=')[1];
+
             fetch('/api/reset-streak/', {
               method: 'POST',
               headers: {
-                'X-CSRFToken': csrftoken,
+                'X-CSRFToken': tokenValue,
                 'Content-Type': 'application/json',
               },
             })
