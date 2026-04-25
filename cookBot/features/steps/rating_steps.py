@@ -18,6 +18,7 @@ def step_public_recipe_exists(context):
         is_public=True,
     )
 
+
 @given('that user has created a public recipe')
 def step_user_created_public_recipe(context):
     context.recipe = Recipe.objects.create(
@@ -25,6 +26,7 @@ def step_user_created_public_recipe(context):
         title='My Own Recipe',
         is_public=True,
     )
+
 
 @given('another user has created a private recipe')
 def step_another_user_private_recipe(context):
@@ -36,6 +38,7 @@ def step_another_user_private_recipe(context):
         is_public=False,
     )
 
+
 @given('a second user has rated that recipe {stars:d} stars')
 def step_second_user_rated(context, stars):
     User.objects.filter(username='rater2').delete()
@@ -45,6 +48,7 @@ def step_second_user_rated(context, stars):
         user=rater,
         defaults={'stars': stars},
     )
+
 
 @given('the user has already rated that recipe {stars:d} stars')
 def step_user_already_rated(context, stars):
@@ -57,6 +61,7 @@ def step_user_already_rated(context, stars):
 
 # --- WHEN ---
 
+
 @when('an unauthenticated user submits a rating of {stars:d} for that recipe')
 def step_unauth_submits_rating(context, stars):
     client = Client()
@@ -66,6 +71,7 @@ def step_unauth_submits_rating(context, stars):
         content_type='application/json',
     )
 
+
 @when('the user submits a rating of {stars:d} for that recipe')
 def step_user_submits_rating(context, stars):
     context.response = context.client.post(
@@ -74,6 +80,7 @@ def step_user_submits_rating(context, stars):
         content_type='application/json',
     )
 
+
 @when('the user submits a rating of {stars:d} for that private recipe')
 def step_user_submits_rating_private(context, stars):
     context.response = context.client.post(
@@ -81,6 +88,7 @@ def step_user_submits_rating_private(context, stars):
         data=json.dumps({'stars': stars}),
         content_type='application/json',
     )
+
 
 @when('the user visits the recipe view page')
 def step_user_visits_recipe_page(context):
@@ -99,12 +107,14 @@ def step_response_success(context):
     assert data.get('success') is True, \
         f"Expected success=True in response, got {data}"
 
+
 @then('the returned average should be {expected:f}')
 def step_returned_average(context, expected):
     data = json.loads(context.response.content)
     assert 'average' in data, f"No 'average' key in response: {data}"
     assert float(data['average']) == expected, \
         f"Expected average {expected}, got {data['average']}"
+
 
 @then('the returned count should be {expected:d}')
 def step_returned_count(context, expected):
@@ -113,10 +123,12 @@ def step_returned_count(context, expected):
     assert data['count'] == expected, \
         f"Expected count {expected}, got {data['count']}"
 
+
 @then('I should receive a 403 error response')
 def step_receive_403(context):
     assert context.response.status_code == 403, \
         f"Expected 403, got {context.response.status_code}"
+
 
 @then('the page should show {stars:d} filled stars')
 def step_page_shows_filled_stars(context, stars):
@@ -127,6 +139,7 @@ def step_page_shows_filled_stars(context, stars):
     filled_count = content.count('star-btn filled')
     assert filled_count == stars, \
         f"Expected {stars} filled star buttons, found {filled_count}"
+
 
 @then('the page should display the average rating')
 def step_page_shows_average(context):

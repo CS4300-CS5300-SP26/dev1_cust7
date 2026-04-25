@@ -620,7 +620,7 @@ def recipe_view(request, recipe_id):
         is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
         existing = recipe.ratings.filter(user=request.user).first()
         user_rating = existing.stars if existing else None
-        
+
     return render(
         request,
         "recipe_view.html",
@@ -1144,6 +1144,7 @@ def search_recipes(request):
             "result_count": recipes.count(),
         },
     )
+
 
 # Ratings view
 @login_required
