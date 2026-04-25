@@ -47,16 +47,6 @@ def step_second_user_rated(context, stars):
         defaults={'stars': stars},
     )
 
-@given('a second user has rated that recipe {stars:d} stars')
-def step_second_user_rated_view(context, stars):
-    User.objects.filter(username='rater2').delete()
-    rater = User.objects.create_user(username='rater2', password='testpass123')
-    RecipeRating.objects.update_or_create(
-        recipe=context.recipe,
-        user=rater,
-        defaults={'stars': stars},
-    )
-
 @given('the user has already rated that recipe {stars:d} stars')
 def step_user_already_rated(context, stars):
     RecipeRating.objects.update_or_create(
