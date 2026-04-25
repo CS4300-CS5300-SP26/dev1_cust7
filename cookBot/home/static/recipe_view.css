@@ -746,6 +746,11 @@
   transition: color 0.1s, transform 0.1s;
   padding: 0;
   line-height: 1;
+  .star-btn:disabled,
+  .star-btn[data-readonly] {
+    cursor: default;
+    pointer-events: none;
+  }
 }
 
 .star-btn.filled {

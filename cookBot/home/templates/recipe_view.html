@@ -40,15 +40,16 @@
     </div>
 
     <!-- Star Rating -->
-    <div class="star-rating-widget" id="starRatingWidget" data-recipe-id="{{ recipe.id }}">
+    <div class="star-rating-widget" id="starRatingWidget" data-recipe-id="{{ recipe.id }}" data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-rate-url="{% url 'rate_recipe' recipe.id %}">
       <div class="star-row" id="starRow">
         {% for i in "12345" %}
-          <button
-            type="button"
-            class="star-btn {% if user_rating and user_rating >= forloop.counter %}filled{% endif %}"
-            data-value="{{ forloop.counter }}"
-            aria-label="{{ forloop.counter }} star"
-          >★</button>
+        <button
+          type="button"
+          class="star-btn {% if user_rating and user_rating >= forloop.counter %}filled{% endif %}"
+          data-value="{{ forloop.counter }}"
+          {% if not user.is_authenticated %}data-readonly{% endif %}
+          aria-label="{{ forloop.counter }} star"
+        >★</button>
         {% endfor %}
       </div>
       <div class="star-meta" id="starMeta">
@@ -266,73 +267,69 @@ if (check) {
 
 <script>
   (function () {
-    const widget  = document.getElementById('starRatingWidget');
+    const widget = document.getElementById('starRatingWidget');
     if (!widget) return;
   
-    const buttons = widget.querySelectorAll('.star-btn');
-    const avgEl   = document.getElementById('avgDisplay');
-    const starPrompt  = document.getElementById('starPrompt');
-    const recipeId = parseInt(widget.dataset.recipeId);
-    const rateUrl  = "{% url 'rate_recipe' recipe.id %}";
-    const csrfToken = "{{ csrf_token }}";
+    const buttons        = widget.querySelectorAll('.star-btn');
+    const avgEl          = document.getElementById('avgDisplay');
+    const starPrompt     = document.getElementById('starPrompt');
+    const rateUrl        = widget.dataset.rateUrl;
+    const csrfToken      = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+    const isAuthenticated = widget.dataset.authenticated === 'true';
   
-    // Hover preview
-    buttons.forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        const val = parseInt(btn.dataset.value);
-        buttons.forEach(b => {
-          b.classList.toggle('hover', parseInt(b.dataset.value) <= val);
+    if (isAuthenticated) {
+      buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+          const val = parseInt(btn.dataset.value);
+          buttons.forEach(b => {
+            b.classList.toggle('hover', parseInt(b.dataset.value) <= val);
+          });
+        });
+        btn.addEventListener('mouseleave', () => {
+          buttons.forEach(b => b.classList.remove('hover'));
         });
       });
-      btn.addEventListener('mouseleave', () => {
-        buttons.forEach(b => b.classList.remove('hover'));
-      });
-    });
   
-    // Submit rating
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const stars = parseInt(btn.dataset.value);
-  
-        fetch(rateUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-          },
-          body: JSON.stringify({ stars }),
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            buttons.forEach(b => {
-              b.classList.toggle('filled', parseInt(b.dataset.value) <= data.stars);
-            });
-            avgEl.textContent = data.average + ' / 5';
-
-            const countEl = widget.querySelector('.star-count');
-            if (countEl) {
-              countEl.textContent = `(${data.count} rating${data.count !== 1 ? 's' : ''})`;
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const stars = parseInt(btn.dataset.value);
+          fetch(rateUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({ stars }),
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              buttons.forEach(b => {
+                b.classList.toggle('filled', parseInt(b.dataset.value) <= data.stars);
+              });
+              avgEl.textContent = data.average + ' / 5';
+              const countEl = widget.querySelector('.star-count');
+              if (countEl) {
+                countEl.textContent = `(${data.count} rating${data.count !== 1 ? 's' : ''})`;
+              }
+              if (starPrompt) {
+                starPrompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
+              }
             }
-
-            if (starPrompt) {
-              starPrompt.textContent = `Your rating: ${data.stars} star${data.stars !== 1 ? 's' : ''} — click to change`;
-            }
-          }
-        })
-        .catch(() => {
-          if (starPrompt) starPrompt.textContent = 'Something went wrong, please try again.';
+          })
+          .catch(() => {
+            if (starPrompt) starPrompt.textContent = 'Something went wrong, please try again.';
+          });
         });
       });
-    });
-    // Force a fresh page load when navigating back to this page
-    // so the star widget always reflects the saved rating from the DB
+    }
+  
     window.addEventListener('pageshow', function(event) {
       if (event.persisted) {
         window.location.reload();
       }
     });
   })();
-  </script>
+</script>
 
 {% endblock %}
