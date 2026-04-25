@@ -16,16 +16,25 @@
       <h1>{{ recipe.title }}</h1>
 
       {% if user.is_authenticated %}
-      <button type="button"
-              id="bookmarkBtn"
-              class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}"
-              data-recipe-id="{{ recipe.id }}"
-              data-toggle-url="{% url 'toggle_favorite' recipe.id %}"
-              aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}">
-        <span class="icon">
-          {% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}
-        </span>
-      </button>
+      <div class="title-buttons">
+        <button type="button"
+                id="bookmarkBtn"
+                class="bookmark-btn {% if is_saved_by_user %}saved{% endif %}"
+                data-recipe-id="{{ recipe.id }}"
+                data-toggle-url="{% url 'toggle_favorite' recipe.id %}"
+                aria-label="{% if is_saved_by_user %}Remove from saved recipes{% else %}Save this recipe{% endif %}">
+          <span class="icon">
+            {% if is_saved_by_user %}&#9733;{% else %}&#9734;{% endif %}
+          </span>
+        </button>
+        <button type="button"
+                id="madeRecipeBtn"
+                class="made-recipe-btn"
+                data-increment-url="{% url 'increment_streak' %}"
+                title="I made this recipe!">
+          🔥 Made Recipe
+        </button>
+      </div>
       {% endif %}
     </div>
 

@@ -21,6 +21,27 @@
             <a class="navbar-brand" href="/">
               <img src="{% static 'logo.png' %}" alt="Logo">
             </a>
+
+            {% if user.is_authenticated %}
+            <span class="streak-badge" title="Click for streak stats" id="streakBadge" style="cursor: pointer;">
+              🔥 <span class="streak-count">{{ user.streak.current_streak|default:"0" }}</span>
+            </span>
+            <div class="streak-popup" id="streakPopup" style="display: none;">
+              <div class="streak-popup-row">
+                <span class="streak-popup-label">Current Streak</span>
+                <span class="streak-popup-value">{{ user.streak.current_streak|default:"0" }}</span>
+              </div>
+              <div class="streak-popup-row">
+                <span class="streak-popup-label">Longest Streak</span>
+                <span class="streak-popup-value">{{ user.streak.longest_streak|default:"0" }}</span>
+              </div>
+              <div class="streak-popup-row">
+                <span class="streak-popup-label">Total Meals Made</span>
+                <span class="streak-popup-value" id="totalMealsCount">{{ user.meal_plans.count }}</span>
+              </div>
+              <button class="streak-reset-btn" id="resetStreakBtn">Reset Streak</button>
+            </div>
+            {% endif %}
       
             <!-- Mobile toggle and this is hidden -->
             <input type="checkbox" id="menu-toggle" class="menu-checkbox">
@@ -76,5 +97,67 @@
       </header>
     {% block content %}
     {% endblock %}
+    
+    <script>
+      // Streak popup toggle handler
+      document.addEventListener('DOMContentLoaded', function() {
+        const streakBadge = document.getElementById('streakBadge');
+        const streakPopup = document.getElementById('streakPopup');
+        const resetBtn = document.getElementById('resetStreakBtn');
+        
+        // Toggle popup when clicking fire badge
+        if (streakBadge && streakPopup) {
+          streakBadge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (streakPopup.style.display === 'none') {
+              streakPopup.style.display = 'block';
+            } else {
+              streakPopup.style.display = 'none';
+            }
+          });
+          
+          // Close popup when clicking anywhere else
+          document.addEventListener('click', function(e) {
+            if (!streakPopup.contains(e.target) && !streakBadge.contains(e.target)) {
+              streakPopup.style.display = 'none';
+            }
+          });
+          
+          // Prevent popup close when clicking inside popup
+          streakPopup.addEventListener('click', function(e) {
+            e.stopPropagation();
+          });
+        }
+        
+        // Reset streak button handler
+        if (resetBtn) {
+          resetBtn.addEventListener('click', function() {
+            const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
+            
+            fetch('/api/reset-streak/', {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+              },
+            })
+            .then(response => response.json())
+            .then(data => {
+              // Update navbar count
+              const streakCount = document.querySelector('.streak-count');
+              if (streakCount) {
+                streakCount.textContent = data.current_streak;
+              }
+              // Update popup values
+              document.querySelectorAll('.streak-popup-value')[0].textContent = data.current_streak;
+              document.querySelectorAll('.streak-popup-value')[1].textContent = data.longest_streak;
+              // Close popup
+              streakPopup.style.display = 'none';
+            })
+            .catch(error => console.error('Error resetting streak:', error));
+          });
+        }
+      });
+    </script>
 </body>
 </html>

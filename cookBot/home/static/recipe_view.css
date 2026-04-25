@@ -668,6 +668,12 @@
   margin-bottom: 0.5rem;
 }
 
+.title-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .bookmark-btn {
   background: none;
   border: 2px solid #e5e7eb;
@@ -723,5 +729,33 @@
 
 .bookmark-btn .icon {
   user-select: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Made Recipe button */
+.made-recipe-btn {
+  background: rgba(226, 88, 34, 0.15);
+  color: #e25822;
+  border: 2px solid rgba(226, 88, 34, 0.6);
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.made-recipe-btn:hover {
+  background: rgba(226, 88, 34, 0.3);
+  transform: scale(1.05);
+  border-color: #e25822;
+}
+
+.made-recipe-btn.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.made-recipe-btn:disabled {
+  cursor: not-allowed;
 }
