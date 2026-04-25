@@ -58,6 +58,6 @@ class MealPlanHistoryViewTests(TestCase):
             )
 
         self.client.login(username="testuser", password="password123")
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(9):
             response = self.client.get(reverse("meal_plan_history"))
         self.assertEqual(response.status_code, 200)

@@ -24,16 +24,16 @@
 
             {% if user.is_authenticated %}
             <span class="streak-badge" title="Click for streak stats" id="streakBadge" style="cursor: pointer;">
-              🔥 <span class="streak-count">{{ user.streak.current_streak|default:"0" }}</span>
+              🔥 <span class="streak-count">{{ user_streak.current_streak|default:"0" }}</span>
             </span>
             <div class="streak-popup" id="streakPopup" style="display: none;">
               <div class="streak-popup-row">
                 <span class="streak-popup-label">Current Streak</span>
-                <span class="streak-popup-value">{{ user.streak.current_streak|default:"0" }}</span>
+                <span class="streak-popup-value">{{ user_streak.current_streak|default:"0" }}</span>
               </div>
               <div class="streak-popup-row">
                 <span class="streak-popup-label">Longest Streak</span>
-                <span class="streak-popup-value">{{ user.streak.longest_streak|default:"0" }}</span>
+                <span class="streak-popup-value">{{ user_streak.longest_streak|default:"0" }}</span>
               </div>
               <div class="streak-popup-row">
                 <span class="streak-popup-label">Total Meals Made</span>
