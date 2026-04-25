@@ -512,10 +512,11 @@ def meal_plan_detail(request, meal_plan_id):
 def increment_streak(request):
     """Increment the user's cooking streak when they mark a recipe as made."""
     from .models import UserStreak
-    from datetime import date, timedelta
+    from datetime import timedelta
+    from django.utils import timezone
 
     streak, _ = UserStreak.objects.get_or_create(user=request.user)
-    today = date.today()
+    today = timezone.localdate()
 
     if streak.last_cooked_date == today:
         pass  # Already cooked today; do nothing
@@ -614,7 +615,7 @@ def generate_meal_plan(request):
         )
 
     # Delete existing meal plans for the next 7 days to avoid duplicates
-    today = date.today()
+    today = timezone.localdate()
     for i in range(7):
         MealPlan.objects.filter(
             user=request.user, date=today + timedelta(days=i)
