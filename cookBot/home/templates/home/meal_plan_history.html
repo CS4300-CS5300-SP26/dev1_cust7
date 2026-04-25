@@ -1,0 +1,48 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'social_feed.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="social-banner">
+  <div class="social-banner-content">
+    <h1>Meal Plan History</h1>
+    <p>Review your past generated meal plans</p>
+  </div>
+</div>
+
+<div class="social-wrap">
+  <div class="social-feed">
+    {% for plan in meal_plans %}
+      <div class="recipe-card">
+        <div class="recipe-card-header">
+          <span class="recipe-card-author">{{ plan.meal_type }}</span>
+          <span class="recipe-card-date">{{ plan.created_at|date:"M d, Y" }}</span>
+        </div>
+        <h2 class="recipe-card-title">{{ plan.recipe_name }}</h2>
+        <div class="recipe-card-meta">
+          {% if plan.calories %}
+            <span class="rating-badge">{{ plan.calories }} kcal</span>
+          {% else %}
+            <span class="no-rating">No macro data</span>
+          {% endif %}
+          {% if plan.protein or plan.fat or plan.carbs %}
+            <span class="no-rating">P:{{ plan.protein|default:"0" }}g F:{{ plan.fat|default:"0" }}g C:{{ plan.carbs|default:"0" }}g</span>
+          {% endif %}
+        </div>
+            <a class="recipe-card-link" href="{% url 'meal_plan_detail' plan.id %}">View Plan &rarr;</a>
+      </div>
+    {% empty %}
+      <div class="feed-empty">
+        <div class="feed-empty-icon">&#128197;</div>
+        <p>No Meal Plan History</p>
+        <a href="{% url 'calendar' %}">Generate a meal plan to get started &rarr;</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

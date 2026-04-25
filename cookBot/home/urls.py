@@ -34,6 +34,12 @@ urlpatterns = [
         "api/generate-meal-plan/", views.generate_meal_plan, name="generate_meal_plan"
     ),
     path("calendar/", views.calendar_view, name="calendar"),
+    path("meal-plan-history/", views.meal_plan_history, name="meal_plan_history"),
+    path(
+        "meal-plan/<int:meal_plan_id>/",
+        views.meal_plan_detail,
+        name="meal_plan_detail",
+    ),
     # Paths for create/edit recipe, search for recipes, and display recipe pages
     path("recipe/<int:recipe_id>/", views.recipe_view, name="recipe_view"),
     path("recipe/create/", views.create_recipe, name="create_recipe"),

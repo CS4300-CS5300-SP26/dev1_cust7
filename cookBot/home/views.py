@@ -128,7 +128,13 @@ def signout(request):
 
 @login_required
 def account(request):
-    return render(request, "home/account_info.html", {"user": request.user})
+    meal_plans = (
+        request.user.meal_plans.prefetch_related("recipes")
+        .order_by("-created_at")[:10]
+    )
+    return render(
+        request, "home/account_info.html", {"user": request.user, "meal_plans": meal_plans}
+    )
 
 
 @login_required
@@ -472,6 +478,36 @@ def calendar_view(request):
 
 
 @login_required
+def meal_plan_history(request):
+    """Display the user's meal plan history."""
+    from .models import MealPlan
+
+    meal_plans = (
+        MealPlan.objects.filter(user=request.user)
+        .prefetch_related("recipes")
+        .order_by("-created_at")
+    )
+    return render(
+        request,
+        "home/meal_plan_history.html",
+        {"meal_plans": meal_plans},
+    )
+
+
+@login_required
+def meal_plan_detail(request, meal_plan_id):
+    """Display a single meal plan entry."""
+    from .models import MealPlan
+
+    meal_plan = get_object_or_404(MealPlan, id=meal_plan_id, user=request.user)
+    return render(
+        request,
+        "home/meal_plan_detail.html",
+        {"plan": meal_plan},
+    )
+
+
+@login_required
 @require_POST
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
@@ -533,6 +569,12 @@ def generate_meal_plan(request):
             user=request.user, date=today + timedelta(days=i)
         ).delete()
 
+    # Build a lookup of recipe titles to Recipe objects for the current user
+    user_recipe_lookup = {
+        r.title.lower(): r
+        for r in Recipe.objects.filter(user=request.user)
+    }
+
     # Save each meal to DB
     created_meals = []
 
@@ -556,6 +598,12 @@ def generate_meal_plan(request):
             fat=meal.get("fat"),
             carbs=meal.get("carbs"),
         )
+
+        # Link matching recipes by title (case-insensitive)
+        matched_recipe = user_recipe_lookup.get(meal.get("recipe_name", "").lower())
+        if matched_recipe:
+            meal_plan.recipes.add(matched_recipe)
+
         created_meals.append(meal_plan)
 
     return JsonResponse(
