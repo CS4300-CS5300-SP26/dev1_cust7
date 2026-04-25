@@ -40,6 +40,9 @@ urlpatterns = [
         views.meal_plan_detail,
         name="meal_plan_detail",
     ),
+    # Streak endpoints
+    path("api/increment-streak/", views.increment_streak, name="increment_streak"),
+    path("api/reset-streak/", views.reset_streak, name="reset_streak"),
     # Paths for create/edit recipe, search for recipes, and display recipe pages
     path("recipe/<int:recipe_id>/", views.recipe_view, name="recipe_view"),
     path("recipe/create/", views.create_recipe, name="create_recipe"),

@@ -282,3 +282,17 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} on {self.recipe.title}"
+
+
+class UserStreak(models.Model):
+    """Tracks a user's cooking streak"""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="streak"
+    )
+    current_streak = models.IntegerField(default=0)
+    longest_streak = models.IntegerField(default=0)
+    last_cooked_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} — Current: {self.current_streak}, Longest: {self.longest_streak}"

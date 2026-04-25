@@ -509,6 +509,57 @@ def meal_plan_detail(request, meal_plan_id):
 
 @login_required
 @require_POST
+def increment_streak(request):
+    """Increment the user's cooking streak when they mark a recipe as made."""
+    from .models import UserStreak
+    from datetime import date, timedelta
+
+    streak, _ = UserStreak.objects.get_or_create(user=request.user)
+    today = date.today()
+
+    if streak.last_cooked_date == today:
+        pass  # Already cooked today; do nothing
+    elif streak.last_cooked_date == today - timedelta(days=1):
+        streak.current_streak += 1
+    else:
+        streak.current_streak = 1
+
+    streak.last_cooked_date = today
+    if streak.current_streak > streak.longest_streak:
+        streak.longest_streak = streak.current_streak
+    streak.save()
+
+    return JsonResponse(
+        {
+            "current_streak": streak.current_streak,
+            "longest_streak": streak.longest_streak,
+            "last_cooked_date": streak.last_cooked_date.isoformat(),
+        }
+    )
+
+
+@login_required
+@require_POST
+def reset_streak(request):
+    """Reset the user's cooking streak."""
+    from .models import UserStreak
+
+    streak, _ = UserStreak.objects.get_or_create(user=request.user)
+    streak.current_streak = 0
+    streak.last_cooked_date = None
+    streak.save()
+
+    return JsonResponse(
+        {
+            "current_streak": streak.current_streak,
+            "longest_streak": streak.longest_streak,
+            "last_cooked_date": streak.last_cooked_date,
+        }
+    )
+
+
+@login_required
+@require_POST
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
