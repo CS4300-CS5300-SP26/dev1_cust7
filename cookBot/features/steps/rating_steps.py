@@ -1,5 +1,4 @@
 from behave import given, when, then
-from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
