@@ -40,7 +40,12 @@
     </div>
 
     <!-- Star Rating -->
-    <div class="star-rating-widget" id="starRatingWidget" data-recipe-id="{{ recipe.id }}" data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" data-rate-url="{% url 'rate_recipe' recipe.id %}">
+    <div class="star-rating-widget" id="starRatingWidget" 
+      data-recipe-id="{{ recipe.id }}" 
+      data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" 
+      data-rate-url="{% url 'rate_recipe' recipe.id %}"
+      data-csrf-token="{{ csrf_token }}">
+
       <div class="star-row" id="starRow">
         {% for i in "12345" %}
         <button
@@ -274,7 +279,7 @@ if (check) {
     const avgEl          = document.getElementById('avgDisplay');
     const starPrompt     = document.getElementById('starPrompt');
     const rateUrl        = widget.dataset.rateUrl;
-    const csrfToken      = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+    const csrfToken      = widget.dataset.csrfToken;
     const isAuthenticated = widget.dataset.authenticated === 'true';
   
     if (isAuthenticated) {
