@@ -132,6 +132,49 @@
 .streak-reset-btn:active {
   transform: translateY(0);
 }
+
+/* Meal Plan Mini Cards for Account Page */
+.meal-plan-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.meal-plan-mini-card {
+  flex: 0 0 auto;
+  min-width: 220px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.meal-plan-mini-card strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.meal-plan-mini-card .date {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.meal-plan-mini-card .calories {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 0.3rem;
+}
+
+.meal-plan-mini-card .view-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #007bff;
+  text-decoration: none;
+}
   
   /* Hide checkbox to toggle hamburger style */
   .menu-checkbox {
