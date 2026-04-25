@@ -190,7 +190,7 @@ class MealPlan(models.Model):
     )  # Optional, for linking to external APIs
     date = models.DateField()
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     calories = models.IntegerField(blank=True, null=True)
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)

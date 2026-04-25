@@ -136,7 +136,7 @@
             if (!csrftoken) return; // Gracefully exit if cookie not present
             const tokenValue = csrftoken.split('=')[1];
 
-            fetch('/api/reset-streak/', {
+            fetch("{% url 'reset_streak' %}", {
               method: 'POST',
               headers: {
                 'X-CSRFToken': tokenValue,

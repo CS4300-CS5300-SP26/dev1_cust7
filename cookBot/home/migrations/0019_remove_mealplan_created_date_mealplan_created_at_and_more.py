@@ -10,15 +10,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
+        migrations.RenameField(
             model_name='mealplan',
-            name='created_date',
-        ),
-        migrations.AddField(
-            model_name='mealplan',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default='2026-04-24T00:00:00Z'),
-            preserve_default=False,
+            old_name='created_date',
+            new_name='created_at',
         ),
         migrations.AddField(
             model_name='mealplan',
