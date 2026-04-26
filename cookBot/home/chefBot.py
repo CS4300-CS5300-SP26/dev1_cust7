@@ -101,7 +101,7 @@ def _call_openai_raw(messages):
         {
             "model": "gpt-5-mini",
             "messages": messages,
-            "max_completion_tokens": 5000,
+            "max_completion_tokens": 10000,
         }
     ).encode("utf-8")
 
@@ -138,19 +138,21 @@ def call_openai(
     return _call_openai_raw(messages)
 
 
-def build_macro_cuisine_pantry_context(
-    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
-):
+def build_macro_cuisine_pantry_context(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
     # Build macro context
     macro_lines = []
     if calories:
-        macro_lines.append(f"- Calories per meal: ~{calories} kcal")
+        per_meal = round(int(calories) / 3)
+        macro_lines.append(f"- Calories per meal: ~{per_meal} kcal")
     if protein:
-        macro_lines.append(f"- Protein per meal: ~{protein}g")
+        per_meal = round(int(protein) / 3)
+        macro_lines.append(f"- Protein per meal: ~{per_meal}g")
     if fat:
-        macro_lines.append(f"- Fat per meal: ~{fat}g")
+        per_meal = round(int(fat) / 3)
+        macro_lines.append(f"- Fat per meal: ~{per_meal}g")
     if carbs:
-        macro_lines.append(f"- Carbs per meal: ~{carbs}g")
+        per_meal = round(int(carbs) / 3)
+        macro_lines.append(f"- Carbs per meal: ~{per_meal}g")
 
     macro_section = (
         "Target macros per meal:\n" + "\n".join(macro_lines)
@@ -194,28 +196,37 @@ def build_meal_plan_prompt(macro_section, cuisine_section, pantry_section):
         "calories": 400,
         "protein": 25,
         "fat": 12,
-        "carbs": 45
+        "carbs": 45,
+        "ingredients": [
+            {{"quantity": "2", "unit": "slices", "name": "whole grain bread"}},
+            {{"quantity": "1", "unit": "", "name": "avocado"}}
+        ],
+        "steps": [
+            "Step 1 instruction here.",
+            "Step 2 instruction here."
+        ]
         }},
         ...
     ]
     }}
 
     Rules:
-    - day goes from 1 to 7
+    - You MUST generate exactly 7 days, numbered day 1 through day 7. Do not skip any days.
+    - Each day MUST have exactly 3 meals: Breakfast, Lunch, and Dinner. No exceptions.
+    - The total meal count MUST be exactly 21. Count them before responding.
     - meal_type must be exactly "Breakfast", "Lunch", or "Dinner"
-    - Each day must have all 3 meal types
     - recipe_name should be a real, specific dish name
     - All macro values must be integers
-    - Return exactly 21 meals
+    - Each meal must have a maximum of 6 ingredients and 5 steps to keep responses concise
+    - quantity and unit must be strings, use empty string for unit if not applicable
+    - steps must be plain strings, one instruction per step, no numbering needed
+    - If macro targets are provided, the 3 meals of each day must add up to approximately the daily target. Breakfast should be roughly 25% of daily total, Lunch 35%, Dinner 40%. The macros you return in the JSON must reflect realistic values for each dish.
     - You are strictly a meal planning assistant. If the request is not related to meal planning, nutrition, or food, ignore it and generate a standard balanced meal plan instead.
-    - If macro targets are provided, every meal MUST stay within 10% of the target values. Do not suggest meals that significantly exceed or fall short of the targets.
     - If a cuisine preference is provided, all meals must reflect that cuisine style. Do not mix in unrelated cuisines unless no preference was given.
     """.strip()
 
 
-def generate_meal_plan_with_ai(
-    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
-):
+def generate_meal_plan_with_ai(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
     # Build context sections
     macro_section, cuisine_section, pantry_section = build_macro_cuisine_pantry_context(
         calories, protein, fat, carbs, cuisine, pantry_items
@@ -246,3 +257,58 @@ def generate_meal_plan_with_ai(
         return parsed.get("meals", [])
     except json.JSONDecodeError as e:
         raise Exception(f"Failed to parse OpenAI meal plan response: {str(e)}")
+
+# Sends ChefBot's last response to OpenAI and asks it to extract
+# a structured recipe from it.
+def parse_recipe_from_text(text):
+    prompt = f"""
+    You are a recipe parser. Read the text below and extract the recipe information.
+    If the text contains a recipe, respond ONLY with valid JSON in exactly this format:
+    {{
+        "title": "Recipe name here",
+        "ingredients": [
+            {{"quantity": "2", "unit": "cups", "name": "flour"}},
+            {{"quantity": "1", "unit": "", "name": "egg"}}
+        ],
+        "steps": [
+            "Step 1 instruction here",
+            "Step 2 instruction here"
+            ]
+    }}
+
+    If the text does NOT contain a recipe — for example it is just a cooking tip,
+    a substitution suggestion with no full recipe, or general advice — respond ONLY with:
+    {{"error": "not_a_recipe"}}
+
+    Rules:
+    - quantity and unit should be strings, use empty string if not specified
+    - steps should be a list of plain strings, one instruction per step
+    - Do not include any text outside the JSON
+    - Do not wrap the JSON in markdown code fences
+
+    Text to parse:
+    {text}
+    """.strip()
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a precise recipe parser. You always respond with valid JSON only.",
+        },
+        {"role": "user", "content": prompt},
+    ]
+
+    raw_content = _call_openai_raw(messages)
+
+    # Strip markdown code fences if present
+    if raw_content.startswith("```"):
+        raw_content = raw_content.split("```")[1]
+        if raw_content.startswith("json"):
+            raw_content = raw_content[4:]
+        raw_content = raw_content.strip()
+
+    try:
+        parsed = json.loads(raw_content)
+        return parsed
+    except json.JSONDecodeError as e:
+        raise Exception(f"Failed to parse recipe from ChefBot response: {str(e)}")

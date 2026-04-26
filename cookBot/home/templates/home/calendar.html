@@ -56,12 +56,19 @@
   </button>
   <div id="generate-message"></div>
 
+  <!-- Save button -->
+  <button id="save-meal-plan-btn">
+    📖 Save All Meals to My Recipes
+  </button>
+  <div id="save-meal-message"></div>
+
 </div>
 
 <!-- API endpoints (used by JavaScript) -->
 <div id="calendar-api-endpoints" 
      data-get-meals-url="{% url 'get_meals' %}" 
      data-generate-meal-plan-url="{% url 'generate_meal_plan' %}"
+     data-save-meal-plan-url="{% url 'calendar_save_meal_plan' %}"
      style="display: none;">
 </div>
 
