@@ -31,7 +31,28 @@
         <div class="change-password">
                 <a href="{% url 'change_password' %}" class="auth-btn">Change Password</a>
             </div>
-
+    </section>
+    <section class="card account-section">
+      <h2>Meal Plan History</h2>
+      {% if meal_plans %}
+          <div class="meal-plan-scroll">
+            {% for plan in meal_plans %}
+              <div class="meal-plan-mini-card">
+                <strong>{{ plan.recipe_name }}</strong>
+                <span class="date">{{ plan.created_at|date:"M d, Y" }}</span>
+                {% if plan.calories %}
+                  <span class="calories">{{ plan.calories }} kcal</span>
+                {% endif %}
+                <a href="{% url 'meal_plan_detail' plan.id %}" class="view-link">View &rarr;</a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No meal plans yet. <a href="{% url 'calendar' %}">Generate one from the Calendar page</a>.</p>
+      {% endif %}
+      <div style="margin-top: 0.75rem;">
+        <a href="{% url 'meal_plan_history' %}" class="auth-btn" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;">View Full History</a>
+      </div>
     </section>
 </main>
 {% endblock %}

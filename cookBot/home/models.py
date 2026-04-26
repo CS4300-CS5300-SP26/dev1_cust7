@@ -190,11 +190,14 @@ class MealPlan(models.Model):
     )  # Optional, for linking to external APIs
     date = models.DateField()
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
-    created_date = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
     calories = models.IntegerField(blank=True, null=True)
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)
     carbs = models.IntegerField(blank=True, null=True)
+    recipes = models.ManyToManyField(
+        Recipe, related_name="meal_plans", blank=True
+    )
 
     class Meta:
         unique_together = ["user", "date", "meal_type"]  # One meal per slot per user
@@ -279,3 +282,17 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} on {self.recipe.title}"
+
+
+class UserStreak(models.Model):
+    """Tracks a user's cooking streak"""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="streak"
+    )
+    current_streak = models.IntegerField(default=0)
+    longest_streak = models.IntegerField(default=0)
+    last_cooked_date = models.DateField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} — Current: {self.current_streak}, Longest: {self.longest_streak}"

@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
+from django.utils import timezone
 from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Q
@@ -129,7 +130,13 @@ def signout(request):
 
 @login_required
 def account(request):
-    return render(request, "home/account_info.html", {"user": request.user})
+    meal_plans = (
+        request.user.meal_plans.prefetch_related("recipes")
+        .order_by("-created_at")[:10]
+    )
+    return render(
+        request, "home/account_info.html", {"user": request.user, "meal_plans": meal_plans}
+    )
 
 
 @login_required
@@ -473,11 +480,93 @@ def calendar_view(request):
 
 
 @login_required
+def meal_plan_history(request):
+    """Display the user's meal plan history."""
+    from .models import MealPlan
+
+    meal_plans = (
+        MealPlan.objects.filter(user=request.user)
+        .prefetch_related("recipes")
+        .order_by("-created_at")
+    )
+    return render(
+        request,
+        "home/meal_plan_history.html",
+        {"meal_plans": meal_plans},
+    )
+
+
+@login_required
+def meal_plan_detail(request, meal_plan_id):
+    """Display a single meal plan entry."""
+    from .models import MealPlan
+
+    meal_plan = get_object_or_404(MealPlan, id=meal_plan_id, user=request.user)
+    return render(
+        request,
+        "home/meal_plan_detail.html",
+        {"plan": meal_plan},
+    )
+
+
+@login_required
+@require_POST
+def increment_streak(request):
+    """Increment the user's cooking streak when they mark a recipe as made."""
+    from .models import UserStreak
+    from datetime import timedelta
+    from django.utils import timezone
+
+    streak, _ = UserStreak.objects.get_or_create(user=request.user)
+    today = timezone.localdate()
+
+    if streak.last_cooked_date == today:
+        pass  # Already cooked today; do nothing
+    elif streak.last_cooked_date == today - timedelta(days=1):
+        streak.current_streak += 1
+    else:
+        streak.current_streak = 1
+
+    streak.last_cooked_date = today
+    if streak.current_streak > streak.longest_streak:
+        streak.longest_streak = streak.current_streak
+    streak.save()
+
+    return JsonResponse(
+        {
+            "current_streak": streak.current_streak,
+            "longest_streak": streak.longest_streak,
+            "last_cooked_date": streak.last_cooked_date.isoformat(),
+        }
+    )
+
+
+@login_required
+@require_POST
+def reset_streak(request):
+    """Reset the user's cooking streak."""
+    from .models import UserStreak
+
+    streak, _ = UserStreak.objects.get_or_create(user=request.user)
+    streak.current_streak = 0
+    streak.last_cooked_date = None
+    streak.save()
+
+    return JsonResponse(
+        {
+            "current_streak": streak.current_streak,
+            "longest_streak": streak.longest_streak,
+            "last_cooked_date": streak.last_cooked_date,
+        }
+    )
+
+
+@login_required
 @require_POST
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
-    from datetime import timedelta, date
+    from datetime import timedelta
 
     # Parse the incoming JSON body
     try:
@@ -528,11 +617,17 @@ def generate_meal_plan(request):
         )
 
     # Delete existing meal plans for the next 7 days to avoid duplicates
-    today = date.today()
+    today = timezone.localdate()
     for i in range(7):
         MealPlan.objects.filter(
             user=request.user, date=today + timedelta(days=i)
         ).delete()
+
+    # Build a lookup of recipe titles to Recipe objects for the current user
+    user_recipe_lookup = {
+        r.title.lower(): r
+        for r in Recipe.objects.filter(user=request.user)
+    }
 
     # Save each meal to DB
     created_meals = []
@@ -557,6 +652,12 @@ def generate_meal_plan(request):
             fat=meal.get("fat"),
             carbs=meal.get("carbs"),
         )
+
+        # Link matching recipes by title (case-insensitive)
+        matched_recipe = user_recipe_lookup.get(meal.get("recipe_name", "").lower())
+        if matched_recipe:
+            meal_plan.recipes.add(matched_recipe)
+
         created_meals.append(meal_plan)
 
     return JsonResponse(

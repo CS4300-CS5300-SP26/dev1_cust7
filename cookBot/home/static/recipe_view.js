@@ -47,6 +47,73 @@ if (ingredientsDataEl && pantryDataEl && list) {
     list.appendChild(li);
   });
 }
+
+// ── Made Recipe / Streak Increment ──
+const madeRecipeBtn = document.getElementById('madeRecipeBtn');
+if (madeRecipeBtn) {
+  let isLoading = false;
+  
+  madeRecipeBtn.addEventListener('click', () => {
+    if (isLoading) return;
+    isLoading = true;
+    
+    const incrementUrl = madeRecipeBtn.dataset.incrementUrl;
+    
+    madeRecipeBtn.classList.add('loading');
+    madeRecipeBtn.disabled = true;
+
+    fetch(incrementUrl, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 403 || response.redirected) {
+          throw new Error('Session expired. Please sign in again.');
+        }
+        throw new Error(`Server error: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Update the streak count in navbar
+      const streakBadge = document.querySelector('.streak-badge');
+      const streakCount = document.querySelector('.streak-count');
+      
+      if (streakBadge) {
+        streakBadge.classList.remove('fire-pop');
+        void streakBadge.offsetWidth; // Trigger reflow to restart animation
+        streakBadge.classList.add('fire-pop');
+      }
+      
+      if (streakCount) {
+        streakCount.style.opacity = '0';
+        setTimeout(() => {
+          streakCount.textContent = data.current_streak;
+          streakCount.style.opacity = '1';
+        }, 150);
+      }
+      
+      // Visual feedback
+      madeRecipeBtn.textContent = '✅ Streak Updated!';
+      setTimeout(() => {
+        madeRecipeBtn.textContent = '🔥 Made Recipe';
+      }, 2000);
+    })
+    .catch(error => {
+      console.error('Error incrementing streak:', error);
+      alert(error.message);
+    })
+    .finally(() => {
+      madeRecipeBtn.classList.remove('loading');
+      madeRecipeBtn.disabled = false;
+      isLoading = false;
+    });
+  });
+}
  
 // ── Kroger store finder ──
 function findNearMe(ingredientName) {

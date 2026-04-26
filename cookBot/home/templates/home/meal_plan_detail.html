@@ -1,0 +1,45 @@
+{% extends "navbar.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'social_feed.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="social-banner">
+  <div class="social-banner-content">
+    <h1>{{ plan.recipe_name }}</h1>
+    <p>{{ plan.meal_type }} on {{ plan.date|date:"F j, Y" }}</p>
+  </div>
+</div>
+
+<div class="social-wrap">
+  <div class="social-feed">
+    <div class="recipe-card">
+      <div class="recipe-card-header">
+        <span class="recipe-card-author">{{ plan.meal_type }}</span>
+        <span class="recipe-card-date">{{ plan.created_at|date:"M d, Y" }}</span>
+      </div>
+      <h2 class="recipe-card-title">{{ plan.recipe_name }}</h2>
+      <div class="recipe-card-meta">
+        {% if plan.calories %}
+          <span class="rating-badge">{{ plan.calories }} kcal</span>
+        {% endif %}
+        {% if plan.protein or plan.fat or plan.carbs %}
+          <span class="no-rating">P:{{ plan.protein|default:"0" }}g F:{{ plan.fat|default:"0" }}g C:{{ plan.carbs|default:"0" }}g</span>
+        {% endif %}
+      </div>
+      {% if plan.recipes.exists %}
+        <div class="recipe-card-meta">
+          <span class="no-rating">Linked recipes:</span>
+          {% for recipe in plan.recipes.all %}
+            <a class="recipe-card-link" href="{% url 'recipe_view' recipe.id %}">{{ recipe.title }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
