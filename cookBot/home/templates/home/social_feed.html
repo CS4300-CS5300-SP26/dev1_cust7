@@ -21,6 +21,17 @@
           <span class="recipe-card-author">&#128065; {{ recipe.user.username }}</span>
           <span class="recipe-card-date">{{ recipe.created_date|date:"M d, Y" }}</span>
         </div>
+        {% if recipe.image %}
+          <img
+            class="recipe-card-image"
+            src="{{ recipe.image.url }}"
+            alt="{{ recipe.title }}"
+          >
+        {% else %}
+          <div class="recipe-card-image-placeholder">
+            🍳
+          </div>
+        {% endif %}
         <h2 class="recipe-card-title">{{ recipe.title }}</h2>
         <div class="recipe-card-meta">
           {% with avg=recipe.average_rating %}

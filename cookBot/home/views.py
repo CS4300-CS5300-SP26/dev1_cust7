@@ -17,6 +17,7 @@ from .models import (
     Tag,
     RecipeTag,
     Comment,
+    RecipeRating,
 )
 from collections import defaultdict
 import json
@@ -614,8 +615,11 @@ def recipe_view(request, recipe_id):
     comment_form = CommentForm() if request.user.is_authenticated else None
     # Check if current user has bookmarked this recipe (efficient single query)
     is_saved_by_user = False
+    user_rating = None
     if request.user.is_authenticated:
         is_saved_by_user = recipe.favorites.filter(id=request.user.id).exists()
+        existing = recipe.ratings.filter(user=request.user).first()
+        user_rating = existing.stars if existing else None
 
     return render(
         request,
@@ -630,6 +634,9 @@ def recipe_view(request, recipe_id):
             "tags": recipe.tags.all(),
             "is_owner": request.user == recipe.user,
             "is_saved_by_user": is_saved_by_user,
+            "user_rating": user_rating,
+            "rating_count": recipe.ratings.count(),
+            "average_rating": recipe.average_rating(),
         },
     )
 
@@ -1137,3 +1144,40 @@ def search_recipes(request):
             "result_count": recipes.count(),
         },
     )
+
+
+# Ratings view
+@login_required
+@require_POST
+def rate_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if not recipe.is_public:
+        if request.user != recipe.user:
+            raise PermissionDenied
+
+    try:
+        data = json.loads(request.body)
+        stars = int(data.get("stars", 0))
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid rating value"}, status=400)
+
+    if stars < 1 or stars > 5:
+        return JsonResponse({"error": "Rating must be between 1 and 5"}, status=400)
+
+    # update_or_create handles both first-time rating and changing an existing one
+    rating, created = RecipeRating.objects.update_or_create(
+        recipe=recipe,
+        user=request.user,
+        defaults={"stars": stars},
+    )
+
+    avg = recipe.average_rating()
+    count = recipe.ratings.count()
+
+    return JsonResponse({
+        "success": True,
+        "stars": stars,
+        "average": round(avg, 1) if avg else stars,
+        "count": count,
+    })
