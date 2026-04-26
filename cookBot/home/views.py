@@ -566,7 +566,7 @@ def reset_streak(request):
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
-    from datetime import timedelta, date
+    from datetime import timedelta
 
     # Parse the incoming JSON body
     try:
