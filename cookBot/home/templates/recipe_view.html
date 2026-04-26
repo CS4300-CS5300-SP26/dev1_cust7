@@ -48,6 +48,42 @@
       {% endif %}
     </div>
 
+    <!-- Star Rating -->
+    <div class="star-rating-widget" id="starRatingWidget" 
+      data-recipe-id="{{ recipe.id }}" 
+      data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}" 
+      data-rate-url="{% url 'rate_recipe' recipe.id %}"
+      data-csrf-token="{{ csrf_token }}">
+
+      <div class="star-row" id="starRow">
+        {% for i in "12345" %}
+        <button
+          type="button"
+          class="star-btn {% if user_rating and user_rating >= forloop.counter %}filled{% endif %}"
+          data-value="{{ forloop.counter }}"
+          {% if not user.is_authenticated %}data-readonly{% endif %}
+          aria-label="{{ forloop.counter }} star"
+        >★</button>
+        {% endfor %}
+      </div>
+      <div class="star-meta" id="starMeta">
+        {% if average_rating %}
+          <span id="avgDisplay">{{ average_rating|floatformat:1 }} / 5</span>
+          <span class="star-count">({{ rating_count }} rating{{ rating_count|pluralize }})</span>
+        {% else %}
+          <span id="avgDisplay">No ratings yet</span>
+          <span class="star-count" style="display:none;"></span>
+        {% endif %}
+      </div>
+      {% if not user.is_authenticated %}
+        <p class="star-login-prompt"><a href="{% url 'signin' %}">Sign in</a> to rate this recipe</p>
+      {% elif user_rating %}
+        <p class="star-prompt" id="starPrompt">Your rating: {{ user_rating }} star{{ user_rating|pluralize }} — click to change</p>
+      {% else %}
+        <p class="star-prompt" id="starPrompt">Click to rate this recipe</p>
+      {% endif %}
+    </div>
+
     <!-- Owner Actions -->
     {% if is_owner %}
     <div class="recipe-actions">
@@ -223,25 +259,8 @@
 <script src="{% static 'voice.js' %}"></script>
 <script src="{% static 'recipe_view.js' %}"></script>
 
-<script>
-function closeDeleteModal() {
-  const modal = document.getElementById('delete-modal');
-  const check = document.getElementById('delete-confirm-check');
-  const btn = document.getElementById('delete-confirm-btn');
+<script src="{% static 'delete.js' %}"></script>
 
-  modal.style.display = 'none';
-  check.checked = false;
-  btn.disabled = true;
-}
-
-const check = document.getElementById('delete-confirm-check');
-const btn = document.getElementById('delete-confirm-btn');
-
-if (check) {
-  check.addEventListener('change', () => {
-    btn.disabled = !check.checked;
-  });
-}
-</script>
+<script src="{% static 'ratings.js' %}"></script>
 
 {% endblock %}
