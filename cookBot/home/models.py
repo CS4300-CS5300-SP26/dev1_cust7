@@ -195,9 +195,7 @@ class MealPlan(models.Model):
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)
     carbs = models.IntegerField(blank=True, null=True)
-    recipes = models.ManyToManyField(
-        Recipe, related_name="meal_plans", blank=True
-    )
+    recipes = models.ManyToManyField(Recipe, related_name="meal_plans", blank=True)
 
     class Meta:
         unique_together = ["user", "date", "meal_type"]  # One meal per slot per user
@@ -287,9 +285,7 @@ class Comment(models.Model):
 class UserStreak(models.Model):
     """Tracks a user's cooking streak"""
 
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="streak"
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="streak")
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     last_cooked_date = models.DateField(blank=True, null=True)

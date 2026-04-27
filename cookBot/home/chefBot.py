@@ -119,9 +119,9 @@ def _call_openai_raw(messages):
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode("utf-8"))
             return data["choices"][0]["message"]["content"].strip()
-    except urllib.error.HTTPError as e:
+    except urllib.error.HTTPError:
         raise Exception("OpenAI API Connection failed")
-    except Exception as e:
+    except Exception:
         raise Exception("OpenAI request failed")
 
 

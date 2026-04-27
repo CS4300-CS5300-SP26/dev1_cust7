@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY")
 
 # Spoonacular API key
 SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY").split(",")
@@ -38,9 +39,9 @@ KROGER_CLIENT_SECRET = config("KROGER_CLIENT_SECRET")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 if DEBUG:
-      ALLOWED_HOSTS = ["localhost", "devedu.io"]
+    ALLOWED_HOSTS = ["localhost", "devedu.io"]
 else:
-    ALLOWED_HOSTS = ["cookbot.me","www.cookbot.me", "app-cs5300-21.devedu.io"]
+    ALLOWED_HOSTS = ["cookbot.me", "www.cookbot.me", "app-cs5300-21.devedu.io"]
 # CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
 # Comment the line below out and uncomment above when working through DevEdu
 CSRF_TRUSTED_ORIGINS = [
@@ -70,7 +71,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
 ]
 
 ROOT_URLCONF = "cookBot.urls"
@@ -163,7 +163,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
-#Security settings
+# Security settings
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 REFERRER_POLICY = "same-origin"
@@ -180,24 +180,15 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
 
 CONTENT_SECURITY_POLICY = {
-
     "DIRECTIVES": {
-
         "default-src": ("'self'",),
-
         "script-src": ("'self'", "https://cdn.jsdelivr.net"),
-
         "style-src": ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
-
         "img-src": ("'self'", "data:", "https:"),
-
         "font-src": ("'self'", "data:", "https://cdn.jsdelivr.net"),
-
         "connect-src": ("'self'",),
-
         "frame-ancestors": ("'none'",),
-
     }
-
 }
 
+RATELIMIT_ENABLE = "test" not in sys.argv and "behave" not in sys.argv

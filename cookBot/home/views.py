@@ -50,7 +50,7 @@ def index(request):
 
 # Help from Claude and Spoonacular documents on fetching data from spoonacular #
 @login_required
-@ratelimit(key="user", rate="20/h",block=True)
+@ratelimit(key="user", rate="20/h", block=True)
 def get_nutrition(request, ingredient_name):
     try:
         # Step 1: find ingredient ID
@@ -95,6 +95,7 @@ def get_nutrition(request, ingredient_name):
 def nutrition_test(request):
     return render(request, "home/nutrition_test.html")
 
+
 @ratelimit(key="ip", rate="5/m", method="POST", block=True)
 def register(request):
     if request.method == "POST":
@@ -109,6 +110,7 @@ def register(request):
         form = RegisterForm()
 
     return render(request, "home/register.html", {"form": form})
+
 
 @ratelimit(key="ip", rate="10/5m", method="POST", block=True)
 def signin(request):
@@ -133,12 +135,13 @@ def signout(request):
 
 @login_required
 def account(request):
-    meal_plans = (
-        request.user.meal_plans.prefetch_related("recipes")
-        .order_by("-created_at")[:10]
-    )
+    meal_plans = request.user.meal_plans.prefetch_related("recipes").order_by(
+        "-created_at"
+    )[:10]
     return render(
-        request, "home/account_info.html", {"user": request.user, "meal_plans": meal_plans}
+        request,
+        "home/account_info.html",
+        {"user": request.user, "meal_plans": meal_plans},
     )
 
 
@@ -630,8 +633,7 @@ def generate_meal_plan(request):
 
     # Build a lookup of recipe titles to Recipe objects for the current user
     user_recipe_lookup = {
-        r.title.lower(): r
-        for r in Recipe.objects.filter(user=request.user)
+        r.title.lower(): r for r in Recipe.objects.filter(user=request.user)
     }
 
     # Save each meal to DB
@@ -1283,9 +1285,11 @@ def rate_recipe(request, recipe_id):
     avg = recipe.average_rating()
     count = recipe.ratings.count()
 
-    return JsonResponse({
-        "success": True,
-        "stars": stars,
-        "average": round(avg, 1) if avg else stars,
-        "count": count,
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "stars": stars,
+            "average": round(avg, 1) if avg else stars,
+            "count": count,
+        }
+    )

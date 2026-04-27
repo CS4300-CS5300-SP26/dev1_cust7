@@ -7,13 +7,20 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0017_merge_0015_comment_parent_0016_merge_20260420_2231'),
+        ("home", "0017_merge_0015_comment_parent_0016_merge_20260420_2231"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='comment',
-            name='parent',
-            field=models.ForeignKey(blank=True, db_column='parent_id', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='home.comment'),
+            model_name="comment",
+            name="parent",
+            field=models.ForeignKey(
+                blank=True,
+                db_column="parent_id",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="replies",
+                to="home.comment",
+            ),
         ),
     ]
