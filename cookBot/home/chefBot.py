@@ -258,6 +258,7 @@ def generate_meal_plan_with_ai(calories=None, protein=None, fat=None, carbs=None
     except json.JSONDecodeError as e:
         raise Exception(f"Failed to parse OpenAI meal plan response: {str(e)}")
 
+
 # Sends ChefBot's last response to OpenAI and asks it to extract
 # a structured recipe from it.
 def parse_recipe_from_text(text):

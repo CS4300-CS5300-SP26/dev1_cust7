@@ -185,7 +185,7 @@ class MealPlan(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="meal_plans")
     recipe_name = models.CharField(max_length=200)
-    recipe_id = models.IntegerField(blank=True, null=True) 
+    recipe_id = models.IntegerField(blank=True, null=True)
     # Optional, for linking to external APIs
     date = models.DateField()
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
@@ -198,7 +198,7 @@ class MealPlan(models.Model):
         Recipe, related_name="meal_plans", blank=True
     )
     recipe_data = models.JSONField(default=dict, blank=True)
-    
+
     class Meta:
         unique_together = ["user", "date", "meal_type"]  # One meal per slot per user
         ordering = ["date", "meal_type"]

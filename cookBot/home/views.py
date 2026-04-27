@@ -31,6 +31,7 @@ from django.db import transaction
 from .forms import RegisterForm, EditProfileForm, CommentForm
 from datetime import date, timedelta
 
+
 def index(request):
     tags = Tag.objects.all().order_by("tag_type", "name")
     grouped_tags = {}
@@ -416,7 +417,7 @@ def get_fallback_recipes(pantry_items):
 def get_meals_json(request):
     """API endpoint to get user's meal plans for FullCalendar.io"""
     from .models import MealPlan
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     # Get optional date range parameters from query string
     start_date = request.GET.get("start_date")
@@ -427,7 +428,6 @@ def get_meals_json(request):
         today = date.today()
         start_date = today.strftime('%Y-%m-%d')
         end_date = (today + timedelta(days=6)).strftime('%Y-%m-%d')
-        
 
     MEAL_ORDER = {"Breakfast": 0, "Lunch": 1, "Dinner": 2}
     MEAL_TIMES = {
@@ -1109,6 +1109,8 @@ def aiChefBot_chat(request):
 
     except Exception as e:
         return JsonResponse({"error": f"Something went wrong: {str(e)}"}, status=500)
+
+
 # Grab last chefBot message, parse it into a structured recipe, and save it to the users account
 @login_required
 @require_POST
@@ -1187,6 +1189,7 @@ def aiChefBot_save_recipe(request):
 
     except Exception as e:
         return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
+
 
 @login_required
 @require_POST
@@ -1279,6 +1282,7 @@ def calendar_save_meal_plan(request):
 
     except Exception as e:
         return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
+
 
 @login_required
 @require_GET

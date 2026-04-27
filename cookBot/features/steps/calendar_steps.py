@@ -5,7 +5,7 @@ from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import Client
 from home.models import Pantry, MealPlan, Recipe
-from datetime import date, timedelta
+
 
 # 21 meals: 7 days x 3 meal types
 MOCK_AI_MEALS = [
@@ -41,6 +41,7 @@ def post_generate(context, payload):
             content_type="application/json",
         )
 
+
 def post_save(context):
     """Helper to POST to calendar_save_meal_plan."""
     context.response = context.client.post(
@@ -48,6 +49,7 @@ def post_save(context):
         data=json.dumps({}),
         content_type="application/json",
     )
+
 
 @given("I am a logged-in user")
 def step_logged_in_user(context):
@@ -63,9 +65,11 @@ def step_logged_in_user(context):
     context.client.login(username="testuser", password="testpass123")
     context.user = user
 
+
 @given("I am a logged-out user")
 def step_logged_out_user(context):
     context.client = Client()
+
 
 @given('I have "{ingredient1}" and "{ingredient2}" in my pantry')
 def step_have_ingredients(context, ingredient1, ingredient2):
@@ -96,6 +100,7 @@ def step_generated_meal_plan(context):
         ]
     }
 
+
 @given("I am a logged-in user with a generated meal plan")
 def step_logged_in_with_generated_meal_plan(context):
     user, created = User.objects.get_or_create(username="testuser")
@@ -107,7 +112,8 @@ def step_logged_in_with_generated_meal_plan(context):
     context.user = user
     # Generate the meal plan
     post_generate(context, {"use_pantry": False})
- 
+
+
 @when('I click "Generate Weekly Plan"')
 def step_click_generate(context):
     """Simulate clicking the generate button by calling the meal plan generator"""
@@ -211,13 +217,16 @@ def step_generate_pantry_on_no_inputs(context):
         content_type="application/json",
     )
 
+
 @when("I click save all meals to my recipes")
 def step_click_save_all_meals(context):
     post_save(context)
- 
+
+
 @when("I click save all meals to my recipes again")
 def step_click_save_all_meals_again(context):
     post_save(context)
+
 
 @then("I should see {count:d} meals on the calendar grid")
 def step_see_meals_on_calendar(context, count):
@@ -270,6 +279,8 @@ def step_meals_still_visible(context):
             assert (
                 found
             ), f"Meal '{meal['meal']}' not found in database meals: {db_meal_names}"
+
+
 @then("all meals should be saved as private recipes")
 def step_all_meals_saved_as_recipes(context):
     assert context.response.status_code == 200
@@ -280,8 +291,8 @@ def step_all_meals_saved_as_recipes(context):
     recipe_count = Recipe.objects.filter(user=context.user, is_public=False).count()
     assert recipe_count == saved_count, \
         f"Expected {saved_count} private recipes, got {recipe_count}"
- 
- 
+
+
 @then("I should receive a success message with saved count")
 def step_success_message_with_count(context):
     data = json.loads(context.response.content)
@@ -290,29 +301,29 @@ def step_success_message_with_count(context):
     assert data["saved_count"] > 0
     assert "message" in data
     assert "saved" in data["message"].lower()
- 
- 
+
+
 @then("I should be redirected when trying to save")
 def step_redirected_when_saving(context):
     assert context.response.status_code in [302, 403], \
         f"Expected redirect or forbidden, got {context.response.status_code}"
- 
- 
+
+
 @then("I should see a warning message about already saved")
 def step_warning_already_saved(context):
     data = json.loads(context.response.content)
     assert "error" in data
     assert "already" in data["error"].lower() or "saved" in data["error"].lower()
- 
- 
+
+
 @then("all saved meal recipes should be private")
 def step_saved_recipes_are_private(context):
     recipes = Recipe.objects.filter(user=context.user)
     for recipe in recipes:
         assert recipe.is_public is False, \
             f"Recipe '{recipe.title}' should be private but is public"
- 
- 
+
+
 @then("the saved recipes should include macro information")
 def step_saved_recipes_have_macros(context):
     recipes = Recipe.objects.filter(user=context.user)
