@@ -29,7 +29,10 @@ SECRET_KEY = config("SECRET_KEY")
 SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY").split(",")
 
 # OPENAI KEY
-OPENAI_API_KEY = config("OPENAI_API_KEY")
+if "test" in sys.argv or "behave" in sys.argv:
+    OPENAI_API_KEY = config("OPENAI_API_KEY", default="test-key")
+else:
+    OPENAI_API_KEY = config("OPENAI_API_KEY")
 
 # KROGER ID AND SECRET
 KROGER_CLIENT_ID = config("KROGER_CLIENT_ID")
