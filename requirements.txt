@@ -3,7 +3,7 @@ certifi==2026.2.25
 charset-normalizer==3.4.7
 Django==4.2.11
 django-csp==4.0
-djange-ratelimit==4.1.0
+django-ratelimit==4.1.0
 idna==3.11
 python-decouple==3.8
 python-dotenv==1.2.2
