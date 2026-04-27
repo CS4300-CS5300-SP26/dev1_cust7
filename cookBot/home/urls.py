@@ -30,9 +30,8 @@ urlpatterns = [
     ),
     # Meal Calendar API
     path("api/get-meals/", views.get_meals_json, name="get_meals"),
-    path(
-        "api/generate-meal-plan/", views.generate_meal_plan, name="generate_meal_plan"
-    ),
+    path("api/generate-meal-plan/", views.generate_meal_plan, name="generate_meal_plan"),
+    path('api/save-meal-plan/', views.calendar_save_meal_plan, name='calendar_save_meal_plan'),
     path("calendar/", views.calendar_view, name="calendar"),
     path("meal-plan-history/", views.meal_plan_history, name="meal_plan_history"),
     path(
@@ -53,6 +52,7 @@ urlpatterns = [
     # ChefBot openai
     path("aiChefBot/", views.aiChefBot_view, name="aiChefBot"),
     path("aiChefBot/chat/", views.aiChefBot_chat, name="aiChefBot_chat"),
+    path('aiChefBot/save-recipe/', views.aiChefBot_save_recipe, name='aiChefBot_save_recipe'),
     # Social feed
     path("social/", views.social_feed, name="social_feed"),
     # Kroger store finder
