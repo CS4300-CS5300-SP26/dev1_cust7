@@ -120,10 +120,9 @@ def _call_openai_raw(messages):
             data = json.loads(response.read().decode("utf-8"))
             return data["choices"][0]["message"]["content"].strip()
     except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8")
-        raise Exception(f"OpenAI API error {e.code}: {error_body}")
+        raise Exception("OpenAI API Connection failed")
     except Exception as e:
-        raise Exception(f"OpenAI request failed: {str(e)}")
+        raise Exception("OpenAI request failed")
 
 
 def call_openai(

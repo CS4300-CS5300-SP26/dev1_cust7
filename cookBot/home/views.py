@@ -9,6 +9,7 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied
+from django_ratelimit.decorators import ratelimit
 from .models import (
     Recipe,
     RecipeStep,
@@ -48,6 +49,8 @@ def index(request):
 
 
 # Help from Claude and Spoonacular documents on fetching data from spoonacular #
+@login_required
+@ratelimit(key="user", rate="20/h",block=True)
 def get_nutrition(request, ingredient_name):
     try:
         # Step 1: find ingredient ID
@@ -92,7 +95,7 @@ def get_nutrition(request, ingredient_name):
 def nutrition_test(request):
     return render(request, "home/nutrition_test.html")
 
-
+@ratelimit(key="ip", rate="5/m", method="POST", block=True)
 def register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -107,7 +110,7 @@ def register(request):
 
     return render(request, "home/register.html", {"form": form})
 
-
+@ratelimit(key="ip", rate="10/5m", method="POST", block=True)
 def signin(request):
     """Simple login view"""
     if request.method == "POST":
@@ -232,6 +235,7 @@ def get_pantry_ingredients(request):
 
 @login_required
 @require_GET
+@ratelimit(key="user", rate="20/h", block=True)
 def search_recipes_by_pantry(request):
     """Search for recipes based on pantry ingredients using Spoonacular API"""
     pantry_items = request.user.pantry_items.values_list("ingredient_name", flat=True)
@@ -563,6 +567,7 @@ def reset_streak(request):
 
 @login_required
 @require_POST
+@ratelimit(key="user", rate="20/h", block=True)
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
@@ -987,6 +992,7 @@ def social_feed(request):
 # Render the ChefBot chat page and starts new session and then prompts it
 # with the newly pulled spoonacular recipes and saved recipes
 @login_required
+@ratelimit(key="user", rate="20/h", block=True)
 def aiChefBot_view(request):
 
     # Getting the spoonacular recipes
@@ -1050,6 +1056,7 @@ def aiChefBot_view(request):
 # Take in the user message and append it to the search history
 @login_required
 @require_POST
+@ratelimit(key="user", rate="50/d", block=True)
 def aiChefBot_chat(request):
 
     try:
