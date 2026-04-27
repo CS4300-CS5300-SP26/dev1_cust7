@@ -43,7 +43,7 @@ if "test" in sys.argv or "behave" in sys.argv:
 else:
     KROGER_CLIENT_ID = config("KROGER_CLIENT_ID")
 if "test" in sys.argv or "behave" in sys.argv:
-    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_ID", defualt="test-key")
+    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_ID", default="test-key")
 else:
     KROGER_CLIENT_SECRET = config("KROGER_CLIENT_ID")
 # SECURITY WARNING: don't run with debug turned on in production!
