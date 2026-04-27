@@ -31,6 +31,9 @@ SESSION_COOKIE_SAMESITE = "Strict"
 
 IS_TEST = "test" in sys.argv or "behave" in sys.argv
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config("DEBUG", default=False, cast=bool)
+
 if not DEBUG and not IS_TEST:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
@@ -52,9 +55,6 @@ CONTENT_SECURITY_POLICY = {
 }
 
 RATELIMIT_ENABLE = "test" not in sys.argv and "behave" not in sys.argv
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 if IS_TEST:
@@ -210,6 +210,3 @@ LOGIN_URL = "signin"
 # Image Media Settings
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
-
-
