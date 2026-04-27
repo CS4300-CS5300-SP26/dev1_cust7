@@ -2,7 +2,7 @@ from behave import given, when, then
 from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import Client
-from home.models import ChatSession, ChatMessage, Recipe
+from home.models import ChatSession, ChatMessage, Recipe, RecipeIngredient, RecipeStep
 from home.chefBot import (
     collect_context_from_recipes,
     build_messages,
@@ -11,7 +11,23 @@ from home.chefBot import (
 import json
 import urllib.error
 
-
+# Mock parsed recipe returned by parse_recipe_from_text
+MOCK_PARSED_RECIPE = {
+    "title": "Chicken Fried Rice",
+    "ingredients": [
+        {"quantity": "2", "unit": "cups", "name": "rice"},
+        {"quantity": "1", "unit": "", "name": "egg"},
+        {"quantity": "200", "unit": "g", "name": "chicken"},
+    ],
+    "steps": [
+        "Cook the rice according to package instructions.",
+        "Fry the chicken in a pan until golden.",
+        "Mix everything together and serve hot.",
+    ],
+}
+ 
+MOCK_NOT_A_RECIPE = {"error": "not_a_recipe"}
+ 
 # GIVEN
 @given("I am not logged in")
 def step_not_logged_in(context):
@@ -39,6 +55,7 @@ def step_logged_in_with_session(context):
         user=user,
         spoonacular_context=[],
     )
+    context.user = user
 
 
 @given("I am a logged in user with saved recipes")
@@ -134,6 +151,40 @@ def step_logged_in_with_session_and_saved_recipes(context):
         spoonacular_context=[],
     )
 
+@given("I am a logged in user with a chat session and a recipe response")
+def step_logged_in_with_recipe_response(context):
+    context.client = Client()
+    User.objects.filter(username="testuser").delete()
+    user = User.objects.create_user(username="testuser", password="testpass123")
+    context.client.post("/signin/", {"username": "testuser", "password": "testpass123"})
+    context.session = ChatSession.objects.create(user=user, spoonacular_context=[])
+    context.user = user
+    # Save a realistic recipe response as the last assistant message
+    ChatMessage.objects.create(
+        session=context.session,
+        role="assistant",
+        content=(
+            "Here is a great Chicken Fried Rice recipe!\n"
+            "Ingredients: 2 cups rice, 1 egg, 200g chicken\n"
+            "Steps: 1. Cook rice. 2. Fry chicken. 3. Mix together."
+        ),
+    )
+ 
+ 
+@given("I am a logged in user with a chat session and a tip response")
+def step_logged_in_with_tip_response(context):
+    context.client = Client()
+    User.objects.filter(username="testuser").delete()
+    user = User.objects.create_user(username="testuser", password="testpass123")
+    context.client.post("/signin/", {"username": "testuser", "password": "testpass123"})
+    context.session = ChatSession.objects.create(user=user, spoonacular_context=[])
+    context.user = user
+    # Save a cooking tip (not a recipe) as the last assistant message
+    ChatMessage.objects.create(
+        session=context.session,
+        role="assistant",
+        content="A great tip for cooking pasta is to salt your water generously before boiling.",
+    )
 
 @given("I have Spoonacular recipes")
 def step_have_spoonacular_recipes(context):
@@ -261,6 +312,54 @@ def step_send_valid_message(context):
         )
         context.openai_call_args = mock.call_args
 
+@when("I click save recipe")
+def step_click_save_recipe(context):
+    with patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE):
+        context.response = context.client.post(
+            "/aiChefBot/save-recipe/",
+            data=json.dumps({"session_id": context.session.id}),
+            content_type="application/json",
+        )
+ 
+ 
+@when("I click save recipe with mocked not a recipe response")
+def step_click_save_recipe_not_a_recipe(context):
+    with patch("home.views.parse_recipe_from_text", return_value=MOCK_NOT_A_RECIPE):
+        context.response = context.client.post(
+            "/aiChefBot/save-recipe/",
+            data=json.dumps({"session_id": context.session.id}),
+            content_type="application/json",
+        )
+ 
+ 
+@when("I try to save a recipe without logging in")
+def step_save_recipe_not_logged_in(context):
+    context.response = context.client.post(
+        "/aiChefBot/save-recipe/",
+        data=json.dumps({"session_id": 1}),
+        content_type="application/json",
+    )
+ 
+ 
+@when("I try to save a recipe from another users session")
+def step_save_recipe_another_users_session(context):
+    other_user = User.objects.create_user(username="otheruser", password="testpass123")
+    other_session = ChatSession.objects.create(user=other_user, spoonacular_context=[])
+    ChatMessage.objects.create(session=other_session, role="assistant", content="Some recipe content")
+    context.response = context.client.post(
+        "/aiChefBot/save-recipe/",
+        data=json.dumps({"session_id": other_session.id}),
+        content_type="application/json",
+    )
+ 
+ 
+@when("I try to save a recipe with an invalid session ID")
+def step_save_recipe_invalid_session(context):
+    context.response = context.client.post(
+        "/aiChefBot/save-recipe/",
+        data=json.dumps({"session_id": 999999}),
+        content_type="application/json",
+    )
 
 @when("I collect context from those recipes")
 def step_collect_context(context):
@@ -426,3 +525,51 @@ def step_system_prompt_has_context(context):
 def step_exception_raised(context):
     assert context.exception is not None
     assert "OpenAI API error" in context.exception
+
+@then("the recipe should be saved to my recipes")
+def step_recipe_saved(context):
+    assert context.response.status_code == 200
+    data = json.loads(context.response.content)
+    assert data.get("success") is True
+    assert Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").exists(), \
+        "Recipe was not saved to the database"
+ 
+ 
+@then("I should receive a success response with the recipe title")
+def step_success_response_with_title(context):
+    data = json.loads(context.response.content)
+    assert "recipe_title" in data
+    assert data["recipe_title"] == "Chicken Fried Rice"
+ 
+ 
+@then("I should receive a 400 error saying no response found")
+def step_400_no_response_found(context):
+    assert context.response.status_code == 400
+    data = json.loads(context.response.content)
+    assert "error" in data
+    assert "no chefbot response" in data["error"].lower() or "no" in data["error"].lower()
+ 
+ 
+@then("I should receive a 400 error saying not a recipe")
+def step_400_not_a_recipe(context):
+    assert context.response.status_code == 400
+    data = json.loads(context.response.content)
+    assert "error" in data
+    assert "recipe" in data["error"].lower()
+ 
+ 
+@then("the saved recipe should be private")
+def step_saved_recipe_is_private(context):
+    recipe = Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").first()
+    assert recipe is not None, "Recipe was not found in the database"
+    assert recipe.is_public is False, "Recipe should be private by default"
+ 
+ 
+@then("the saved recipe should have ingredients and steps")
+def step_saved_recipe_has_ingredients_and_steps(context):
+    recipe = Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").first()
+    assert recipe is not None, "Recipe was not found in the database"
+    assert RecipeIngredient.objects.filter(recipe=recipe).exists(), \
+        "Recipe has no ingredients"
+    assert RecipeStep.objects.filter(recipe=recipe).exists(), \
+        "Recipe has no steps"

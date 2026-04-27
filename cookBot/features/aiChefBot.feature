@@ -51,6 +51,7 @@ Feature: AI ChefBot chat functionality
     Given I am a logged in user with a chat session
     When I send a valid message to ChefBot
     Then the OpenAI call should have the system prompt as the first message
+
   Scenario: collect_context_from_recipes formats Spoonacular recipes correctly
     Given I have Spoonacular recipes
     When I collect context from those recipes
@@ -80,3 +81,44 @@ Feature: AI ChefBot chat functionality
     Given I have a conversation history
     When the OpenAI API returns an error
     Then an exception should be raised with the error details
+
+  Scenario: User saves a recipe from ChefBot successfully
+    Given I am a logged in user with a chat session and a recipe response
+    When I click save recipe
+    Then the recipe should be saved to my recipes
+    And I should receive a success response with the recipe title
+
+  Scenario: User tries to save with no ChefBot response yet
+    Given I am a logged in user with a chat session
+    When I click save recipe
+    Then I should receive a 400 error saying no response found
+
+  Scenario: User tries to save a cooking tip that is not a recipe
+    Given I am a logged in user with a chat session and a tip response
+    When I click save recipe with mocked not a recipe response
+    Then I should receive a 400 error saying not a recipe
+
+  Scenario: Unauthenticated user cannot save a recipe
+    Given I am not logged in
+    When I try to save a recipe without logging in
+    Then I should be redirected to the sign in page
+
+  Scenario: User cannot save from another user's session
+    Given I am a logged in user with a chat session
+    When I try to save a recipe from another users session
+    Then I should receive a 404 error response
+
+  Scenario: Save recipe with invalid session ID
+    Given I am a logged in user with a chat session
+    When I try to save a recipe with an invalid session ID
+    Then I should receive a 404 error response
+
+  Scenario: Saved recipe is private by default
+    Given I am a logged in user with a chat session and a recipe response
+    When I click save recipe
+    Then the saved recipe should be private
+
+  Scenario: Saved recipe has correct ingredients and steps
+    Given I am a logged in user with a chat session and a recipe response
+    When I click save recipe
+    Then the saved recipe should have ingredients and steps
