@@ -26,7 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 # Spoonacular API key
-SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY").split(",")
+if "test" in sys.argv or "behave" in sys.argv:
+    SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY", default="test-key").split(",")
+else:
+    SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY").split(",")
 
 # OPENAI KEY
 if "test" in sys.argv or "behave" in sys.argv:
@@ -35,9 +38,14 @@ else:
     OPENAI_API_KEY = config("OPENAI_API_KEY")
 
 # KROGER ID AND SECRET
-KROGER_CLIENT_ID = config("KROGER_CLIENT_ID")
-KROGER_CLIENT_SECRET = config("KROGER_CLIENT_SECRET")
-
+if "test" in sys.argv or "behave" in sys.argv:
+    KROGER_CLIENT_ID = config("KROGER_CLIENT_ID", defualt="test-key")
+else:
+    KROGER_CLIENT_ID = config("KROGER_CLIENT_ID")
+if "test" in sys.argv or "behave" in sys.argv:
+    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_ID", defualt="test-key")
+else:
+    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_ID")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -176,7 +184,7 @@ SESSION_COOKIE_SAMESITE = "Strict"
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
-    SSECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SESSION_COOKIE_SECURE = True
