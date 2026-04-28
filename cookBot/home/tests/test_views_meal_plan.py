@@ -221,7 +221,7 @@ class MealPlanAcceptanceTests(TestCase):
             user=self.user,
             recipe_name="Omelette",
             recipe_id=111,
-            date=date(2026, 4, 7),
+            date=date.today(),
             meal_type="Breakfast",
         )
         self.client.login(username="testuser", password="password123")
@@ -632,8 +632,8 @@ class ChefBotMealPlanUnitTests(TestCase):
             cuisine="Italian",
             pantry_items=["chicken", "rice"],
         )
-        self.assertIn("500", macro)
-        self.assertIn("30", macro)
+        self.assertIn("167", macro)
+        self.assertIn("10", macro)
         self.assertIn("Italian", cuisine)
         self.assertIn("chicken", pantry)
         self.assertIn("rice", pantry)
@@ -650,7 +650,7 @@ class ChefBotMealPlanUnitTests(TestCase):
         macro, cuisine, pantry = build_macro_cuisine_pantry_context(
             calories=600, protein=40, fat=20, carbs=60
         )
-        self.assertIn("600", macro)
+        self.assertIn("200", macro)
         self.assertIn("No cuisine preference", cuisine)
         self.assertIn("No pantry items provided", pantry)
 
@@ -687,4 +687,5 @@ class ChefBotMealPlanUnitTests(TestCase):
         """Prompt should contain the meal planning rules."""
         prompt = build_meal_plan_prompt("macros", "cuisine", "pantry")
         self.assertIn("meal planning assistant", prompt)
-        self.assertIn("10%", prompt)
+        self.assertIn("21", prompt)
+        self.assertIn("7 days", prompt)

@@ -3,13 +3,15 @@ const mainEl = document.getElementById('chefbot-main');
 const SESSION_ID = mainEl.dataset.sessionId;
 const CHAT_URL   = mainEl.dataset.chatUrl;
 const CSRF_TOKEN = mainEl.dataset.csrfToken;
- 
+const SAVE_RECIPE_URL = mainEl.dataset.saveRecipeUrl;
 const messagesEl      = document.getElementById('chatMessages');
 const inputEl         = document.getElementById('userInput');
 const sendBtn         = document.getElementById('sendBtn');
 const typingIndicator = document.getElementById('typingIndicator');
 const errorToast      = document.getElementById('errorToast');
- 
+const saveRecipeBtn   = document.getElementById('saveRecipeBtn');
+const saveRecipeToast = document.getElementById('saveRecipeToast');
+
 // Auto-grow textarea as user types
 inputEl.addEventListener('input', () => {
   inputEl.style.height = 'auto';
@@ -90,3 +92,43 @@ async function sendMessage() {
     inputEl.focus();
   }
 }
+saveRecipeBtn.addEventListener('click', async function() {
+  saveRecipeBtn.disabled = true;
+  saveRecipeBtn.textContent = 'Saving...';
+  saveRecipeToast.textContent = '';
+  saveRecipeToast.className = 'save-recipe-toast';
+
+  try {
+    const response = await fetch(SAVE_RECIPE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF_TOKEN,
+      },
+      body: JSON.stringify({ session_id: SESSION_ID }),
+    });
+
+      const data = await response.json();
+
+      if (data.success) {
+        saveRecipeToast.textContent = `✓ "${data.recipe_title}" saved to My Recipes!`;
+        saveRecipeToast.classList.add('success');
+      } else {
+        saveRecipeToast.textContent = data.error || 'Could not save recipe. Please try again.';
+        saveRecipeToast.classList.add('error');
+      }
+
+  } catch (err) {
+    saveRecipeToast.textContent = 'Something went wrong. Please try again.';
+    saveRecipeToast.classList.add('error');
+  } finally {
+    saveRecipeBtn.disabled = false;
+    saveRecipeBtn.textContent = '🍳 Save Recipe to My Recipes';
+
+    // Auto clear the toast after 5 seconds
+    setTimeout(() => {
+      saveRecipeToast.textContent = '';
+      saveRecipeToast.className = 'save-recipe-toast';
+    }, 5000);
+  }
+});

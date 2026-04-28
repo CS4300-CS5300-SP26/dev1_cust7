@@ -17,6 +17,7 @@
   data-session-id="{{ session_id }}"
   data-chat-url="{% url 'aiChefBot_chat' %}"
   data-csrf-token="{{ csrf_token }}"
+  data-save-recipe-url="{% url 'aiChefBot_save_recipe' %}"
 >
 
   <!-- Chat layout -->
@@ -82,6 +83,13 @@
           <button id="sendBtn" title="Send">&#9658;</button>
         </div>
         <div class="error-toast" id="errorToast"></div>
+
+        <!-- Save Recipe button and feedback -->
+        <div class="save-recipe-row">
+          <button id="saveRecipeBtn" title="Save the last recipe ChefBot gave you">🍳 Save Recipe to My Recipes</button>
+          <div class="save-recipe-toast" id="saveRecipeToast"></div>
+        </div>
+
       </div>
  
     </div>

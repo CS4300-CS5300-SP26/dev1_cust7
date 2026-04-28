@@ -28,41 +28,41 @@
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-  }
+}
    
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
-  .chefbot-sidebar {
+.chefbot-sidebar {
     width: 260px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-  }
+}
    
-  .context-card {
+.context-card {
     background: #f4fbf8;
     border: 1.5px solid #d7eba3;
     border-radius: 16px;
     padding: 1rem 1.1rem;
-  }
+}
    
-  .context-card h3 {
+.context-card h3 {
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: #009470;
     margin-bottom: 0.7rem;
-  }
+}
    
-  .context-card ul {
+.context-card ul {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-  }
+}
    
-  .context-card ul li {
+.context-card ul li {
     font-size: 0.875rem;
     color: #1a3d2b;
     padding: 0.3rem 0.65rem;
@@ -72,16 +72,16 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
+}
    
-  .context-card .empty-note {
+.context-card .empty-note {
     font-size: 0.82rem;
     color: #9ab8ac;
     font-style: italic;
-  }
+}
    
-  /* ── Chat window ──────────────────────────────────────────────────────────── */
-  .chat-container {
+/* ── Chat window ──────────────────────────────────────────────────────────── */
+.chat-container {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -89,11 +89,11 @@
     border: 1.5px solid #d7eba3;
     border-radius: 20px;
     overflow: hidden;
-    min-height: 400px;
-  }
+   min-height: 400px;
+}
    
-  /* Scrollable message area */
-  .chat-messages {
+/* Scrollable message area */
+.chat-messages {
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
@@ -101,27 +101,27 @@
     flex-direction: column;
     gap: 1rem;
     scroll-behavior: smooth;
-  }
+}
    
-  /* ── Message bubbles ──────────────────────────────────────────────────────── */
-  .message {
+/* ── Message bubbles ──────────────────────────────────────────────────────── */
+.message {
     display: flex;
     gap: 0.7rem;
     align-items: flex-start;
     animation: fadeUp 0.2s ease;
-  }
+}
    
-  .message.user {
+.message.user {
     flex-direction: row-reverse;
-  }
+}
    
-  @keyframes fadeUp {
+@keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
-  }
+}
    
-  /* Avatar circles */
-  .avatar {
+/* Avatar circles */
+.avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -132,15 +132,15 @@
     flex-shrink: 0;
     background: #d7eba3;
     color: #1a3d2b;
-  }
+}
    
-  .message.user .avatar {
+.message.user .avatar {
     background: #009470;
     color: #ffffff;
-  }
+}
    
-  /* Bubble */
-  .bubble {
+/* Bubble */
+.bubble {
     max-width: 72%;
     padding: 0.85rem 1.1rem;
     border-radius: 18px;
@@ -148,32 +148,32 @@
     line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-word;
-  }
+}
    
-  .message.user .bubble {
+.message.user .bubble {
     background: #009470;
     color: #ffffff;
     border-bottom-right-radius: 4px;
-  }
+}
    
-  .message.assistant .bubble {
+.message.assistant .bubble {
     background: #f4fbf8;
     color: #1a3d2b;
     border: 1px solid #d7eba3;
     border-bottom-left-radius: 4px;
-  }
+}
    
-  /* ── Typing indicator ─────────────────────────────────────────────────────── */
-  .typing-indicator {
+/* ── Typing indicator ─────────────────────────────────────────────────────── */
+.typing-indicator {
     display: none;
     align-items: center;
     gap: 0.7rem;
     padding: 0 1.5rem 1rem;
-  }
+}
    
-  .typing-indicator.visible { display: flex; }
+.typing-indicator.visible { display: flex; }
    
-  .typing-dots {
+.typing-dots {
     display: flex;
     gap: 4px;
     padding: 0.55rem 0.9rem;
@@ -181,33 +181,33 @@
     border: 1px solid #d7eba3;
     border-radius: 18px;
     border-bottom-left-radius: 4px;
-  }
+}
    
-  .typing-dots span {
+.typing-dots span {
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: #009470;
     animation: bounce 1.2s infinite;
-  }
+}
    
-  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
    
-  @keyframes bounce {
+@keyframes bounce {
     0%, 60%, 100% { transform: translateY(0); }
     30%            { transform: translateY(-6px); }
-  }
+}
    
-  /* ── Input bar ────────────────────────────────────────────────────────────── */
-  .chat-input-area {
+/* ── Input bar ────────────────────────────────────────────────────────────── */
+.chat-input-area {
     border-top: 1.5px solid #d7eba3;
     padding: 0.6rem 1.25rem;
     background: #ffffff;
     margin-top: auto;
-  }
+}
    
-  .chat-input-bar {
+.chat-input-bar {
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -216,11 +216,11 @@
     padding: 0.4rem 0.4rem 0.4rem 1.25rem;
     background: #ffffff;
     transition: border-color 0.2s;
-  }
+}
    
-  .chat-input-bar:focus-within { border-color: #009470; }
+.chat-input-bar:focus-within { border-color: #009470; }
    
-  #userInput {
+#userInput {
     flex: 1;
     border: none;
     outline: none;
@@ -231,11 +231,11 @@
     max-height: 120px;
     line-height: 1.5;
     font-family: sans-serif;
-  }
+}
    
-  #userInput::placeholder { color: #9ab8ac; }
+#userInput::placeholder { color: #9ab8ac; }
    
-  #sendBtn {
+#sendBtn {
     background: #009470;
     border: none;
     color: #ffffff;
@@ -249,13 +249,13 @@
     justify-content: center;
     flex-shrink: 0;
     transition: background 0.2s;
-  }
+}
    
-  #sendBtn:hover:not(:disabled) { background: #42a06d; }
-  #sendBtn:disabled { background: #9ab8ac; cursor: not-allowed; }
+#sendBtn:hover:not(:disabled) { background: #42a06d; }
+#sendBtn:disabled { background: #9ab8ac; cursor: not-allowed; }
    
-  /* ── Error toast ──────────────────────────────────────────────────────────── */
-  .error-toast {
+/* ── Error toast ──────────────────────────────────────────────────────────── */
+.error-toast {
     display: none;
     background: #fff0f0;
     border: 1px solid #f5c6c6;
@@ -264,24 +264,67 @@
     padding: 0.6rem 1rem;
     font-size: 0.85rem;
     margin-top: 0.5rem;
-  }
+}
    
-  .error-toast.visible { display: block; }
-   
-  /* ── Mobile ───────────────────────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .chefbot-area {
+.error-toast.visible { display: block; }
+
+/* ── Save Recipe row ─────────────────────────────────────────────────────── */
+.save-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  padding: 0 0.25rem;
+}
+
+#saveRecipeBtn {
+  background: #ffffff;
+  color: #009470;
+  border: 1.5px solid #009470;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+#saveRecipeBtn:hover:not(:disabled) {
+  background: #009470;
+  color: #ffffff;
+}
+
+#saveRecipeBtn:disabled {
+  background: #f4fbf8;
+  color: #9ab8ac;
+  border-color: #d7eba3;
+  cursor: not-allowed;
+}
+
+.save-recipe-toast {
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-height: 1.2rem;
+}
+
+.save-recipe-toast.success { color: #009470; }
+.save-recipe-toast.error   { color: #b94a4a; }
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .chefbot-area {
       flex-direction: column;
       padding: 1rem;
-    }
+  }
    
-    .chefbot-sidebar {
+  .chefbot-sidebar {
       width: 100%;
       flex-direction: row;
       overflow-x: auto;
-    }
-   
-    .context-card {
-      min-width: 200px;
-    }
   }
+   
+  .context-card {
+      min-width: 200px;
+  }
+}

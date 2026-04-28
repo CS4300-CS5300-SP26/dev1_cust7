@@ -84,7 +84,7 @@
         flex-direction: column;
     }
 }
-/* ── Meal plan controls ───────────────────────────────────────────────────── */
+/* ── Meal plan controls ─────── */
 .meal-plan-controls {
     max-width: 700px;
     margin: 1.5rem auto;
@@ -231,7 +231,38 @@
     font-weight: 500;
     min-height: 1.2rem;
 }
+/* ── Save meal plan button ────── */
+#save-meal-plan-btn {
+    background: #ffffff;
+    color: #009470;
+    border: 1.5px solid #009470;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    align-self: flex-start;
+}
   
+#save-meal-plan-btn:hover:not(:disabled) {
+    background: #009470;
+    color: #ffffff;
+}
+  
+#save-meal-plan-btn:disabled {
+    background: #f4fbf8;
+    color: #9ab8ac;
+    border-color: #d7eba3;
+    cursor: not-allowed;
+}
+  
+#save-meal-message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-height: 1.2rem;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .macro-inputs {
