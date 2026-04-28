@@ -23,9 +23,7 @@ class RegisterFormTests(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("email", form.errors)
-        self.assertIn(
-            "An account with this email already exists.", form.errors["email"]
-        )
+        self.assertIn("Unable to create account, please try again", form.errors["email"])
 
 
 class EditProfileFormTests(TestCase):
