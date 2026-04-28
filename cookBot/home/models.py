@@ -185,9 +185,8 @@ class MealPlan(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="meal_plans")
     recipe_name = models.CharField(max_length=200)
-    recipe_id = models.IntegerField(
-        blank=True, null=True
-    )  # Optional, for linking to external APIs
+    recipe_id = models.IntegerField(blank=True, null=True)
+    # Optional, for linking to external APIs
     date = models.DateField()
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
     created_at = models.DateTimeField(default=timezone.now)
@@ -195,7 +194,10 @@ class MealPlan(models.Model):
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)
     carbs = models.IntegerField(blank=True, null=True)
-    recipes = models.ManyToManyField(Recipe, related_name="meal_plans", blank=True)
+    recipes = models.ManyToManyField(
+        Recipe, related_name="meal_plans", blank=True
+    )
+    recipe_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
         unique_together = ["user", "date", "meal_type"]  # One meal per slot per user
