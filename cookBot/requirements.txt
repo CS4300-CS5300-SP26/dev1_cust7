@@ -5,7 +5,7 @@ Django==4.2.11
 idna==3.11
 python-decouple==3.8
 python-dotenv==1.2.2
-pytz==2024.1
+pytz==2026.1.post1
 requests==2.33.1
 setuptools==82.0.1
 six==1.17.0
