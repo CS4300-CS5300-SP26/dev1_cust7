@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0018_alter_comment_parent'),
+        ("home", "0018_alter_comment_parent"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mealplan',
-            name='recipe_data',
+            model_name="mealplan",
+            name="recipe_data",
             field=models.JSONField(blank=True, default=dict),
         ),
     ]

@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.test import Client
 from home.models import Pantry, MealPlan, Recipe
 
-
 # 21 meals: 7 days x 3 meal types
 MOCK_AI_MEALS = [
     {
@@ -289,8 +288,9 @@ def step_all_meals_saved_as_recipes(context):
     saved_count = data.get("saved_count", 0)
     assert saved_count > 0, "No meals were saved as recipes"
     recipe_count = Recipe.objects.filter(user=context.user, is_public=False).count()
-    assert recipe_count == saved_count, \
-        f"Expected {saved_count} private recipes, got {recipe_count}"
+    assert (
+        recipe_count == saved_count
+    ), f"Expected {saved_count} private recipes, got {recipe_count}"
 
 
 @then("I should receive a success message with saved count")
@@ -305,8 +305,10 @@ def step_success_message_with_count(context):
 
 @then("I should be redirected when trying to save")
 def step_redirected_when_saving(context):
-    assert context.response.status_code in [302, 403], \
-        f"Expected redirect or forbidden, got {context.response.status_code}"
+    assert context.response.status_code in [
+        302,
+        403,
+    ], f"Expected redirect or forbidden, got {context.response.status_code}"
 
 
 @then("I should see a warning message about already saved")
@@ -320,8 +322,9 @@ def step_warning_already_saved(context):
 def step_saved_recipes_are_private(context):
     recipes = Recipe.objects.filter(user=context.user)
     for recipe in recipes:
-        assert recipe.is_public is False, \
-            f"Recipe '{recipe.title}' should be private but is public"
+        assert (
+            recipe.is_public is False
+        ), f"Recipe '{recipe.title}' should be private but is public"
 
 
 @then("the saved recipes should include macro information")
@@ -330,5 +333,7 @@ def step_saved_recipes_have_macros(context):
     assert recipes.exists(), "No recipes were saved"
     for recipe in recipes:
         assert recipe.description, f"Recipe '{recipe.title}' has no description"
-        assert "cal" in recipe.description.lower() or "protein" in recipe.description.lower(), \
-            f"Recipe description does not contain macro info: {recipe.description}"
+        assert (
+            "cal" in recipe.description.lower()
+            or "protein" in recipe.description.lower()
+        ), f"Recipe description does not contain macro info: {recipe.description}"

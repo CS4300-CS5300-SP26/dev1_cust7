@@ -137,7 +137,9 @@ def call_openai(
     return _call_openai_raw(messages)
 
 
-def build_macro_cuisine_pantry_context(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+def build_macro_cuisine_pantry_context(
+    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
+):
     # Build macro context
     macro_lines = []
     if calories:
@@ -225,7 +227,9 @@ def build_meal_plan_prompt(macro_section, cuisine_section, pantry_section):
     """.strip()
 
 
-def generate_meal_plan_with_ai(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+def generate_meal_plan_with_ai(
+    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
+):
     # Build context sections
     macro_section, cuisine_section, pantry_section = build_macro_cuisine_pantry_context(
         calories, protein, fat, carbs, cuisine, pantry_items

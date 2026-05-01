@@ -194,9 +194,7 @@ class MealPlan(models.Model):
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)
     carbs = models.IntegerField(blank=True, null=True)
-    recipes = models.ManyToManyField(
-        Recipe, related_name="meal_plans", blank=True
-    )
+    recipes = models.ManyToManyField(Recipe, related_name="meal_plans", blank=True)
     recipe_data = models.JSONField(default=dict, blank=True)
 
     class Meta:

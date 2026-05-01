@@ -349,7 +349,9 @@ def step_save_recipe_not_logged_in(context):
 def step_save_recipe_another_users_session(context):
     other_user = User.objects.create_user(username="otheruser", password="testpass123")
     other_session = ChatSession.objects.create(user=other_user, spoonacular_context=[])
-    ChatMessage.objects.create(session=other_session, role="assistant", content="Some recipe content")
+    ChatMessage.objects.create(
+        session=other_session, role="assistant", content="Some recipe content"
+    )
     context.response = context.client.post(
         "/aiChefBot/save-recipe/",
         data=json.dumps({"session_id": other_session.id}),
@@ -537,8 +539,9 @@ def step_recipe_saved(context):
     assert context.response.status_code == 200
     data = json.loads(context.response.content)
     assert data.get("success") is True
-    assert Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").exists(), \
-        "Recipe was not saved to the database"
+    assert Recipe.objects.filter(
+        user=context.user, title="Chicken Fried Rice"
+    ).exists(), "Recipe was not saved to the database"
 
 
 @then("I should receive a success response with the recipe title")
@@ -553,7 +556,9 @@ def step_400_no_response_found(context):
     assert context.response.status_code == 400
     data = json.loads(context.response.content)
     assert "error" in data
-    assert "no chefbot response" in data["error"].lower() or "no" in data["error"].lower()
+    assert (
+        "no chefbot response" in data["error"].lower() or "no" in data["error"].lower()
+    )
 
 
 @then("I should receive a 400 error saying not a recipe")
@@ -566,16 +571,20 @@ def step_400_not_a_recipe(context):
 
 @then("the saved recipe should be private")
 def step_saved_recipe_is_private(context):
-    recipe = Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").first()
+    recipe = Recipe.objects.filter(
+        user=context.user, title="Chicken Fried Rice"
+    ).first()
     assert recipe is not None, "Recipe was not found in the database"
     assert recipe.is_public is False, "Recipe should be private by default"
 
 
 @then("the saved recipe should have ingredients and steps")
 def step_saved_recipe_has_ingredients_and_steps(context):
-    recipe = Recipe.objects.filter(user=context.user, title="Chicken Fried Rice").first()
+    recipe = Recipe.objects.filter(
+        user=context.user, title="Chicken Fried Rice"
+    ).first()
     assert recipe is not None, "Recipe was not found in the database"
-    assert RecipeIngredient.objects.filter(recipe=recipe).exists(), \
-        "Recipe has no ingredients"
-    assert RecipeStep.objects.filter(recipe=recipe).exists(), \
-        "Recipe has no steps"
+    assert RecipeIngredient.objects.filter(
+        recipe=recipe
+    ).exists(), "Recipe has no ingredients"
+    assert RecipeStep.objects.filter(recipe=recipe).exists(), "Recipe has no steps"
