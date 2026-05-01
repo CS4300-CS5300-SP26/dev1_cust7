@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-REFERRER_POLICY = "same-origin"
+SECURE_REFERRER_POLICY = "same-origin"
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
 SESSION_COOKIE_SAMESITE = "Strict"
@@ -62,28 +62,22 @@ if IS_TEST:
 else:
     SECRET_KEY = config("SECRET_KEY")
 
-# Spoonacular API key
-if "test" in sys.argv or "behave" in sys.argv:
-    SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY", default="test-key").split(",")
-else:
-    SPOONACULAR_API_KEY = config("SPOONACULAR_API_KEY").split(",")
-
-# OPENAI KEY
-if "test" in sys.argv or "behave" in sys.argv:
-    OPENAI_API_KEY = config("OPENAI_API_KEY", default="test-key")
-else:
-    OPENAI_API_KEY = config("OPENAI_API_KEY")
-
-# KROGER ID AND SECRET
-if "test" in sys.argv or "behave" in sys.argv:
-    KROGER_CLIENT_ID = config("KROGER_CLIENT_ID", default="test-key")
-else:
-    KROGER_CLIENT_ID = config("KROGER_CLIENT_ID")
-if "test" in sys.argv or "behave" in sys.argv:
-    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_SECRET", default="test-key")
-else:
-    KROGER_CLIENT_SECRET = config("KROGER_CLIENT_SECRET")
-
+SPOONACULAR_API_KEY = config(
+    "SPOONACULAR_API_KEY",
+    default="test-key" if IS_TEST else None,
+).split(",")
+OPENAI_API_KEY = config(
+    "OPENAI_API_KEY",
+    default="test-key" if IS_TEST else None,
+)
+KROGER_CLIENT_ID = config(
+    "KROGER_CLIENT_ID",
+    default="test-key" if IS_TEST else None,
+)
+KROGER_CLIENT_SECRET = config(
+    "KROGER_CLIENT_SECRET",
+    default="test-key" if IS_TEST else None,
+)
 
 if IS_TEST:
     ALLOWED_HOSTS = ["testserver", "localhost"]
