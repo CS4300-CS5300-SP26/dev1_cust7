@@ -30,7 +30,7 @@ jobs:
             systemctl start cookBot
             systemctl reload nginx
             for i in 1 2 3 4 5 6; do
-              STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 3 --max-time 10 htts://cookbot.me || true)
+              STATUS=$(curl -o /dev/null -s -w "%{http_code}" --connect-timeout 3 --max-time 10 https://cookbot.me || true)
               echo "Attempt $i: Status $STATUS"
               if [ "$STATUS" = "200" ]; then
                 echo "App is healthy"
