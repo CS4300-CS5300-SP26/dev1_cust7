@@ -42,17 +42,16 @@ if not DEBUG and not IS_TEST:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-CONTENT_SECURITY_POLICY = {
-    "DIRECTIVES": {
-        "default-src": ("'self'",),
-        "script-src": ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
-        "style-src": ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
-        "img-src": ("'self'", "data:", "https:"),
-        "font-src": ("'self'", "data:", "https://cdn.jsdelivr.net"),
-        "connect-src": ("'self'",),
-        "frame-ancestors": ("'none'",),
-    }
-}
+
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:", "https://cdn.jsdelivr.net")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+        
+
 
 RATELIMIT_ENABLE = "test" not in sys.argv and "behave" not in sys.argv
 
@@ -80,11 +79,11 @@ KROGER_CLIENT_SECRET = config(
 )
 
 if IS_TEST:
-    ALLOWED_HOSTS = ["testserver", "localhost"]
+    ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 elif DEBUG:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".devedu.io"]
 else:
-    ALLOWED_HOSTS = ["cookbot.me", "www.cookbot.me", "app-cs5300-21.devedu.io"]
+    ALLOWED_HOSTS = ["cookbot.me", "www.cookbot.me"]
 # CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
 # Comment the line below out and uncomment above when working through DevEdu
 CSRF_TRUSTED_ORIGINS = [
