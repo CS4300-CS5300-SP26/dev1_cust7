@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,25 +22,67 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY", default="django-insecure-fallback-key-for-local-dev")
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "same-origin"
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Strict"
 
-# Spoonacular API key
-SPOONACULAR_API_KEY = config(
-    "SPOONACULAR_API_KEY", default="placeholder_key_for_local_dev"
-).split(",")
-
-# OPENAI KEY
-OPENAI_API_KEY = config("OPENAI_API_KEY", default="placeholder")
-
-# KROGER ID AND SECRET
-KROGER_CLIENT_ID = config("KROGER_CLIENT_ID", default="placeholder")
-KROGER_CLIENT_SECRET = config("KROGER_CLIENT_SECRET", default="placeholder")
+IS_TEST = "test" in sys.argv or "behave" in sys.argv
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*", ".devedu.io"]
+if not DEBUG and not IS_TEST:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:", "https://cdn.jsdelivr.net")
+CSP_CONNECT_SRC = ("'self'",)
+CSP_FRAME_ANCESTORS = ("'none'",)
+
+
+RATELIMIT_ENABLE = "test" not in sys.argv and "behave" not in sys.argv
+
+# SECURITY WARNING: keep the secret key used in production secret!
+if IS_TEST:
+    SECRET_KEY = config("SECRET_KEY", default="test-secret-key-only-for-tests")
+else:
+    SECRET_KEY = config("SECRET_KEY")
+
+SPOONACULAR_API_KEY = config(
+    "SPOONACULAR_API_KEY",
+    default="test-key" if IS_TEST else None,
+).split(",")
+OPENAI_API_KEY = config(
+    "OPENAI_API_KEY",
+    default="test-key" if IS_TEST else None,
+)
+KROGER_CLIENT_ID = config(
+    "KROGER_CLIENT_ID",
+    default="test-key" if IS_TEST else None,
+)
+KROGER_CLIENT_SECRET = config(
+    "KROGER_CLIENT_SECRET",
+    default="test-key" if IS_TEST else None,
+)
+
+if IS_TEST:
+    ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
+elif DEBUG:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".devedu.io"]
+else:
+    ALLOWED_HOSTS = ["cookbot.me", "www.cookbot.me"]
 # CSRF_TRUSTED_ORIGINS = ['https://app-name.devedu.io'] # Change this for your devedu
 # Comment the line below out and uncomment above when working through DevEdu
 CSRF_TRUSTED_ORIGINS = [
@@ -62,6 +105,7 @@ INSTALLED_APPS = [
 # 'cookBot'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

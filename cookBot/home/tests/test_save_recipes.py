@@ -59,12 +59,15 @@ MOCK_AI_MEALS = [
 
 # ── ChefBot Save Recipe Tests ─────────────────────────────────────────────────
 
+
 class TestAiChefBotSaveRecipe(TestCase):
     """Tests for the aiChefBot_save_recipe view."""
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
         self.client.login(username="testuser", password="testpass123")
         self.session = ChatSession.objects.create(
             user=self.user,
@@ -93,12 +96,16 @@ class TestAiChefBotSaveRecipe(TestCase):
         data = response.json()
         self.assertTrue(data["success"])
         self.assertEqual(data["recipe_title"], "Chicken Fried Rice")
-        self.assertTrue(Recipe.objects.filter(user=self.user, title="Chicken Fried Rice").exists())
+        self.assertTrue(
+            Recipe.objects.filter(user=self.user, title="Chicken Fried Rice").exists()
+        )
 
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE)
     def test_saved_recipe_is_private_by_default(self, mock_parse):
         """Saved recipe should be private by default."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         self.post_save()
         recipe = Recipe.objects.filter(user=self.user).first()
         self.assertIsNotNone(recipe)
@@ -107,7 +114,9 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE)
     def test_saved_recipe_has_correct_ingredients(self, mock_parse):
         """Saved recipe should have all ingredients from the parsed response."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         self.post_save()
         recipe = Recipe.objects.filter(user=self.user).first()
         self.assertIsNotNone(recipe)
@@ -121,7 +130,9 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE)
     def test_saved_recipe_has_correct_steps(self, mock_parse):
         """Saved recipe should have all steps from the parsed response in order."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         self.post_save()
         recipe = Recipe.objects.filter(user=self.user).first()
         self.assertIsNotNone(recipe)
@@ -133,7 +144,9 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE)
     def test_save_recipe_returns_recipe_id(self, mock_parse):
         """Save response should include the new recipe ID."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         response = self.post_save()
         data = response.json()
         self.assertIn("recipe_id", data)
@@ -142,8 +155,12 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_PARSED_RECIPE)
     def test_only_last_assistant_message_is_used(self, mock_parse):
         """Only the most recent assistant message should be sent for parsing."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Old message")
-        ChatMessage.objects.create(session=self.session, role="assistant", content="New recipe message")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Old message"
+        )
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="New recipe message"
+        )
         self.post_save()
         # Verify parse was called with the latest message
         call_args = mock_parse.call_args[0][0]
@@ -153,7 +170,9 @@ class TestAiChefBotSaveRecipe(TestCase):
 
     def test_save_recipe_no_assistant_message_returns_400(self):
         """Returns 400 if there is no ChefBot response in the session yet."""
-        ChatMessage.objects.create(session=self.session, role="user", content="Tell me a recipe")
+        ChatMessage.objects.create(
+            session=self.session, role="user", content="Tell me a recipe"
+        )
         response = self.post_save()
         self.assertEqual(response.status_code, 400)
         data = response.json()
@@ -183,7 +202,9 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", return_value=MOCK_NOT_A_RECIPE)
     def test_save_recipe_not_a_recipe_does_not_create_recipe(self, mock_parse):
         """No Recipe object should be created when response is not a recipe."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Just a tip")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Just a tip"
+        )
         initial_count = Recipe.objects.filter(user=self.user).count()
         self.post_save()
         self.assertEqual(Recipe.objects.filter(user=self.user).count(), initial_count)
@@ -206,9 +227,15 @@ class TestAiChefBotSaveRecipe(TestCase):
 
     def test_save_recipe_another_users_session_returns_404(self):
         """Returns 404 when trying to save from another user's session."""
-        other_user = User.objects.create_user(username="otheruser", password="testpass123")
-        other_session = ChatSession.objects.create(user=other_user, spoonacular_context=[])
-        ChatMessage.objects.create(session=other_session, role="assistant", content="Recipe")
+        other_user = User.objects.create_user(
+            username="otheruser", password="testpass123"
+        )
+        other_session = ChatSession.objects.create(
+            user=other_user, spoonacular_context=[]
+        )
+        ChatMessage.objects.create(
+            session=other_session, role="assistant", content="Recipe"
+        )
         response = self.post_save(session_id=other_session.id)
         self.assertEqual(response.status_code, 404)
 
@@ -225,16 +252,23 @@ class TestAiChefBotSaveRecipe(TestCase):
     @patch("home.views.parse_recipe_from_text", side_effect=Exception("OpenAI is down"))
     def test_save_recipe_openai_failure_returns_500(self, mock_parse):
         """Returns 500 when OpenAI parsing call fails."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         response = self.post_save()
         self.assertEqual(response.status_code, 500)
         data = response.json()
         self.assertIn("error", data)
 
-    @patch("home.views.parse_recipe_from_text", return_value={"title": "", "ingredients": [], "steps": []})
+    @patch(
+        "home.views.parse_recipe_from_text",
+        return_value={"title": "", "ingredients": [], "steps": []},
+    )
     def test_save_recipe_empty_title_returns_400(self, mock_parse):
         """Returns 400 when OpenAI returns a recipe with no title."""
-        ChatMessage.objects.create(session=self.session, role="assistant", content="Recipe content")
+        ChatMessage.objects.create(
+            session=self.session, role="assistant", content="Recipe content"
+        )
         response = self.post_save()
         self.assertEqual(response.status_code, 400)
         data = response.json()
@@ -252,12 +286,15 @@ class TestAiChefBotSaveRecipe(TestCase):
 
 # ── Calendar Save Meal Plan Tests ─────────────────────────────────────────────
 
+
 class TestCalendarSaveMealPlan(TestCase):
     """Tests for the calendar_save_meal_plan view."""
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="password123")
+        self.user = User.objects.create_user(
+            username="testuser", password="password123"
+        )
         self.client.login(username="testuser", password="password123")
 
     def generate_meal_plan(self):
@@ -301,7 +338,9 @@ class TestCalendarSaveMealPlan(TestCase):
         self.post_save()
         recipes = Recipe.objects.filter(user=self.user)
         for recipe in recipes:
-            self.assertFalse(recipe.is_public, f"Recipe '{recipe.title}' should be private")
+            self.assertFalse(
+                recipe.is_public, f"Recipe '{recipe.title}' should be private"
+            )
 
     def test_saved_meal_recipes_have_ingredients(self):
         """Saved meal recipes should have ingredients from recipe_data."""
@@ -341,7 +380,7 @@ class TestCalendarSaveMealPlan(TestCase):
             if meal_plan.recipe_data:
                 self.assertIsNotNone(
                     meal_plan.recipe_id,
-                    f"MealPlan '{meal_plan.recipe_name}' should have a recipe_id after saving"
+                    f"MealPlan '{meal_plan.recipe_name}' should have a recipe_id after saving",
                 )
 
     def test_save_returns_success_message(self):
@@ -368,7 +407,9 @@ class TestCalendarSaveMealPlan(TestCase):
         first_count = Recipe.objects.filter(user=self.user).count()
         self.post_save()
         second_count = Recipe.objects.filter(user=self.user).count()
-        self.assertEqual(first_count, second_count, "Duplicate recipes were created on second save")
+        self.assertEqual(
+            first_count, second_count, "Duplicate recipes were created on second save"
+        )
 
     def test_save_meal_plan_twice_second_returns_400(self):
         """Second save attempt returns 400 with already saved message."""
@@ -415,15 +456,22 @@ class TestCalendarSaveMealPlan(TestCase):
             recipe_name="Old Meal",
             date=old_date,
             meal_type="Lunch",
-            recipe_data={"ingredients": [{"quantity": "1", "unit": "cup", "name": "rice"}], "steps": ["Cook it"]},
+            recipe_data={
+                "ingredients": [{"quantity": "1", "unit": "cup", "name": "rice"}],
+                "steps": ["Cook it"],
+            },
         )
         self.post_save()
         # Old meal should not be saved as a recipe
-        self.assertFalse(Recipe.objects.filter(user=self.user, title="Old Meal").exists())
+        self.assertFalse(
+            Recipe.objects.filter(user=self.user, title="Old Meal").exists()
+        )
 
     def test_save_meal_plan_user_isolation(self):
         """Saving only creates recipes for the logged-in user, not other users."""
-        other_user = User.objects.create_user(username="otheruser", password="password123")
+        other_user = User.objects.create_user(
+            username="otheruser", password="password123"
+        )
         # Create a meal plan for other_user
         MealPlan.objects.create(
             user=other_user,
@@ -435,6 +483,8 @@ class TestCalendarSaveMealPlan(TestCase):
         self.generate_meal_plan()
         self.post_save()
         # Other user's meal should not be saved as a recipe for this user
-        self.assertFalse(Recipe.objects.filter(user=self.user, title="Other User Meal").exists())
+        self.assertFalse(
+            Recipe.objects.filter(user=self.user, title="Other User Meal").exists()
+        )
         # Other user should have no recipes
         self.assertFalse(Recipe.objects.filter(user=other_user).exists())

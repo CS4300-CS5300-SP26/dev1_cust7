@@ -194,9 +194,7 @@ class MealPlan(models.Model):
     protein = models.IntegerField(blank=True, null=True)
     fat = models.IntegerField(blank=True, null=True)
     carbs = models.IntegerField(blank=True, null=True)
-    recipes = models.ManyToManyField(
-        Recipe, related_name="meal_plans", blank=True
-    )
+    recipes = models.ManyToManyField(Recipe, related_name="meal_plans", blank=True)
     recipe_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -287,9 +285,7 @@ class Comment(models.Model):
 class UserStreak(models.Model):
     """Tracks a user's cooking streak"""
 
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="streak"
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="streak")
     current_streak = models.IntegerField(default=0)
     longest_streak = models.IntegerField(default=0)
     last_cooked_date = models.DateField(blank=True, null=True)

@@ -9,18 +9,33 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('home', '0019_remove_mealplan_created_date_mealplan_created_at_and_more'),
+        ("home", "0019_remove_mealplan_created_date_mealplan_created_at_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UserStreak',
+            name="UserStreak",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('current_streak', models.IntegerField(default=0)),
-                ('longest_streak', models.IntegerField(default=0)),
-                ('last_cooked_date', models.DateField(blank=True, null=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='streak', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("current_streak", models.IntegerField(default=0)),
+                ("longest_streak", models.IntegerField(default=0)),
+                ("last_cooked_date", models.DateField(blank=True, null=True)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="streak",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

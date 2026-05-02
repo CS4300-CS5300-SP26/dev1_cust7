@@ -119,11 +119,10 @@ def _call_openai_raw(messages):
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode("utf-8"))
             return data["choices"][0]["message"]["content"].strip()
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8")
-        raise Exception(f"OpenAI API error {e.code}: {error_body}")
-    except Exception as e:
-        raise Exception(f"OpenAI request failed: {str(e)}")
+    except urllib.error.HTTPError:
+        raise Exception("OpenAI API Connection failed")
+    except Exception:
+        raise Exception("OpenAI request failed")
 
 
 def call_openai(
@@ -138,7 +137,9 @@ def call_openai(
     return _call_openai_raw(messages)
 
 
-def build_macro_cuisine_pantry_context(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+def build_macro_cuisine_pantry_context(
+    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
+):
     # Build macro context
     macro_lines = []
     if calories:
@@ -226,7 +227,9 @@ def build_meal_plan_prompt(macro_section, cuisine_section, pantry_section):
     """.strip()
 
 
-def generate_meal_plan_with_ai(calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None):
+def generate_meal_plan_with_ai(
+    calories=None, protein=None, fat=None, carbs=None, cuisine=None, pantry_items=None
+):
     # Build context sections
     macro_section, cuisine_section, pantry_section = build_macro_cuisine_pantry_context(
         calories, protein, fat, carbs, cuisine, pantry_items

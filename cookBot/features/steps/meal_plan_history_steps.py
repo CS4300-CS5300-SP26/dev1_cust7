@@ -56,7 +56,9 @@ def step_should_see_meal_plans_with_dates(context, count):
     plans = MealPlan.objects.filter(user=context.user).order_by("-created_at")
     assert plans.count() == count, f"Expected {count} plans, got {plans.count()}"
     for plan in plans:
-        assert plan.recipe_name in content, f"Recipe name '{plan.recipe_name}' not found"
+        assert (
+            plan.recipe_name in content
+        ), f"Recipe name '{plan.recipe_name}' not found"
         date_str = plan.created_at.strftime("%b %d, %Y")
         assert date_str in content, f"Date '{date_str}' not found in content"
 

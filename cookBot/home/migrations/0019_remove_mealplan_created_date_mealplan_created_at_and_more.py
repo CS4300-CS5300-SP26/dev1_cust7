@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0018_alter_comment_parent'),
+        ("home", "0018_alter_comment_parent"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='mealplan',
-            old_name='created_date',
-            new_name='created_at',
+            model_name="mealplan",
+            old_name="created_date",
+            new_name="created_at",
         ),
         migrations.AddField(
-            model_name='mealplan',
-            name='recipes',
-            field=models.ManyToManyField(blank=True, related_name='meal_plans', to='home.recipe'),
+            model_name="mealplan",
+            name="recipes",
+            field=models.ManyToManyField(
+                blank=True, related_name="meal_plans", to="home.recipe"
+            ),
         ),
     ]

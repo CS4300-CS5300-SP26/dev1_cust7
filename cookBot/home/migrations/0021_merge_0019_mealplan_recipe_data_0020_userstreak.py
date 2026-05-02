@@ -6,9 +6,8 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('home', '0019_mealplan_recipe_data'),
-        ('home', '0020_userstreak'),
+        ("home", "0019_mealplan_recipe_data"),
+        ("home", "0020_userstreak"),
     ]
 
-    operations = [
-    ]
+    operations = []

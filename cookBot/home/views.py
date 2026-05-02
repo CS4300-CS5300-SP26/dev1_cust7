@@ -9,6 +9,7 @@ from .spoonacular import spoonacular_get
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied
+from django_ratelimit.decorators import ratelimit
 from .models import (
     Recipe,
     RecipeStep,
@@ -48,6 +49,8 @@ def index(request):
 
 
 # Help from Claude and Spoonacular documents on fetching data from spoonacular #
+@login_required
+@ratelimit(key="user", rate="20/h", block=True)
 def get_nutrition(request, ingredient_name):
     try:
         # Step 1: find ingredient ID
@@ -93,6 +96,7 @@ def nutrition_test(request):
     return render(request, "home/nutrition_test.html")
 
 
+@ratelimit(key="ip", rate="5/m", method="POST", block=True)
 def register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -108,6 +112,7 @@ def register(request):
     return render(request, "home/register.html", {"form": form})
 
 
+@ratelimit(key="ip", rate="10/5m", method="POST", block=True)
 def signin(request):
     """Simple login view"""
     if request.method == "POST":
@@ -130,12 +135,13 @@ def signout(request):
 
 @login_required
 def account(request):
-    meal_plans = (
-        request.user.meal_plans.prefetch_related("recipes")
-        .order_by("-created_at")[:10]
-    )
+    meal_plans = request.user.meal_plans.prefetch_related("recipes").order_by(
+        "-created_at"
+    )[:10]
     return render(
-        request, "home/account_info.html", {"user": request.user, "meal_plans": meal_plans}
+        request,
+        "home/account_info.html",
+        {"user": request.user, "meal_plans": meal_plans},
     )
 
 
@@ -232,6 +238,7 @@ def get_pantry_ingredients(request):
 
 @login_required
 @require_GET
+@ratelimit(key="user", rate="20/h", block=True)
 def search_recipes_by_pantry(request):
     """Search for recipes based on pantry ingredients using Spoonacular API"""
     pantry_items = request.user.pantry_items.values_list("ingredient_name", flat=True)
@@ -426,8 +433,8 @@ def get_meals_json(request):
     # Default to current month if not provided
     if not start_date or not end_date:
         today = date.today()
-        start_date = today.strftime('%Y-%m-%d')
-        end_date = (today + timedelta(days=6)).strftime('%Y-%m-%d')
+        start_date = today.strftime("%Y-%m-%d")
+        end_date = (today + timedelta(days=6)).strftime("%Y-%m-%d")
 
     MEAL_ORDER = {"Breakfast": 0, "Lunch": 1, "Dinner": 2}
     MEAL_TIMES = {
@@ -554,6 +561,7 @@ def reset_streak(request):
 
 @login_required
 @require_POST
+@ratelimit(key="user", rate="20/h", block=True)
 def generate_meal_plan(request):
     """Generate a 7-day meal plan using OpenAI based on user inputs"""
     from .models import MealPlan
@@ -612,13 +620,11 @@ def generate_meal_plan(request):
     for i in range(7):
         MealPlan.objects.filter(
             user=request.user, date=today + timedelta(days=i)
-
         ).delete()
 
     # Build a lookup of recipe titles to Recipe objects for the current user
     user_recipe_lookup = {
-        r.title.lower(): r
-        for r in Recipe.objects.filter(user=request.user)
+        r.title.lower(): r for r in Recipe.objects.filter(user=request.user)
     }
 
     # Save each meal to DB
@@ -983,6 +989,7 @@ def social_feed(request):
 # Render the ChefBot chat page and starts new session and then prompts it
 # with the newly pulled spoonacular recipes and saved recipes
 @login_required
+@ratelimit(key="user", rate="20/h", block=True)
 def aiChefBot_view(request):
 
     # Getting the spoonacular recipes
@@ -1046,6 +1053,7 @@ def aiChefBot_view(request):
 # Take in the user message and append it to the search history
 @login_required
 @require_POST
+@ratelimit(key="user", rate="50/d", block=True)
 def aiChefBot_chat(request):
     try:
         data = json.loads(request.body)
@@ -1117,42 +1125,53 @@ def aiChefBot_chat(request):
 def aiChefBot_save_recipe(request):
     try:
         data = json.loads(request.body)
-        session_id = data.get('session_id')
+        session_id = data.get("session_id")
 
         if not session_id:
-            return JsonResponse({'error': 'Session ID is required.'}, status=400)
+            return JsonResponse({"error": "Session ID is required."}, status=400)
 
         # Load session and verify ownership
         try:
             session = ChatSession.objects.get(id=session_id, user=request.user)
         except ChatSession.DoesNotExist:
-            return JsonResponse({'error': 'Chat session not found.'}, status=404)
+            return JsonResponse({"error": "Chat session not found."}, status=404)
 
         # Get the last assistant message
-        last_message = session.messages.filter(role='assistant').order_by('timestamp').last()
+        last_message = (
+            session.messages.filter(role="assistant").order_by("timestamp").last()
+        )
 
         if not last_message:
-            return JsonResponse({
-                'error': 'No ChefBot response found to save. Ask ChefBot for a recipe first.'
-            }, status=400)
+            return JsonResponse(
+                {
+                    "error": "No ChefBot response found to save. Ask ChefBot for a recipe first."
+                },
+                status=400,
+            )
 
         # Send to OpenAI to parse into structured recipe
         parsed = parse_recipe_from_text(last_message.content)
 
         # Check if OpenAI flagged it as not a recipe
-        if parsed.get('error') == 'not_a_recipe':
-            return JsonResponse({
-                'error': 'This doesn\'t look like a recipe. Try asking ChefBot for a specific recipe first.'
-            }, status=400)
+        if parsed.get("error") == "not_a_recipe":
+            return JsonResponse(
+                {
+                    "error": "This doesn't look like a recipe. Try asking ChefBot for a specific recipe first."
+                },
+                status=400,
+            )
 
-        title = parsed.get('title', '').strip()
-        ingredients = parsed.get('ingredients', [])
-        steps = parsed.get('steps', [])
+        title = parsed.get("title", "").strip()
+        ingredients = parsed.get("ingredients", [])
+        steps = parsed.get("steps", [])
 
         if not title:
-            return JsonResponse({
-                'error': 'Could not extract a recipe title. Try asking ChefBot for a specific recipe.'
-            }, status=400)
+            return JsonResponse(
+                {
+                    "error": "Could not extract a recipe title. Try asking ChefBot for a specific recipe."
+                },
+                status=400,
+            )
 
         # Create the Recipe — private by default matching create_recipe behavior
         recipe = Recipe.objects.create(
@@ -1163,12 +1182,12 @@ def aiChefBot_save_recipe(request):
 
         # Create RecipeIngredient objects
         for ingredient in ingredients:
-            name = ingredient.get('name', '').strip()
+            name = ingredient.get("name", "").strip()
             if name:
                 RecipeIngredient.objects.create(
                     recipe=recipe,
-                    quantity=ingredient.get('quantity', '').strip(),
-                    unit=ingredient.get('unit', '').strip() or None,
+                    quantity=ingredient.get("quantity", "").strip(),
+                    unit=ingredient.get("unit", "").strip() or None,
                     name=name,
                 )
 
@@ -1181,14 +1200,16 @@ def aiChefBot_save_recipe(request):
                     text=step_text.strip(),
                 )
 
-        return JsonResponse({
-            'success': True,
-            'recipe_title': recipe.title,
-            'recipe_id': recipe.id,
-        })
+        return JsonResponse(
+            {
+                "success": True,
+                "recipe_title": recipe.title,
+                "recipe_id": recipe.id,
+            }
+        )
 
     except Exception as e:
-        return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
+        return JsonResponse({"error": f"Something went wrong: {str(e)}"}, status=500)
 
 
 @login_required
@@ -1208,9 +1229,9 @@ def calendar_save_meal_plan(request):
         )
 
         if not meal_plans.exists():
-            return JsonResponse({
-                'error': 'No meal found. Generate a meal plan first.'
-            }, status=400)
+            return JsonResponse(
+                {"error": "No meal found. Generate a meal plan first."}, status=400
+            )
 
         saved_count = 0
         skipped_count = 0
@@ -1222,8 +1243,8 @@ def calendar_save_meal_plan(request):
                 continue
 
             recipe_data = meal_plan.recipe_data
-            ingredients = recipe_data.get('ingredients', [])
-            steps = recipe_data.get('steps', [])
+            ingredients = recipe_data.get("ingredients", [])
+            steps = recipe_data.get("steps", [])
 
             # Skip meals with no recipe data
             if not ingredients and not steps:
@@ -1245,12 +1266,12 @@ def calendar_save_meal_plan(request):
             )
 
             for ingredient in ingredients:
-                name = ingredient.get('name', '').strip()
+                name = ingredient.get("name", "").strip()
                 if name:
                     RecipeIngredient.objects.create(
                         recipe=recipe,
-                        quantity=ingredient.get('quantity', '').strip(),
-                        unit=ingredient.get('unit', '').strip() or None,
+                        quantity=ingredient.get("quantity", "").strip(),
+                        unit=ingredient.get("unit", "").strip() or None,
                         name=name,
                     )
 
@@ -1269,19 +1290,22 @@ def calendar_save_meal_plan(request):
             saved_count += 1
 
         if saved_count == 0:
-            return JsonResponse({
-                'error': 'All meals have already been saved to My Recipes.'
-            }, status=400)
+            return JsonResponse(
+                {"error": "All meals have already been saved to My Recipes."},
+                status=400,
+            )
 
-        return JsonResponse({
-            'success': True,
-            'message': f'{saved_count} meals saved to My Recipes!',
-            'saved_count': saved_count,
-            'skipped_count': skipped_count,
-        })
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f"{saved_count} meals saved to My Recipes!",
+                "saved_count": saved_count,
+                "skipped_count": skipped_count,
+            }
+        )
 
     except Exception as e:
-        return JsonResponse({'error': f'Something went wrong: {str(e)}'}, status=500)
+        return JsonResponse({"error": f"Something went wrong: {str(e)}"}, status=500)
 
 
 @login_required
@@ -1444,9 +1468,11 @@ def rate_recipe(request, recipe_id):
     avg = recipe.average_rating()
     count = recipe.ratings.count()
 
-    return JsonResponse({
-        "success": True,
-        "stars": stars,
-        "average": round(avg, 1) if avg else stars,
-        "count": count,
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "stars": stars,
+            "average": round(avg, 1) if avg else stars,
+            "count": count,
+        }
+    )
