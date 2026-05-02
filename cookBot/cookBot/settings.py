@@ -50,7 +50,6 @@ CSP_IMG_SRC = ("'self'", "data:", "https:")
 CSP_FONT_SRC = ("'self'", "data:", "https://cdn.jsdelivr.net")
 CSP_CONNECT_SRC = ("'self'",)
 CSP_FRAME_ANCESTORS = ("'none'",)
-        
 
 
 RATELIMIT_ENABLE = "test" not in sys.argv and "behave" not in sys.argv
