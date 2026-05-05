@@ -7,7 +7,7 @@ django-ratelimit==4.1.0
 idna==3.11
 python-decouple==3.8
 python-dotenv==1.2.2
-pytz==2026.1.post1
+pytz==2026.2
 requests==2.33.1
 setuptools==82.0.1
 six==1.17.0
