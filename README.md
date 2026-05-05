@@ -6,5 +6,7 @@
 ## Project Overview
 CookBot is a web/mobile application designed to help users find recipes based on the ingredients they already have.
 
+## Project Demo Video URL: https://youtu.be/p7R8MNH4s4k?si=ubMwp_wb6pZY8JMC
+
 ## AI Disclosure
 Our team utilized AI tools such as Claude and OpenAI to assist in the development of this project.
