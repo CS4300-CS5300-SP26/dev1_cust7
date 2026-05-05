@@ -4,7 +4,7 @@ charset-normalizer==3.4.7
 Django==6.0.4
 django-csp==4.0
 django-ratelimit==4.1.0
-idna==3.11
+idna==3.13
 python-decouple==3.8
 python-dotenv==1.2.2
 pytz==2026.1.post1
